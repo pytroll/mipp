@@ -5,6 +5,8 @@ import numpy
 
 class Metadata(object):
     def read(self, file_name):
+        """Read until empty line og 'EOH'.
+        """
         fp = open(file_name)
         try:
             for line in fp:
