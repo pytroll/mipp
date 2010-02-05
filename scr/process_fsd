@@ -1,0 +1,135 @@
+#!/usr/bin/python
+#
+import sys
+import os
+import getopt
+import glob
+
+import xrit
+
+#-----------------------------------------------------------------------------
+
+def usage():
+    print >>sys.stderr, """\
+    process_fsd --check [-l] <prologue-file>
+        check if number of image segments are as planned
+        -l, list corresponding image segment files
+    process_fsd --decompress [-o<output-dir>] <file> ... <file>
+        decompress files to output-dir (default is working directory)
+        -l, list decompressed files
+    process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
+        print meta-data
+    process_fsd [h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
+        -h, save image data to a HDF5 file (default is binary dump and meta-data to stdout)\
+    """
+    sys.exit(2)
+
+#-----------------------------------------------------------------------------
+
+def check_segment_count(prologue, listit=False):
+    dname, fname = os.path.split(prologue.file_name)
+    fname = fname.replace('-PRO______-', '-0????????-')
+    fname = fname[:-2] + '??'
+    image_files = glob.glob(dname + '/' + fname)
+    if not image_files:
+        return False
+    if listit:
+        image_files.sort()
+        for f in image_files:
+            print f
+    im = xrit.read_imagedata(image_files[-1])
+    seg_miss = im.segment.planned_end_seg_no - im.segment.planned_start_seg_no + 1 - len(image_files)
+    return seg_miss <= 0
+
+def decompress(image_files, outdir='.', listit=False):
+    for f in sorted(image_files):
+        outfile = xrit.decompress(f, outdir)
+        if listit:
+            print outfile
+
+def process(prologue, image_files, outdir='.', hdf5it=False):
+    im = xrit.read_imagedata(image_files[-1])
+    print >>sys.stderr, 'Processing', prologue.product_id + ',', len(image_files), 'image data files'
+    mda, img = xrit.sat.read(prologue, image_files)
+    fname = outdir + '/' + prologue.product_id
+    if hdf5it:
+        fname += '.H5'
+        print >>sys.stderr, 'Writing', fname
+        xrit.hdf5_dmi.save(mda, img, fname)
+    else:
+        fname_mda = fname + '.mda'
+        fp = open(fname_mda, 'w')
+        print >>sys.stderr, 'Writing', fname_mda
+        fp.write(str(mda) + '\n')
+        fp.close()
+        fname += '.dat'
+        print >>sys.stderr, 'Writing', fname
+        img.tofile(fname)
+    return True
+
+#-----------------------------------------------------------------------------
+
+long_options = ['check', 'decompress', 'metadata']
+nlopt = 0
+outdir = '.'
+check = False
+decomp = False
+metadata = False
+listit = False
+hdf5it = False
+opts, args = getopt.getopt(sys.argv[1:], 'o:lh', long_options)
+for k, v in opts:
+    if k == '--decompress':
+        decomp = True
+        nlopt += 1
+    elif k == '--check':
+        check = True
+        nlopt += 1
+    elif k == '--metadata':
+        nlopt += 1
+        metadata = True
+    elif k == '-o':
+        outdir = v
+    elif k == '-l':
+        listit = True
+    elif k == '-h':
+        hdf5it = True
+
+if nlopt > 1:
+    print >>sys.stderr, "Please specify only one of these: ", ', '.join(['--' + s for s in long_options])
+    sys.exit(2)
+    
+pro_file = ''
+image_files = []
+try:
+    if check:
+        pro_file = args[0]
+    elif decomp:
+        image_files = args
+    else:
+        pro_file = args[0]
+        image_files = args[1:]
+except IndexError:
+    usage()
+
+if pro_file:
+    prologue = xrit.read_prologue(pro_file)
+    
+#-----------------------------------------------------------------------------
+
+return_code = 0
+
+if check:
+    if not check_segment_count(prologue, listit):
+        return_code = 1
+        
+elif decomp:
+    decompress(image_files, outdir, listit)
+    
+elif metadata:
+    print xrit.sat.read_metadata(prologue, image_files)
+
+else:
+    process(prologue, image_files, outdir, hdf5it)
+
+sys.exit(return_code)

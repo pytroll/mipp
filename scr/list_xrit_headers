@@ -1,0 +1,24 @@
+#!/usr/bin/python
+#
+import sys
+import getopt
+
+import xrit
+
+def usage():
+    print >>sys.stderr, "usage: list_xrit_headers [-d] <file-name>"
+    print >>sys.stderr, "    -d, ... and dump data"
+    sys.exit(2)
+
+dumpit = False
+opts, args = getopt.getopt(sys.argv[1:], 'd')
+for k, v in opts:
+    if k == '-d':
+        dumpit = True
+
+try:
+    file_name = args[0]
+except IndexError:
+    usage()
+
+xrit.list(file_name, dumpit)
