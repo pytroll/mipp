@@ -55,7 +55,7 @@ def process(prologue, image_files, outdir='.', hdf5it=False):
     if hdf5it:
         fname += '.H5'
         print >>sys.stderr, 'Writing', fname
-        xrit.hdf5_dmi.save(mda, img, fname)
+        xrit.hdfdmi.save(mda, img, fname)
     else:
         fname_mda = fname + '.mda'
         fp = open(fname_mda, 'w')
