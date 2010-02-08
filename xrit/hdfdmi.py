@@ -42,13 +42,13 @@ def save(mda, img, file_name):
     ds = gr.create_dataset('image_data', data=img, compression=1)    
     ds.attrs['CLASS'] = 'IMAGE'
     ds.attrs['DISPLAY_ORIGIN'] = 'UL'
-    sgr = gr.create_group('satellite')
-    sgr.attrs['satellite_name'] = mda.satname
+    gr = h5.create_group('satellite1')
+    gr.attrs['satellite_name'] = mda.satname
 
-    sgr = h5.create_group('overview')
-    sgr.attrs['product_group_name']  = 'FSD_' + mda.satname + '_' + mda.channel + '_' + mda.sspname
-    sgr.attrs['product_datetime_start'] = mda.time_stamp.strftime('%d-%b-%Y %H:%M:%S.000')
-    sgr.attrs['product_datetime_end'] = mda.time_stamp.strftime('%d-%b-%Y %H:%M:%S.000')
-    sgr.attrs['number_image_groups'] = 1
+    gr = h5.create_group('overview')
+    gr.attrs['product_group_name']  = 'FSD_' + mda.satname + '_' + mda.channel + '_' + mda.sspname
+    gr.attrs['product_datetime_start'] = mda.time_stamp.strftime('%d-%b-%Y %H:%M:%S.000')
+    gr.attrs['product_datetime_end'] = mda.time_stamp.strftime('%d-%b-%Y %H:%M:%S.000')
+    gr.attrs['number_image_groups'] = 1
 
     h5.close()
