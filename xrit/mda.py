@@ -5,15 +5,18 @@ import numpy
 
 class Metadata(object):
     def read(self, file_name):
-        """Read until empty line og 'EOH'.
+        """Read until empty line or 'EOH'.
         """
         fp = open(file_name)
         try:
             for line in fp:
                 line = line.strip()
                 if not line or line == 'EOH':
+                    # end of meta-data
                     break
-                if line[0] == '#':
+                line = line.split('#')[0].strip()
+                if not line:
+                    # just a comment
                     continue
                 k, v = [s.strip() for s in line.split('=', 1)]
                 try:
