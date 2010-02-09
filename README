@@ -1,0 +1,4 @@
+This is a Meteorological Ingest-Processing Package (MIPP).
+
+It's main task is to convert satellite level-1.5 data into a 
+format understood by MPPP.
