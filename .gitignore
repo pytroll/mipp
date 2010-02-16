@@ -2,3 +2,5 @@
 *.[oa]
 *.so
 *.pyc
+build
+dist
