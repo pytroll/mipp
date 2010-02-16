@@ -1,0 +1,35 @@
+#!/usr/bin/python
+#
+import sys
+import os
+import getopt
+
+import xrit
+
+#-----------------------------------------------------------------------------
+
+def usage():
+    print >>sys.stdout, "usage: process_gts [-o<output-dir>] <file-name>"
+    sys.exit(2)
+
+#-----------------------------------------------------------------------------
+
+outdir = '.'
+opts, args = getopt.getopt(sys.argv[1:], 'o:')
+for k, v in opts:
+    if k == '-o':
+        outdir = v
+        
+try:
+    file_name = args[0]
+except IndexError:
+    usage()
+
+#-----------------------------------------------------------------------------
+
+gts = xrit.read_gts_message(file_name)
+gts_file = outdir + '/' + gts.product_id
+print >>sys.stdout, "Writing", gts_file
+fp = open(gts_file, "wb")
+fp.write(gts.data)
+fp.close()

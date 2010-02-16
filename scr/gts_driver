@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+base=$(dirname $(dirname $(realpath $0)))
+
+. ${base}/etc/setup.sh
+last_processed=$XRIT_IN_DIR/gts_processor.last
+
+for gts_file in $(find $XRIT_IN_DIR -newer $last_processed -name 'L-000-MSG?__-MPEF________-AMV______-*'); do
+    echo $gts_file > $last_processed
+    echo "$(date '+%Y-%m-%d %H:%M:%S') doing: $gts_file"
+    echo "process_gts -o$XRIT_OUT_DIR $gts_file"
+    process_gts -o$XRIT_OUT_DIR $gts_file
+done

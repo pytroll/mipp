@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+base=$(dirname $(dirname $(realpath $0)))
+
+. ${base}/etc/setup.sh
+last_processed=$XRIT_IN_DIR/fsd_processor.last
+
+for pro_file in $(find $XRIT_IN_DIR -newer $last_processed -name '*-PRO______-*'); do
+    # check for all segments
+    process_fsd --check $pro_file || continue
+    echo $(basename $pro_file) > $last_processed
+
+    # get image files
+    img_files=$(process_fsd --check -l $pro_file)
+    test $? -eq 0 && test -n "$img_files" || continue
+
+    # process it
+    echo "$(date '+%Y-%m-%d %H:%M:%S') doing: $pro_file"
+    echo "process_fsd --decompress -l ..."
+    img_files=$(process_fsd --decompress -l -o$XRIT_WRK_DIR $img_files)
+    test $? -eq 0 || continue
+    echo "process_fsd -h -o$XRIT_OUT_DIR"
+    echo "$pro_file"
+    echo "$img_files"
+    process_fsd -o$XRIT_OUT_DIR $pro_file $img_files
+    rm -f $img_files
+done
