@@ -14,13 +14,16 @@ def usage():
     process_fsd --check [-l] <prologue-file>
         check if number of image segments are as planned
         -l, list corresponding image segment files
+        
     process_fsd --decompress [-o<output-dir>] <file> ... <file>
         decompress files to output-dir (default is working directory)
         -l, list decompressed files
+        
     process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
         print meta-data
+        
     process_fsd [h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
-        -h, save image data to a HDF5 file (default is binary dump and meta-data to stdout)\
+        -h, save image data to a HDF5 file (default is binary dump of image-data and ascii dump of meta-data)\
     """
     sys.exit(2)
 
