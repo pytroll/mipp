@@ -91,7 +91,7 @@ class SatelliteReader(object):
             tmp = img.copy() # Make it ownen data
             del img
             img = tmp
-            mda.first_pixel == 'north west'
+            mda.first_pixel = 'north west'
         if mda.first_pixel != 'north west':
             print >>sys.stderr, "Weird image orientation, first pixel: '%s'"%mda.first_pixel        
         delattr(mda, 'line_offset')

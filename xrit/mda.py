@@ -5,7 +5,7 @@ import numpy
 
 class Metadata(object):
     def read(self, file_name):
-        """Read until empty line or 'EOH'.
+        """Read until empty line, 'EOH' or 'EOF'.
         """
         fp = open(file_name)
         try:
@@ -28,6 +28,11 @@ class Metadata(object):
         finally:
             fp.close()
         return self
+
+    def save(self, file_name):
+        fp = open(file_name, 'w')
+        fp.write(str(self) + '\n')
+        fp.close()
             
     def __str__(self):
         keys = sorted(self.__dict__.keys())
