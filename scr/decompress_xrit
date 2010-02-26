@@ -1,0 +1,58 @@
+#!/usr/bin/python
+#
+import os
+import sys
+import getopt
+import glob
+from datetime import datetime
+
+import xrit
+
+#-----------------------------------------------------------------------------
+def usage():
+    print >>sys.stderr, """\
+    decompress_xrit [-w<work-dir>] [<in-dir>] [<out-dir>]
+        If directory not defined, environment variables are used"""
+    sys.exit(2)
+
+#-----------------------------------------------------------------------------
+#
+# Handle options
+#
+in_dir = os.environ.get('XRIT_IN_DIR', '')
+out_dir = os.environ.get('XRIT_OUT_DIR', '')
+wrk_dir = os.environ.get('XRIT_WRK_DIR', '')
+opts, args = getopt.getopt(sys.argv[1:], 'w:')
+for k, v in opts:
+    if k == '-w':
+        wrk_dir = v
+try:
+    in_dir = args[0]
+    out_dir = args[1]
+except IndexError:
+    pass
+
+if not in_dir or not out_dir:
+    usage()
+if not wrk_dir:
+    wrk_dir = out_dir
+
+#-----------------------------------------------------------------------------
+#
+# Get all XRIT files, decompress and move to output directory
+#
+def cmp_ctime(f1, f2):
+    t1 = os.path.getctime(f1)
+    t2 = os.path.getctime(f2)
+    if t1 == t2:
+        return cmp(os.path.basename(f1), os.path.basename(f2))
+    else:
+        return cmp(t1, t2)
+
+file_names = glob.glob(in_dir + '/[HL]*')
+file_names.sort(cmp_ctime)
+for file_name in file_names:
+    print 'doing:', str(datetime.fromtimestamp(os.path.getctime(file_name))), file_name
+    fn = xrit.decompress(file_name, wrk_dir)
+    os.rename(fn, out_dir + '/' + os.path.basename(fn))
+    os.remove(file_name)

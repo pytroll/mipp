@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+base=$(dirname $(realpath $0))
+
+. /opt/etc/setup.sh
+. $base/setup.sh
+$base/decompress_xrit
