@@ -7,6 +7,6 @@ Standards-Version: 3.7.2
 
 Package: python-mipp
 Architecture: any
-Depends: python-numpy
+Depends: python-tisat-numpy
 Description: DMI/TI, this is a Meteorological Ingest-Processing Package (mipp).
  
