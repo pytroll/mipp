@@ -75,8 +75,8 @@ Code Layout
 
   DMI's hdf5 format (writer)
 
-Definition of a satellites
---------------------------
+Definition of satellites
+------------------------
 ::
 
     satellites = {
@@ -138,7 +138,7 @@ Usage
     fp.close()
 
     # In the spirit of mpop, we should also have:
-    mda, image_data = xrit.sat.read(sat_name, time_slot)
+    mda, image_data = xrit.sat.load_meteosat07(time_slot, channel)
 
 
 Script
@@ -165,8 +165,6 @@ Script
 
 
 ==============================
-
- .. rubric:: References:
 
  .. [CGMS] LRIT/HRIT Global Specification; CGMS 03; Issue 2.6; 12 August 1999 
     "MSG Ground Segment LRIT/HRIT Mission Specific Implementation"

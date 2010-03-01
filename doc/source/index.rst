@@ -7,7 +7,7 @@ SMHI & DMI common processing environment
 ========================================
 .. centered:: Norrkoping, 3 March 2010
 
-This is a presentaion of (and an exercise in sphinx):
+This is a presentation of (and an exercise in sphinx):
 
 .. toctree::
    :maxdepth: 1

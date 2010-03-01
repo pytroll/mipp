@@ -10,10 +10,10 @@ Some points
       * SMHI: ``_pyhl``, ``_satproj``, ``_proj``
       * DMI: ``h5py``, ``pyproj``
   * Someone should define our hdf5 format, based on OPERA style ?
-  * Memory usage (cleanup ?)
-      For MSGN (928x3712)
+    (in that process don't forget OpenNDap, netcdf ...)
+  * Memory usage (cleanup ?), for MSGN (928x3712)
       ``seviri.hr_overview`` uses more that 2 GB of memory (``overview`` is using 300 MB).
-      One channel is using 4*928*3712 = 14 MB (pynwclib.c *3 for each channel),
+      One channel is using 4x928x3712 = 14 MB (pynwclib.c x3 for each channel),
       we are handling four channels, it's 180 MB ... a long way to 2000 MB
 
 
