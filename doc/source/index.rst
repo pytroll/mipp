@@ -1,0 +1,26 @@
+.. mipp documentation master file, created by
+   sphinx-quickstart on Fri Feb 26 16:06:36 2010.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+SMHI & DMI common processing environment
+========================================
+.. centered:: Norrkoping, 3 March 2010
+
+This is a presentaion of (and an exercise in sphinx):
+
+.. toctree::
+   :maxdepth: 1
+
+   introduction
+   mpop_experience
+   mpop_mipp
+   discuss
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
