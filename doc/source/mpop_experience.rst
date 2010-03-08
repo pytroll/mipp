@@ -55,5 +55,5 @@ From ``acpg`` we stripped off:
   >>> img.save("./overview.png") # see above
 
 * No problems reading MSG7, using Martins ``satin/mipp.py``.
-* Once in a while it will not read HRV (to much non-empty data ?).
+* Once in a while it will not read HRV (in pynwclib the 'RAD' array can be filled, not the 'REFL' array).
 

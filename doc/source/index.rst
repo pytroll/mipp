@@ -3,11 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-SMHI & DMI common processing environment
-========================================
+MIPP and SMHI/DMI's Common Processing Environment
+=================================================
 .. centered:: Norrkoping, 3 March 2010
 
-This is a presentation of (and an exercise in sphinx):
+This is a presentation of:
 
 .. toctree::
    :maxdepth: 1
@@ -16,6 +16,8 @@ This is a presentation of (and an exercise in sphinx):
    mpop_experience
    mpop_mipp
    discuss
+
+(and an exercise in sphinx)
 
 Indices and tables
 ==================

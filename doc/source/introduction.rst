@@ -29,6 +29,13 @@ In the beginning, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R*
   * decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
   * catenate image data into a numpy-array (if needed convert 10 bit data to 16 bit).
 
+.. note::
+
+    * MET7: not calibrated.
+    * GOES, METSAT: calibration constants to Kelvin or Radiance (not Reflectance).
+
+
+
 Code Layout
 -----------
 
@@ -137,10 +144,6 @@ Usage
     image_data.tofile(fp)
     fp.close()
 
-    # In the spirit of mpop, we should also have:
-    mda, image_data = xrit.sat.load_meteosat07(time_slot, channel)
-
-
 Script
 ------
 
@@ -162,6 +165,12 @@ Script
     process_fsd [h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
         -h, save image data to a HDF5 file
             (default is binary dump of image-data and ascii dump of meta-data)\
+
+Next
+----
+Make ``mpop`` more happy (and ``mipp`` more useful):
+  * Interface: ``mda, image_data = xrit.sat.load_meteosat07(time_slot, channel)``
+  * An option that ``image_data`` should be in physical units (if possible).
 
 
 ==============================

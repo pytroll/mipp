@@ -3,9 +3,10 @@
 =====================
 
 First, I thought that the interface should/would be a common level1.5 (level2)
-file format (e.g a hdf5 format).
+file format.
 
 Second, I undestood, that ``mpop`` was directly reading the (uncompressed) `xrit` files.
+
 
 Current interface
 -----------------
@@ -27,9 +28,9 @@ The above should be replaces by, e.g::
 Options
 -------
 
-Common SatelliteScene object
-############################
-``mpop``, using inheitance::
+Common SatelliteScene object ?
+##############################
+``mpop``, using inheritance::
 
   class Meteosat07MviriScene(MviriScene)(area, time_slot)
       # satellite definition
@@ -53,22 +54,27 @@ Common SatelliteScene object
                       names
                       time_slot    
 
-``MviriScene`` is where channels are defined, but it pulls in image building and resampling. 
+``MviriScene`` (or ``SeviriScene``) is where channels are defined ... it's a big objects, including 
+image building and resampling. 
 
 We could decouple with mixin-classes::
 
   class Meteosat07MviriScene(MviriScene, ImageBuilder, Resampler)
 
-or::
+or composite::
 
-  ImageBuilder.build(SatellitScene, ...)
-  Resampler.proj(SatellitScene, ...)
+  ImageBuilder.__init__(SatellitScene, ...)
+  Resampler.__init__(SatellitScene, ...)
+
+or::
+  
+  ...
 
 **But no problem as it is now**, we could have
 
 
-Common configuration files
-##########################
+Common configuration files ?
+############################
 
 Common level1.5 configuration files::
 
@@ -82,8 +88,11 @@ Common level1.5 configuration files::
   [instruments]
   name = 'mviri'
 
-  [level1]
+  [level2]
   format = 'mipp'
+
+  [level1]
+  format = 'xrit-mtp'
   dir = '/usr/local/safnwc/import/SEVIRI_data'
   filename = 'L-000-MTP___-MET7________-%(channel)s_057E-%(segment)s-%Y%m%d%H%M-__'
   area = 'FULL_DISK'
@@ -91,17 +100,28 @@ Common level1.5 configuration files::
   [channel-1]
   name = '00_7'
   frequency = (0.5, 0.7, 0.9)
-  resolution = 2500
+  resolution = 2500.0
+  size = (5000, 5000) # total size
+                      # NWCLIB can define sub-areas (in satellite projection)
 
   [channel-2]
   name = '06_4'
   frequency = (5.7, 6.4, 7.1)
-  resolution = 5000
+  resolution = 5000.0
+  size = (2500, 2500)
 
   [channel-3]
   name = '11_5'
   frequency = (10.5, 11.5, 12.5)
-  resolution = 5000
+  resolution = 5000.0
+  size = (2500, 2500)
+
+and common environment variables::
+
+  export PPP_CONFIG_DIR = '/opt/mpop/etc'
+  export PPP_PYTHONPATH = '/opt/mpop/lib/python2.5/site-packages:/opt/lib/python2.5/site-packages'
+  ...
+  ...
 
 
 ``mpop`` would then::

@@ -9,17 +9,19 @@ Some points
   * We should agree on third party software
       * SMHI: ``_pyhl``, ``_satproj``, ``_proj``
       * DMI: ``h5py``, ``pyproj``
-  * Someone should define our hdf5 format, based on OPERA style ?
+  * Someone should define our hdf5/netcdf-4 format, based on OPERA style ?
     (in that process don't forget OpenNDap, netcdf ...)
-  * Memory usage (cleanup ?), for MSGN (928x3712)
+  * Is there a need for "analyze" memory usage ?.
+
+    For MSGN (928x3712)
       ``seviri.hr_overview`` uses more that 2 GB of memory (``overview`` is using 300 MB).
       One channel is using 4x928x3712 = 14 MB (pynwclib.c x3 for each channel),
-      we are handling four channels, it's 180 MB ... a long way to 2000 MB
+      we are handling four channels, it's 180 MB.
 
 
 NWCLIB
 ------
-I though it was just decofing HRIT files, extracting calibrations constants etc, but::
+I thought ``nwclib`` just was decoding HRIT files, extracting calibrations constants etc, but::
 
 	|   2.- FOR L15 CONTAINING SPECTRAL RADIANCE RELATED COUNTS (Pre XXX-08)
 	|   --------------------------------------------------------------------
@@ -38,3 +40,21 @@ I though it was just decofing HRIT files, extracting calibrations constants etc,
 	|   2.4.- Effective Radiances are computed inverting the EUMETSAT
 	|         formula relating Effective Radiances with BT
 	|
+
+From ``pynwclib``::
+
+            if(read_rad)
+              rad = (PyArrayObject *)SimpleNewFrom2DData(2,hr_dims,NPY_FLOAT,
+                                                         SevBand(hr_seviri,channel,RAD));
+            else
+              rad = (PyArrayObject *)PyArray_EMPTY(2, hr_dims, NPY_FLOAT,0);
+            if(SevBand(hr_seviri,channel,REFL)!=NULL)
+              {
+                cal = (PyArrayObject *)SimpleNewFrom2DData(2,hr_dims,NPY_FLOAT,
+                                                           SevBand(hr_seviri,channel,REFL));
+              }
+            else
+              {
+                cal = (PyArrayObject *)SimpleNewFrom2DData(2,hr_dims,NPY_FLOAT,
+                                                           SevBand(hr_seviri,channel,BT));
+              }
