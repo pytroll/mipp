@@ -52,21 +52,22 @@ def decompress(image_files, outdir='.', listit=False):
 
 def process(prologue, image_files, outdir='.', hdf5it=False):
     im = xrit.read_imagedata(image_files[-1])
-    print >>sys.stderr, 'Processing', prologue.product_id + ',', len(image_files), 'image data files'
+    print >>sys.stderr, 'Processing:', prologue.product_id + ',', len(image_files), 'image data files'
     mda, img = xrit.sat.read(prologue, image_files)
+    print >>sys.stderr, 'Image data min, max:', "%d, %d counts"%(img.min(), img.max())
     fname = outdir + '/' + prologue.product_id
     if hdf5it:
         fname += '.H5'
-        print >>sys.stderr, 'Writing', fname
+        print >>sys.stderr, 'Writing:', fname
         xrit.hdfdmi.save(mda, img, fname)
     else:
         fname_mda = fname + '.mda'
         fp = open(fname_mda, 'w')
-        print >>sys.stderr, 'Writing', fname_mda
+        print >>sys.stderr, 'Writing:', fname_mda
         fp.write(str(mda) + '\n')
         fp.close()
         fname += '.dat'
-        print >>sys.stderr, 'Writing', fname
+        print >>sys.stderr, 'Writing:', fname
         img.tofile(fname)
     return True
 

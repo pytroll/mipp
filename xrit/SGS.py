@@ -47,16 +47,17 @@ def read_metadata(prologue, image_files):
     im = xrit.read_imagedata(image_files[0])
     md = mda.Metadata()
     md.satname = im.platform
-    md.product_type = 'full earth'
+    md.product_type = 'full disc'
     md.product_name = prologue.product_id
     md.channel = prologue.product_name[:4]
     ssp = float(im.product_name[5:-1].replace('_','.'))
     if im.product_name[-1].lower() == 'w':            
         ssp *= -1
-    md.sub_satellite_point = numpy.array([ssp, 0.], dtype=numpy.float32)
+    md.sublon = ssp
     md.first_pixel = 'north west'
     md.data_type = im.structure.nb
-    md.image_size = [im.structure.nc, im.structure.nl]
+    nseg = im.segment.planned_end_seg_no - im.segment.planned_start_seg_no + 1
+    md.image_size = (im.structure.nc, im.structure.nl*nseg)
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
@@ -72,16 +73,16 @@ def read_metadata(prologue, image_files):
     md.calibration_table = numpy.array(dd, dtype=numpy.float32)
 
     # some check for consistency
-    channel_name = im.product_name[:4]
-    lines = im.structure.nl
-    for f in image_files[1:]:
-        im = xrit.read_imagedata(f)
-        lines += im.structure.nl
-        if md.satname != im.platform:
-            raise SGSDecodeError("Inconsistency in image data files")
-        if channel_name != im.product_name[:4]:
-            raise SGSDecodeError("Inconsistency in image data files")
-    md.image_size = [md.image_size[0], lines]
+    ###channel_name = im.product_name[:4]
+    ###lines = im.structure.nl
+    ###for f in image_files[1:]:
+    ###    im = xrit.read_imagedata(f)
+    ###    lines += im.structure.nl
+    ###    if md.satname != im.platform:
+    ###        raise SGSDecodeError("Inconsistency in image data files")
+    ###    if channel_name != im.product_name[:4]:
+    ###        raise SGSDecodeError("Inconsistency in image data files")
+    ###md.image_size = [md.image_size[0], lines]
     return md
 
 def read_prologue_headers(fp):
