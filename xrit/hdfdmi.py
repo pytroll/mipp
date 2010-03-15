@@ -20,8 +20,8 @@ def save(mda, img, file_name):
     gr.attrs['geo_pixel_size_x'] = mda.pixel_size[0]
     gr.attrs['geo_pixel_size_y'] = mda.pixel_size[1]
     gr.attrs['geo_dim_pixel'] = "KM,KM"
-    gr.attrs['geo_product_center'] = mda.sub_satellite_point
-    gr.attrs['full_disk'] = 'yes'
+    gr.attrs['geo_product_center'] = [mda.sublon, 0.0]
+    gr.attrs['full_disc'] = 'yes'
     gr = gr.create_group('map_projection')
     gr.attrs['projection_indication'] = 'yes'
     gr.attrs['projection_proj4_params'] = mda.proj4_params

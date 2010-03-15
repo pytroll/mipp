@@ -92,10 +92,10 @@ def read_metadata(prologue, image_files):
     md.satname = pf
     md.channel = prologue.product_name[:4]
     md.product_type = asc_hdr['ProductType']
-    md.sub_satellite_point = (bin_hdr['ssp'],0.0)
+    md.sublon = bin_hdr['ssp']
     md.first_pixel = asc_hdr['FirstPixelOri']
     md.data_type = bin_hdr['dtype']*8
-    md.image_size = [int(asc_hdr['NumberOfPixels']), int(asc_hdr['NumberOfLines'])]
+    md.image_size = (int(asc_hdr['NumberOfPixels']), int(asc_hdr['NumberOfLines']))
     md.line_offset = int(asc_hdr['LineOffset'])
     md.time_stamp = datetime.strptime(asc_hdr['Date'] + asc_hdr['Time'], "%y%m%d%H%M")
     md.production_time = datetime.strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
