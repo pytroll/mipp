@@ -3,7 +3,7 @@
 #
 # Stolen from EUMETSAT's msg_navigation.c
 #
-# You probaly don't wanna call this for each point in a full disc image.
+# You probaly don't wanna call this one for each point in a full disc image.
 #
 import math
 
@@ -36,37 +36,30 @@ class GeosNavigation(object):
     def __init__(self, sublon, cfac, lfac, coff, loff):
         self.navcoef = GeosNavigation._Navcoef(sublon, cfac, lfac, coff, loff)
         
-    def lonlat(self, xy, cartesian=False):
-        return xy2lonlat(xy, self.navcoef, cartesian)
+    def lonlat(self, xy, intermediate=False):
+        return xy2lonlat(xy, self.navcoef, intermediate)
     
-    def xy(self, lonlat, cartesian=False):
-        return lonlat2xy(lonlat, self.navcoef, cartesian)
+    def xy(self, lonlat, intermediate=False):
+        return lonlat2xy(lonlat, self.navcoef, intermediate)
 
 #-----------------------------------------------------------------------------
 
-def xy2lonlat (xy, navcoef, cartesian=False):
-
-    COFF = navcoef.coff
-    LOFF = navcoef.loff
-    CFAC = navcoef.cfac
-    LFAC = navcoef.lfac
-    SUBLON = navcoef.sublon
+def xy2lonlat (xy, nav, intermediate=False):
 
     # Auxiliary variable
     rpol2 = RPOL*RPOL
     req2 = REQ*REQ
     aux1 = 1737121856.0
-    
-    
+        
     # Intermediate coordinates
-    if cartesian:
+    if intermediate:
         # from km to scan angles
         x = float(xy[0])*math.atan(REQ/H)/REQ
         y = -float(xy[1])*math.atan(RPOL/H)/RPOL
     else:    
         # from column, line to scan angles
-        x = ((float(xy[0]) - COFF)*pow(2,16)/CFAC)*DEG2RAD
-        y = ((float(xy[1]) - LOFF)*pow(2,16)/LFAC)*DEG2RAD
+        x = ((float(xy[0]) - nav.coff)*pow(2,16)/nav.cfac)*DEG2RAD
+        y = ((float(xy[1]) - nav.loff)*pow(2,16)/nav.lfac)*DEG2RAD
 
     # Auxiliary values 
     cosx = math.cos(x)
@@ -88,7 +81,7 @@ def xy2lonlat (xy, navcoef, cartesian=False):
     sxy = math.sqrt(s1*s1 + s2*s2)
 
     # Longitude and latitude calculation
-    lon = RAD2DEG*math.atan(s2/s1) + SUBLON
+    lon = RAD2DEG*math.atan(s2/s1) + nav.sublon
     lat = (math.atan(req2/rpol2*s3/sxy))*RAD2DEG
 
     # Valid range for longitudes [-180,180]
@@ -99,14 +92,8 @@ def xy2lonlat (xy, navcoef, cartesian=False):
 
     return lon, lat
 
-def lonlat2xy(lonlat, navcoef, cartesian=False):
+def lonlat2xy(lonlat, nav, intermediate=False):
     
-    COFF = navcoef.coff
-    LOFF = navcoef.loff
-    CFAC = navcoef.cfac
-    LFAC = navcoef.lfac
-    SUBLON = navcoef.sublon
-
     # Auxiliary variable
     rpol2 = RPOL*RPOL
     req2 = REQ*REQ
@@ -117,7 +104,7 @@ def lonlat2xy(lonlat, navcoef, cartesian=False):
     # From degrees to radians 
     lon = lonlat[0]*DEG2RAD
     lat = lonlat[1]*DEG2RAD
-    sublon = SUBLON*DEG2RAD
+    sublon = nav.sublon*DEG2RAD
 
     # Calculte as described in LRIT/HRIT Global Specification section 4.4.3.2
     c_lat = math.atan(aux1*math.tan(lat))
@@ -141,7 +128,7 @@ def lonlat2xy(lonlat, navcoef, cartesian=False):
     x = math.atan(-r2/r1)
     y = math.asin(-r3/rn)
     
-    if cartesian:
+    if intermediate:
         # from scan angles to km
         x = REQ*x/math.atan(REQ/H)
         y = -RPOL*y/math.atan(RPOL/H)
@@ -149,8 +136,8 @@ def lonlat2xy(lonlat, navcoef, cartesian=False):
 
     x *= RAD2DEG
     y *= RAD2DEG
-    x = int(round((x*CFAC)/pow(2,16) + COFF))
-    y = int(round((y*LFAC)/pow(2,16) + LOFF))    
+    x = int(round((x*nav.cfac)/pow(2,16) + nav.coff))
+    y = int(round((y*nav.lfac)/pow(2,16) + nav.loff))    
     return x, y
 
 #-----------------------------------------------------------------------------
