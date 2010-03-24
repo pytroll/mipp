@@ -11,8 +11,7 @@ import sys
 import numpy
 
 import xrit
-import mda
-from bin_reader import *
+from xrit.bin_reader import *
 
 __all__ = ['read_metadata',]
 
@@ -45,7 +44,7 @@ def read_metadata(prologue, image_files):
     """ Selected items from the GOES image data files (not much information in prologue).
     """
     im = xrit.read_imagedata(image_files[0])
-    md = mda.Metadata()
+    md = xrit.mda.Metadata()
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
     md.product_name = prologue.product_id

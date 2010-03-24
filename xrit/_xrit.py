@@ -12,7 +12,7 @@ import os
 from StringIO import StringIO 
 from datetime import datetime
 
-from bin_reader import *
+from xrit.bin_reader import *
 
 __all__ = ['read_prologue',
            'read_imagedata',

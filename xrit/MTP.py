@@ -9,8 +9,8 @@
 import sys
 from StringIO import StringIO
 
-from bin_reader import *
-import mda
+import xrit
+from xrit.bin_reader import *
 
 __all__ = ['read_metadata',]
 
@@ -81,7 +81,7 @@ def _read_binary_header(fp, product_type):
 def read_metadata(prologue, image_files):
     """ Selected items from the Meteosat-7 prolog file.
     """
-    md = mda.Metadata()
+    md = xrit.mda.Metadata()
     fp = StringIO(prologue.data)
     asc_hdr = _read_ascii_header(fp)
     bin_hdr = _read_binary_header(fp, asc_hdr['ProductType'])

@@ -1,3 +1,10 @@
+python-mipp (0.1-4) unstable; urgency=low
+
+  * Now returns calibrated data
+  * New satellite configuration file
+
+ -- Lars Ørum Rasmussen <ras@dmi.dk>  Wed, 24 Mar 2010 12:26:54 +0000
+
 python-mipp (0.1-3) unstable; urgency=low
 
   * Now with new interface:

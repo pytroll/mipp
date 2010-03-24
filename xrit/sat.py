@@ -9,8 +9,6 @@ import types
 import imp
 
 import xrit
-import convert
-import cfg
 
 __all__ = ['load_meteosat07',
            'load_goes11',
@@ -59,7 +57,7 @@ class _SatelliteLoader(object):
         self.no_data_value = 0
         delattr(self, 'number')
 
-    def load(self, time_stamp, channel, masked_array=False, only_metadata=False):
+    def load(self, time_stamp, channel, mask=False, calibrate=True, only_metadata=False):
         if channel not in self._config_reader.get_channel_names():
             raise SatDecodeError("Unknown channel name '%s'"%channel)
         opt = self._config_reader('level1')
@@ -84,13 +82,13 @@ class _SatelliteLoader(object):
             print >>sys.stderr, '    ', f
 
         prologue = xrit.read_prologue(prologue)
-        return self.load_files(prologue, image_files, masked_array, only_metadata)
+        return self.load_files(prologue, image_files, mask, calibrate, only_metadata)
 
-    def load_files(self, prologue, image_files, masked_array=False, only_metadata=False):
+    def load_files(self, prologue, image_files, mask=False, calibrate=True, only_metadata=False):
         if only_metadata:
             return self._read_metadata(prologue, image_files)
         else:
-            return self._read(prologue, image_files, masked_array=masked_array)
+            return self._read(prologue, image_files, mask, calibrate)
         
 
     def _read_metadata(self, prologue, image_files):
@@ -111,16 +109,16 @@ class _SatelliteLoader(object):
                 
         return mda
 
-    def _read(self, prologue, image_files, masked_array=False):
+    def _read(self, prologue, image_files, mask=False, calibrate=True):
         mda = self._read_metadata(prologue, image_files)
 	len_img = (((mda.image_size[0] + mda.line_offset)*mda.image_size[1])*mda.data_type)//8
         print >>sys.stdout, "Data size: %dx%d pixels, %d bytes, %d bits per pixel"%\
               (mda.image_size[0], mda.image_size[1], len_img, mda.data_type)
         
-        raw_img = _make_image1(image_files)
+        raw_img = _make_image(image_files)
         
         if mda.data_type == 10:
-            tmp = convert.dec10216(raw_img)
+            tmp = xrit.convert.dec10216(raw_img)
             del raw_img
             raw_img = tmp
             mda.data_type = 16
@@ -152,23 +150,16 @@ class _SatelliteLoader(object):
         delattr(mda, 'line_offset')
         delattr(mda, 'first_pixel')
 
-        if masked_array:
+        mda.calibrated = calibrate
+        if calibrate:
+            # do this before masking.
+            img = _calibrate(mda, img)
+        
+        if mask:
             img = numpy.ma.array(img, mask=(img == mda.no_data_value), copy=False)
         return mda, img
 
-def _make_image2(mda, image_files):
-    len_img = (((mda.image_size[0] + mda.line_offset)*mda.image_size[1])*mda.data_type)//8
-    raw_img = '\0' * len_img
-    for f in image_files:
-        segment = xrit.read_imagedata(f)
-        start = mda.image_size[0] - segment.navigation.loff - segment.navigation.coff
-        start *= mda.image_size[0] + mda.line_offset
-        start = (start*mda.data_type)//8 # now in bytes
-        end = start + len(segment.data)
-        raw_img = raw_img[:start] + segment.data + raw_img[end:]
-    return raw_img
-
-def _make_image1(image_files, size=()):        
+def _make_image(image_files, size=()):        
     image_files.sort()
     s = xrit.read_imagedata(image_files[0])
     start_seg_no = s.segment.planned_start_seg_no
@@ -194,51 +185,87 @@ def _make_image1(image_files, size=()):
         raw_img += '\0'*pad_size
     return raw_img
 
+def _calibrate(mda, img):
+    mda.calibrated = False
+    mda.calibration_unit = 'counts'
+    try:
+        cal = mda.__dict__.pop('calibration_table')
+    except KeyError:
+        cal = None
+    
+    if cal == None or len(cal) == 0:
+        return img
+    if type(cal) != numpy.ndarray:
+        cal = numpy.array(cal)
+
+    if cal.shape == (256, 2):
+        cal = cal[:,1] # nasty !!!
+        cal[int(mda.no_data_value)] = mda.no_data_value
+        img = cal[img] # this does not work on masked arrays !!!
+    elif cal.shape ==(2, 2):
+        scale = (cal[1][1] - cal[0][1])/(cal[1][0] - cal[0][0])
+        offset = cal[0][1] - cal[0][0]*scale
+        img = numpy.select([img == mda.no_data_value*scale], [mda.no_data_value], default=offset + img*scale)
+    else:
+        raise SatDecodeError("Could not recognize the shape %s of the calibration table"%str(cal.shape))
+    mda.calibrated = True
+    return img
+
 #-----------------------------------------------------------------------------
 #
 # Interface
 #
 #-----------------------------------------------------------------------------
-def load_files(prologue, image_files, masked_array=False, only_metadata=False):
+def load_files(prologue, image_files,
+               mask=False, calibrate=True, only_metadata=False):
     if type(prologue) == type('string'):
         prologue = xrit.read_prologue(prologue)
     satname = prologue.platform.lower()
-    return _SatelliteLoader(cfg.read_config(satname)).load_files(prologue, image_files, masked_array, only_metadata)
+    return _SatelliteLoader(xrit.cfg.read_config(satname)).\
+           load_files(prologue, image_files, mask, calibrate, only_metadata)
  
-def load(satname, time_stamp, channel, masked_array=False, only_metadata=False):
-    return _SatelliteLoader(cfg.read_config(satname)).load(time_stamp, channel, masked_array, only_metadata)
+def load(satname, time_stamp, channel,
+         mask=False, calibrate=True, only_metadata=False):
+    return _SatelliteLoader(xrit.cfg.read_config(satname)).\
+           load(time_stamp, channel, mask, calibrate, only_metadata)
  
-def load_meteosat07(time_stamp, channel, masked_array=False, only_metadata=False):
-    return load('meteosat07', time_stamp, channel, only_metadata)
+def load_meteosat07(time_stamp, channel,
+                    mask=False, calibrate=True, only_metadata=False):
+    return load('meteosat07', time_stamp, channel, mask, calibrate, only_metadata)
  
-def load_goes11(time_stamp, channel, masked_array=False, only_metadata=False):
-    return load ('goes11', time_stamp, channel, only_metadata)
+def load_goes11(time_stamp, channel,
+                mask=False, calibrate=True, only_metadata=False):
+    return load ('goes11', time_stamp, channel, mask, calibrate, only_metadata)
  
-def load_goes12(time_stamp, channel, masked_array=False, only_metadata=False):
-    return load('goes12', time_stamp, channel, only_metadata)
+def load_goes12(time_stamp, channel,
+                mask=False, calibrate=True, only_metadata=False):
+    return load('goes12', time_stamp, channel, mask, calibrate, only_metadata)
  
-def load_mtsat1r(time_stamp, channel, masked_array=False, only_metadata=False):
-    return load ('mtsat1r', time_stamp, channel, only_metadata)
+def load_mtsat1r(time_stamp, channel,
+                 mask=False, calibrate=True, only_metadata=False):
+    return load ('mtsat1r', time_stamp, channel, mask, calibrate, only_metadata)
 
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
     from datetime import datetime
     import Image as pil
 
-    #mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8')
+    mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True)
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5')
-    mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7')
+    #mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7', mask=True)
+    #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '00_7', mask=True)
     print mda
+    print 'min/max =', "%.3f/%.3f %s"%(img.min(), img.max(), mda.calibration_unit)
     fname = './' + mda.product_name + '.png'
-    print >>sys.stderr, 'Writing', fname
-    sys.stderr.flush()
-    img = ((img - img.min()) * 255.0 /
-           (img.max() - img.min()))
-    sys.stderr.flush()
-    img = 255 - img
-    if type(img) == numpy.ma.MaskedArray:
-        img = pil.fromarray(numpy.array(img.filled(0), numpy.uint8))
-    else:
-        img = pil.fromarray(numpy.array(img, numpy.uint8))
-    sys.stderr.flush()
-    img.save(fname)
+    #print >>sys.stderr, 'Writing', fname
+    #sys.stderr.flush()
+    #img = ((img - img.min()) * 255.0 /
+    #       (img.max() - img.min()))
+    #sys.stderr.flush()
+    #img = 255 - img
+    #if type(img) == numpy.ma.MaskedArray:
+    #    img = pil.fromarray(numpy.array(img.filled(0), numpy.uint8))
+    #else:
+    #    img = pil.fromarray(numpy.array(img, numpy.uint8))
+    #sys.stderr.flush()
+    #img.save(fname)

@@ -71,12 +71,13 @@ def process(prologue, image_files, outdir='.', saveashdf5=False):
     im = xrit.read_imagedata(image_files[-1])
     print >>sys.stderr, 'Processing:', prologue.product_id + ',', len(image_files), 'image data files'
     mda, img = xrit.sat.load_files(prologue, image_files)
-    print >>sys.stderr, 'Image data min, max:', "%d, %d counts"%(img.min(), img.max())
+    print >>sys.stderr, 'Image data min, max:', "%.2f, %.2f %s"%(img.min(), img.max(), mda.calibration_unit)
     fname = outdir + '/' + prologue.product_id
     if saveashdf5:
+        import hdfdmi
         fname += '.H5'
         print >>sys.stderr, 'Writing:', fname
-        xrit.hdfdmi.save(mda, img, fname)
+        hdfdmi.save(mda, img, fname)
     else:
         fname_mda = fname + '.mda'
         fp = open(fname_mda, 'w')
