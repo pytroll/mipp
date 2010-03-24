@@ -12,7 +12,7 @@ import os
 from StringIO import StringIO 
 from datetime import datetime
 
-from bin_reader import *
+from xrit.bin_reader import *
 
 __all__ = ['read_prologue',
            'read_imagedata',
@@ -313,28 +313,6 @@ def read_gts_message(file_name):
     else:
         raise XRITDecodeError("This is no 'GTS Message' file: '%s'"%file_name)
     
-def read_image_segments(file_names):
-    def seg_info(s):
-        return  s.segment.seg_no,\
-               (s.structure.nc, s.structure.nl), \
-               (s.structure.nc*s.structure.nl*s.structure.nb)/8
-    
-    file_names.sort()
-    s = read_imagedata(file_names[0])
-    start_seg_no = s.segment.planned_start_seg_no
-    end_seg_no = s.segment.planned_end_seg_no
-    
-    seg_no, seg_size, seg_length  = seg_info(s)    
-    last_seg_no = 0
-    segments = []
-    for f in file_names:
-        s = read_imagedata(f)
-        no, size, length = seg_info(s)
-        prepend = (no - last_seg_no - 1)*seg_length
-        segments.append((s, prepend))
-        last_seg_no = no
-    return segments
-
 def list(file_name, dump_data=False):
     fname = 'xrit.dat'
     fp = open(file_name)

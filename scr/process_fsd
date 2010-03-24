@@ -4,8 +4,18 @@ import sys
 import os
 import getopt
 import glob
+from datetime import datetime, timedelta
+import numpy
 
 import xrit
+
+
+max_age = {'MET7': timedelta(seconds=25*60),
+           'GOES11' : timedelta(seconds=5*60),
+           'GOES12' : timedelta(seconds=5*60),
+           'METSAT1R' : timedelta(seconds=5*60)}
+
+max_product_age = timedelta(seconds=25*60)
 
 #-----------------------------------------------------------------------------
 
@@ -19,7 +29,7 @@ def usage():
         decompress files to output-dir (default is working directory)
         -l, list decompressed files
         
-    process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
+   process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
         print meta-data
         
     process_fsd [h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
@@ -29,20 +39,27 @@ def usage():
 
 #-----------------------------------------------------------------------------
 
-def check_segment_count(prologue, listit=False):
+def check_segments(prologue, listit=False):
     dname, fname = os.path.split(prologue.file_name)
     fname = fname.replace('-PRO______-', '-0????????-')
     fname = fname[:-2] + '??'
     image_files = glob.glob(dname + '/' + fname)
     if not image_files:
         return False
+    image_files.sort()
     if listit:
-        image_files.sort()
         for f in image_files:
             print f
+    ctime = os.path.getctime(prologue.file_name)
+    now = datetime.now()
     im = xrit.read_imagedata(image_files[-1])
-    seg_miss = im.segment.planned_end_seg_no - im.segment.planned_start_seg_no + 1 - len(image_files)
-    return seg_miss <= 0
+    if im.segment.planned_end_seg_no == im.segment.seg_no:
+        return True
+    elif now - im.time_stamp > max_product_age:
+        return True
+    elif now - ctime > max_age[im.platform]:
+        return True
+    return False
 
 def decompress(image_files, outdir='.', listit=False):
     for f in sorted(image_files):
@@ -50,16 +67,17 @@ def decompress(image_files, outdir='.', listit=False):
         if listit:
             print outfile
 
-def process(prologue, image_files, outdir='.', hdf5it=False):
+def process(prologue, image_files, outdir='.', saveashdf5=False):
     im = xrit.read_imagedata(image_files[-1])
     print >>sys.stderr, 'Processing:', prologue.product_id + ',', len(image_files), 'image data files'
-    mda, img = xrit.sat.read(prologue, image_files)
-    print >>sys.stderr, 'Image data min, max:', "%d, %d counts"%(img.min(), img.max())
+    mda, img = xrit.sat.load_files(prologue, image_files)
+    print >>sys.stderr, 'Image data min, max:', "%.2f, %.2f %s"%(img.min(), img.max(), mda.calibration_unit)
     fname = outdir + '/' + prologue.product_id
-    if hdf5it:
+    if saveashdf5:
+        import hdfdmi
         fname += '.H5'
         print >>sys.stderr, 'Writing:', fname
-        xrit.hdfdmi.save(mda, img, fname)
+        hdfdmi.save(mda, img, fname)
     else:
         fname_mda = fname + '.mda'
         fp = open(fname_mda, 'w')
@@ -68,7 +86,10 @@ def process(prologue, image_files, outdir='.', hdf5it=False):
         fp.close()
         fname += '.dat'
         print >>sys.stderr, 'Writing:', fname
+        if type(img) == numpy.ma.MaskedArray:
+            img = img.filled(mda.no_data_value)
         img.tofile(fname)
+            
     return True
 
 #-----------------------------------------------------------------------------
@@ -80,7 +101,7 @@ check = False
 decomp = False
 metadata = False
 listit = False
-hdf5it = False
+saveashdf5 = False
 opts, args = getopt.getopt(sys.argv[1:], 'o:lh', long_options)
 for k, v in opts:
     if k == '--decompress':
@@ -97,7 +118,7 @@ for k, v in opts:
     elif k == '-l':
         listit = True
     elif k == '-h':
-        hdf5it = True
+        saveashdf5 = True
 
 if nlopt > 1:
     print >>sys.stderr, "Please specify only one of these: ", ', '.join(['--' + s for s in long_options])
@@ -124,16 +145,16 @@ if pro_file:
 return_code = 0
 
 if check:
-    if not check_segment_count(prologue, listit):
+    if not check_segments(prologue, listit):
         return_code = 1
         
 elif decomp:
     decompress(image_files, outdir, listit)
     
 elif metadata:
-    print xrit.sat.read_metadata(prologue, image_files)
+    print xrit.sat.load_files(prologue, image_files, only_metadata=True)
 
 else:
-    process(prologue, image_files, outdir, hdf5it)
+    process(prologue, image_files, outdir, saveashdf5)
 
 sys.exit(return_code)
