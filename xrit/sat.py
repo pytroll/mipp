@@ -250,22 +250,17 @@ if __name__ == '__main__':
     from datetime import datetime
     import Image as pil
 
-    mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True)
-    #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5')
+    #mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True)
+    mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)
     #mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7', mask=True)
     #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '00_7', mask=True)
     print mda
     print 'min/max =', "%.3f/%.3f %s"%(img.min(), img.max(), mda.calibration_unit)
     fname = './' + mda.product_name + '.png'
-    #print >>sys.stderr, 'Writing', fname
-    #sys.stderr.flush()
-    #img = ((img - img.min()) * 255.0 /
-    #       (img.max() - img.min()))
-    #sys.stderr.flush()
-    #img = 255 - img
-    #if type(img) == numpy.ma.MaskedArray:
-    #    img = pil.fromarray(numpy.array(img.filled(0), numpy.uint8))
-    #else:
-    #    img = pil.fromarray(numpy.array(img, numpy.uint8))
-    #sys.stderr.flush()
-    #img.save(fname)
+    print >>sys.stderr, 'Writing', fname
+    img = ((img - img.min()) * 255.0 /
+           (img.max() - img.min()))
+    if type(img) == numpy.ma.MaskedArray:
+        img = img.filled(mda.no_data_value)
+    img = pil.fromarray(numpy.array(img, numpy.uint8))
+    img.save(fname)
