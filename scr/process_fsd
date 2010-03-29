@@ -15,7 +15,7 @@ max_age = {'MET7': timedelta(seconds=25*60),
            'GOES12' : timedelta(seconds=5*60),
            'METSAT1R' : timedelta(seconds=5*60)}
 
-max_product_age = timedelta(seconds=25*60)
+max_product_age = timedelta(seconds=35*60)
 
 #-----------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ def decompress(image_files, outdir='.', listit=False):
 def process(prologue, image_files, outdir='.', saveashdf5=False):
     im = xrit.read_imagedata(image_files[-1])
     print >>sys.stderr, 'Processing:', prologue.product_id + ',', len(image_files), 'image data files'
-    mda, img = xrit.sat.load_files(prologue, image_files)
+    mda, img = xrit.sat.load_files(prologue, image_files, mask=False, calibrate=False)
     print >>sys.stderr, 'Image data min, max:', "%.2f, %.2f %s"%(img.min(), img.max(), mda.calibration_unit)
     fname = outdir + '/' + prologue.product_id
     if saveashdf5:

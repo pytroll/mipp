@@ -46,22 +46,25 @@ class _ConfigReader(object):
 
     def get(self, section):
         options = {}
+        section = str(section) # allow get(1)
         if section != 'satellite' and not section.startswith(self.instrument):
             section = self.instrument + '-' + section
         for k, v in self._config.items(section, raw=True):
             options[k] = _eval(v)
         return options
 
-    def get_channels(self):
+    def get_channel(self, name):
+        try:
+            return self._channels[name]
+        except KeyError:
+            raise SatConfigReaderError("Unknown channel: '%s'"%name)
+
+    @property
+    def channels(self):
         return self._channels
 
-    def get_channel(self, channel):
-        try:
-            return self._channels[channel]
-        except KeyError:
-            raise SatConfigReaderError("Unknown channel: '%s'"%channel)
-
-    def get_channel_names(self):
+    @property
+    def channel_names(self):
         return sorted(self._channels.keys())
 
     def _channels2dict(self, instrument):
@@ -99,9 +102,11 @@ def _eval(v):
 
 if __name__ == '__main__':
     import sys
-    cfg = read_config(sys.argv[1], 'mviri')
+    cfg = read_config(sys.argv[1])
     print cfg('satellite')
     print cfg('level1')
-    cs = cfg.get_channels()
-    for k in sorted(cs.keys()):
-        print cs[k]
+    print cfg(1)
+    print cfg(2)
+    print cfg(3)
+    for name in cfg.channel_names:
+        print name + ':', cfg.get_channel(name)
