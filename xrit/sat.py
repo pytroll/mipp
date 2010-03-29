@@ -58,7 +58,7 @@ class _SatelliteLoader(object):
         delattr(self, 'number')
 
     def load(self, time_stamp, channel, mask=False, calibrate=True, only_metadata=False):
-        if channel not in self._config_reader.get_channel_names():
+        if channel not in self._config_reader.channel_names:
             raise SatDecodeError("Unknown channel name '%s'"%channel)
         opt = self._config_reader('level1')
         val = {}
