@@ -19,6 +19,7 @@ def usage():
 #
 # Handle options
 #
+#-----------------------------------------------------------------------------
 in_dir = os.environ.get('XRIT_IN_DIR', '')
 out_dir = os.environ.get('XRIT_OUT_DIR', '')
 wrk_dir = os.environ.get('XRIT_WRK_DIR', '')
@@ -41,13 +42,12 @@ if not wrk_dir:
 #
 # Get all XRIT files, decompress and move to output directory
 #
+#-----------------------------------------------------------------------------
 def cmp_ctime(f1, f2):
-    t1 = os.path.getctime(f1)
-    t2 = os.path.getctime(f2)
-    if t1 == t2:
-        return cmp(os.path.basename(f1), os.path.basename(f2))
-    else:
-        return cmp(t1, t2)
+    result = cmp(os.path.getctime(f1), os.path.getctime(f2))
+    if result == 0:
+        result = cmp(os.path.basename(f1), os.path.basename(f2))
+    return result
 
 file_names = glob.glob(in_dir + '/[HL]*')
 file_names.sort(cmp_ctime)

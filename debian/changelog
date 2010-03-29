@@ -1,4 +1,4 @@
-python-mipp (0.1-6) unstable; urgency=low
+python-mipp (0.1-7) unstable; urgency=low
 
   * Now returns calibrated data
   * New satellite configuration file
