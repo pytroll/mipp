@@ -57,7 +57,7 @@ class _SatelliteLoader(object):
         self.no_data_value = 0
         delattr(self, 'number')
 
-    def load(self, time_stamp, channel, mask=False, calibrate=True, only_metadata=False):
+    def load(self, time_stamp, channel, **kwarg):
         if channel not in self._config_reader.channel_names:
             raise SatDecodeError("Unknown channel name '%s'"%channel)
         opt = self._config_reader('level1')
@@ -82,7 +82,7 @@ class _SatelliteLoader(object):
             print >>sys.stderr, '    ', f
 
         prologue = xrit.read_prologue(prologue)
-        return self.load_files(prologue, image_files, mask, calibrate, only_metadata)
+        return self.load_files(prologue, image_files, **kwarg)
 
     def load_files(self, prologue, image_files, mask=False, calibrate=True, only_metadata=False):
         if only_metadata:
@@ -159,7 +159,7 @@ class _SatelliteLoader(object):
             img = numpy.ma.array(img, mask=(img == mda.no_data_value), copy=False)
         return mda, img
 
-def _make_image(image_files, size=()):        
+def _make_image(image_files, size=()): 
     image_files.sort()
     s = xrit.read_imagedata(image_files[0])
     start_seg_no = s.segment.planned_start_seg_no
@@ -216,34 +216,26 @@ def _calibrate(mda, img):
 # Interface
 #
 #-----------------------------------------------------------------------------
-def load_files(prologue, image_files,
-               mask=False, calibrate=True, only_metadata=False):
+def load_files(prologue, image_files, **kwarg):
     if type(prologue) == type('string'):
         prologue = xrit.read_prologue(prologue)
     satname = prologue.platform.lower()
-    return _SatelliteLoader(xrit.cfg.read_config(satname)).\
-           load_files(prologue, image_files, mask, calibrate, only_metadata)
+    return _SatelliteLoader(xrit.cfg.read_config(satname)).load_files(prologue, image_files, **kwarg)
  
-def load(satname, time_stamp, channel,
-         mask=False, calibrate=True, only_metadata=False):
-    return _SatelliteLoader(xrit.cfg.read_config(satname)).\
-           load(time_stamp, channel, mask, calibrate, only_metadata)
+def load(satname, time_stamp, channel, **kwarg):
+    return _SatelliteLoader(xrit.cfg.read_config(satname)).load(time_stamp, channel, **kwarg)
  
-def load_meteosat07(time_stamp, channel,
-                    mask=False, calibrate=True, only_metadata=False):
-    return load('meteosat07', time_stamp, channel, mask, calibrate, only_metadata)
+def load_meteosat07(time_stamp, channel, **kwarg):
+    return load('meteosat07', time_stamp, channel, **kwarg)
  
-def load_goes11(time_stamp, channel,
-                mask=False, calibrate=True, only_metadata=False):
-    return load ('goes11', time_stamp, channel, mask, calibrate, only_metadata)
+def load_goes11(time_stamp, channel, **kwarg):
+    return load ('goes11', time_stamp, channel, **kwarg)
  
-def load_goes12(time_stamp, channel,
-                mask=False, calibrate=True, only_metadata=False):
-    return load('goes12', time_stamp, channel, mask, calibrate, only_metadata)
+def load_goes12(time_stamp, channel, **kwarg):
+    return load('goes12', time_stamp, channel, **kwarg)
  
-def load_mtsat1r(time_stamp, channel,
-                 mask=False, calibrate=True, only_metadata=False):
-    return load ('mtsat1r', time_stamp, channel, mask, calibrate, only_metadata)
+def load_mtsat1r(time_stamp, channel, **kwarg):
+    return load ('mtsat1r', time_stamp, channel, **kwarg)
 
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
