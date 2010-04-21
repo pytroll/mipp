@@ -52,7 +52,7 @@ def read_metadata(prologue, image_files):
     ssp = float(im.product_name[5:-1].replace('_','.'))
     if im.product_name[-1].lower() == 'w':            
         ssp *= -1
-    md._sublon = ssp
+    md.sublon = ssp
     md.first_pixel = 'north west'
     md.data_type = im.structure.nb
     nseg = im.segment.planned_end_seg_no - im.segment.planned_start_seg_no + 1

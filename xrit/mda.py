@@ -4,6 +4,7 @@
 import numpy
 
 class Metadata(object):
+    token = ': '
     def read(self, file_name):
         """Read until empty line, 'EOH' or 'EOF'.
         """
@@ -18,7 +19,7 @@ class Metadata(object):
                 if not line:
                     # just a comment
                     continue
-                k, v = [s.strip() for s in line.split('=', 1)]
+                k, v = [s.strip() for s in line.split(self.token, 1)]
                 try:
                     v = eval(v)
                 except:
@@ -42,7 +43,7 @@ class Metadata(object):
             if k[0] != '_' and k != 'image_data':
                 if type(v) == numpy.ndarray:
                     v = v.tolist()
-                s += k + ' = ' + str(v) + '\n'
+                s += k + self.token + str(v) + '\n'
         return s[:-1]
 
 if __name__ == '__main__':

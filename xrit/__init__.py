@@ -1,5 +1,6 @@
 #
 from xrit._xrit import *
+from xrit.log import logger
 import xrit.bin_reader as bin_reader
 import xrit.cfg as cfg
 import xrit.convert as convert

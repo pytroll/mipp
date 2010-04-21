@@ -277,6 +277,7 @@ class Segment(object):
             self.is_compressed = bool(self.structure.compress_flag)
         except AttributeError:
             self.is_compressed = False
+        # lazy reading of data
         self._blob = None
 
     @property
@@ -291,6 +292,27 @@ class Segment(object):
     def __str__(self):
         return self.segment_id
 
+class ImageSegment(Segment):
+
+    def __init__(self, file_name):
+        Segment.__init__(self, file_name)
+        self.bytes_per_line = (self.structure.nc*self.structure.nb)/8
+        self.fp = None
+    
+    def readline(self, nlines=1):
+        if not self.fp:
+            self.fp = open(self.file_name)
+            read_headers(self.fp)
+        data = self.fp.read(self.bytes_per_line*nlines)
+        if not data:
+            raise XRITDecodeError("ERROR, could not read", self.bytes_per_line*nlines, "bytes")
+        return data
+    
+    def close(self):
+        if self.fp:
+            self.fp.close()
+            self.fp = None
+
 def read_prologue(file_name):
     s = Segment(file_name)
     if s.file_type == 128:
@@ -301,7 +323,7 @@ def read_prologue(file_name):
 def read_imagedata(file_name):
     s = Segment(file_name)
     if s.file_type == 0:
-        return s
+        return ImageSegment(file_name)
     else:
         raise XRITDecodeError("This is no 'image data' file: '%s'"%file_name)
     

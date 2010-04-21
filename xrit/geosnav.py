@@ -8,8 +8,8 @@
 import math
 
 __all__ = ['GeosNavigation',
-           'xy2latlon',
-           'latlon2xy',
+           'px2latlon',
+           'latlon2px',
            'NavigationError']
 
 class NavigationOutside(Exception):
@@ -25,26 +25,26 @@ H = 42164.0
 #-----------------------------------------------------------------------------
 
 class GeosNavigation(object):
-    class _Navcoef:
-        def __init__(self, sublon, cfac, lfac, coff, loff):
-            self.sublon = sublon
-            self.cfac = cfac
-            self.lfac = lfac
-            self.coff = coff
-            self.loff = loff
-            
     def __init__(self, sublon, cfac, lfac, coff, loff):
-        self.navcoef = GeosNavigation._Navcoef(sublon, cfac, lfac, coff, loff)
+        self.sublon = sublon
+        self.cfac = cfac
+        self.lfac = lfac
+        self.coff = coff
+        self.loff = loff
         
-    def lonlat(self, xy, intermediate=False):
-        return xy2lonlat(xy, self.navcoef, intermediate)
+    def lonlat(self, px, intermediate=False):
+        return px2lonlat(px, self, intermediate)
     
-    def xy(self, lonlat, intermediate=False):
-        return lonlat2xy(lonlat, self.navcoef, intermediate)
+    def pixel(self, lonlat, intermediate=False):
+        return lonlat2px(lonlat, self, intermediate)
+    
+    def __str__(self):
+        return "sublon=%.2f cfac=%d lfac=%d coff=%d loff=%d"%\
+               (self.sublon, self.cfac, self.lfac, self.coff, self.loff)
 
 #-----------------------------------------------------------------------------
 
-def xy2lonlat (xy, nav, intermediate=False):
+def px2lonlat (px, nav, intermediate=False):
 
     # Auxiliary variable
     rpol2 = RPOL*RPOL
@@ -54,12 +54,12 @@ def xy2lonlat (xy, nav, intermediate=False):
     # Intermediate coordinates
     if intermediate:
         # from km to scan angles
-        x = float(xy[0])*math.atan(REQ/H)/REQ
-        y = -float(xy[1])*math.atan(RPOL/H)/RPOL
+        x = float(px[0])*math.atan(REQ/H)/REQ
+        y = -float(px[1])*math.atan(RPOL/H)/RPOL
     else:    
         # from column, line to scan angles
-        x = ((float(xy[0]) - nav.coff)*pow(2,16)/nav.cfac)*DEG2RAD
-        y = ((float(xy[1]) - nav.loff)*pow(2,16)/nav.lfac)*DEG2RAD
+        x = ((float(px[0]) - nav.coff)*pow(2,16)/nav.cfac)*DEG2RAD
+        y = ((float(px[1]) - nav.loff)*pow(2,16)/nav.lfac)*DEG2RAD
 
     # Auxiliary values 
     cosx = math.cos(x)
@@ -71,7 +71,7 @@ def xy2lonlat (xy, nav, intermediate=False):
     aux3 = cosy*cosy + req2/rpol2*siny*siny
     aux4 = aux2*aux2 - aux3*aux1
     if aux4 < 0:
-        raise NavigationOutside("xy2lonlat: point outside earth disk")
+        raise NavigationOutside("px2lonlat: point outside earth disk")
         
     sd = math.sqrt(aux4)
     sn = (aux2 - sd)/aux3
@@ -92,7 +92,7 @@ def xy2lonlat (xy, nav, intermediate=False):
 
     return lon, lat
 
-def lonlat2xy(lonlat, nav, intermediate=False):
+def lonlat2px(lonlat, nav, intermediate=False):
     
     # Auxiliary variable
     rpol2 = RPOL*RPOL
@@ -122,7 +122,7 @@ def lonlat2xy(lonlat, nav, intermediate=False):
     halfsom = bd*rn/ad2
  
     if (delta2 < 0.) or (rn > halfsom):
-        raise NavigationOutside("lonlat2xy: coordinates can not be seen from the satellite")
+        raise NavigationOutside("lonlat2px: coordinates can not be seen from the satellite")
     
     # Intermediate coordinates
     x = math.atan(-r2/r1)
@@ -143,9 +143,9 @@ def lonlat2xy(lonlat, nav, intermediate=False):
 #-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    nav = GeosNavigation(-75.0, 10216334, 10216334, 1408, 1408)
-    print nav.lonlat((1408, 1408))
-    print nav.xy((-75, 0))
-    print nav.lonlat((1408, 60))
-    print nav.xy(nav.lonlat((1408, 60)))
-    print nav.xy((0,0))
+    nav = GeosNavigation(57.0, 18204444, 18204444, 2500, 2500)
+    print nav.lonlat((2500, 2500))
+    print nav.pixel((57.0, 0))
+    print nav.lonlat((2500, 100))
+    print nav.pixel(nav.lonlat((2500, 100)))
+    print nav.pixel((0,0))
