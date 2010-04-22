@@ -5,6 +5,7 @@ import os
 import getopt
 
 import xrit
+from xrit import logger
 
 #-----------------------------------------------------------------------------
 
@@ -29,7 +30,7 @@ except IndexError:
 
 gts = xrit.read_gts_message(file_name)
 gts_file = outdir + '/' + gts.product_id
-print >>sys.stdout, "Writing", gts_file
+logger.info("Writing '%s'", gts_file)
 fp = open(gts_file, "wb")
 fp.write(gts.data)
 fp.close()

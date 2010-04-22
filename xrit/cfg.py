@@ -5,11 +5,9 @@ import os
 import re
 from ConfigParser import ConfigParser
 
-__all__ = ['read_config',
-           'SatConfigReaderError']
+import xrit
 
-class SatConfigReaderError(Exception):
-    pass
+__all__ = ['read_config',]
 
 def read_config(satname, instrument=''):
     return _ConfigReader(satname, instrument)
@@ -20,11 +18,11 @@ class _ConfigReader(object):
         try:
             home = os.environ['PPP_CONFIG_DIR']
         except KeyError:
-            raise SatConfigReaderError("PPP_CONFIG_DIR environment variable is not set")
+            raise xrit.SatConfigReaderError("PPP_CONFIG_DIR environment variable is not set")
 
         self.config_file = home + '/' + satname + '.cfg'
         if not os.path.isfile(self.config_file):
-            raise SatConfigReaderError("Unknown satellite: '%s' (no such file: '%s')"%(satname, self.config_file))
+            raise xrit.SatConfigReaderError("unknown satellite: '%s' (no such file: '%s')"%(satname, self.config_file))
         self._config = ConfigParser()
         self._config.read(self.config_file)
         
@@ -33,10 +31,10 @@ class _ConfigReader(object):
             if len(instruments) == 1:
                 instrument = instruments[0]
             else:
-                raise SatConfigReaderError("Please specify instrument")
+                raise xrit.SatConfigReaderError("please specify instrument")
         else:
             if instrument not in instruments: 
-                raise SatConfigReaderError("Unknown instrument: '%s'"%instrument)
+                raise xrit.SatConfigReaderError("unknown instrument: '%s'"%instrument)
         self.instrument = instrument
         
         self._channels = self._channels2dict(instrument)
@@ -57,7 +55,7 @@ class _ConfigReader(object):
         try:
             return self._channels[name]
         except KeyError:
-            raise SatConfigReaderError("Unknown channel: '%s'"%name)
+            raise xrit.SatConfigReaderError("unknown channel: '%s'"%name)
 
     @property
     def channels(self):

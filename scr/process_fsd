@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import numpy
 
 import xrit
+from xrit import logger
 
 
 max_age = {'MET7': timedelta(seconds=25*60),
@@ -69,23 +70,23 @@ def decompress(image_files, outdir='.', listit=False):
 
 def process(prologue, image_files, outdir='.', saveashdf5=False):
     im = xrit.read_imagedata(image_files[-1])
-    print >>sys.stderr, 'Processing:', prologue.product_id + ',', len(image_files), 'image data files'
-    mda, img = xrit.sat.load_files(prologue, image_files, mask=False, calibrate=False)
-    print >>sys.stderr, 'Image data min, max:', "%.2f, %.2f %s"%(img.min(), img.max(), mda.calibration_unit)
+    logger.info('Processing: %s, %d image data files', prologue.product_id, len(image_files))
+    mda, img = xrit.sat.load_files(prologue, image_files, mask=False, calibrate=False)()
+    logger.info("Image data min, max: %.2f, %.2f %s", img.min(), img.max(), mda.calibration_unit)
     fname = outdir + '/' + prologue.product_id
     if saveashdf5:
         import hdfdmi
         fname += '.H5'
-        print >>sys.stderr, 'Writing:', fname
+        logger.info("Writing: '%s'", fname)
         hdfdmi.save(mda, img, fname)
     else:
         fname_mda = fname + '.mda'
         fp = open(fname_mda, 'w')
-        print >>sys.stderr, 'Writing:', fname_mda
+        logger.info("Writing: '%s'", fname_mda)
         fp.write(str(mda) + '\n')
         fp.close()
         fname += '.dat'
-        print >>sys.stderr, 'Writing:', fname
+        logger.info("Writing: '%s'", fname)
         if type(img) == numpy.ma.MaskedArray:
             img = img.filled(mda.no_data_value)
         img.tofile(fname)
@@ -121,7 +122,7 @@ for k, v in opts:
         saveashdf5 = True
 
 if nlopt > 1:
-    print >>sys.stderr, "Please specify only one of these: ", ', '.join(['--' + s for s in long_options])
+    logger.error("Please specify only one of these: %s", ', '.join(['--' + s for s in long_options]))
     sys.exit(2)
     
 pro_file = ''

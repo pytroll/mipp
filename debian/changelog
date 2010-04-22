@@ -1,3 +1,20 @@
+python-mipp (0.2-0) unstable; urgency=low
+
+  * Now handling "proxy" slicing.
+    image = xrit.sat.load(...) will no more return the full image.
+    It will return a slice-able object where data is read when the
+    returned object (image) is called like:
+    image[2:56, 1020:1070] or image(center, size)
+    image[:] or image() will load the full image.
+  
+  * A logger is introduced based on the standard logging module.
+    It can be controlled by environment variables DEBUG and LOGLEVEL.
+    If DEBUG is set it will overwrite LOGLEVEL.
+    If LOGLEVEL=NULL and DEBUG not set it will be very quiet.
+    Default log level is INFO.
+  
+ -- Lars Ørum Rasmussen <ras@dmi.dk>  Thu, 22 Apr 2010 08:34:19 +0000
+
 python-mipp (0.1-7) unstable; urgency=low
 
   * Now returns calibrated data
