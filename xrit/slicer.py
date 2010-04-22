@@ -163,6 +163,8 @@ class ImageSlicer(object):
             first_line = region.shape[0] - 1
             increment_line = -1
             factor_col = -1
+        else:
+            raise xrit.SatReaderError("unknown geographical orientation of first pixel: '%s'"%mda.first_pixel)
         
         #
         # Generate final image with no data
