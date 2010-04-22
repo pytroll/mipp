@@ -12,17 +12,14 @@ import os
 from StringIO import StringIO 
 from datetime import datetime
 
+from xrit._exceptions import XRITDecodeError
 from xrit.bin_reader import *
 
 __all__ = ['read_prologue',
            'read_imagedata',
            'read_gts_message',
-           'XRITDecodeError',
            'decompress',
            'list']
-
-class XRITDecodeError(Exception):
-    pass
 
 def decompress(infile, outdir='.'):
     """Will decompress a XRIT data file and return the path to the decompressed file.
@@ -216,7 +213,7 @@ def _decode_data_definition(buf):
         elif k.isdigit():
             dd[int(k)] = float(v)
         else:
-            raise XRITDecodeError("Could not decode data definition: '%s'"%a)
+            raise XRITDecodeError("could not decode data definition: '%s'"%a)
     return dd
     
 header_map = {0: PrimaryHeader,
@@ -232,7 +229,7 @@ header_types = tuple(sorted(header_map.keys()))
 def read_header(fp):
     hdr_type = read_uint1(fp.read(1))
     if hdr_type != 0:
-        raise XRITDecodeError("First header has to be a Primary Header, this one is of type %d"%hdr_type)
+        raise XRITDecodeError("first header has to be a Primary Header, this one is of type %d"%hdr_type)
     phdr = PrimaryHeader(fp)
     yield phdr
     current_size = phdr.rec_len
@@ -305,7 +302,7 @@ class ImageSegment(Segment):
             read_headers(self.fp)
         data = self.fp.read(self.bytes_per_line*nlines)
         if not data:
-            raise XRITDecodeError("ERROR, could not read", self.bytes_per_line*nlines, "bytes")
+            raise XRITDecodeError("could not read", self.bytes_per_line*nlines, "bytes")
         return data
     
     def close(self):
@@ -318,14 +315,14 @@ def read_prologue(file_name):
     if s.file_type == 128:
         return s
     else:
-        raise XRITDecodeError("This is no 'prologue' file: '%s'"%file_name)
+        raise XRITDecodeError("this is no 'prologue' file: '%s'"%file_name)
 
 def read_imagedata(file_name):
     s = Segment(file_name)
     if s.file_type == 0:
         return ImageSegment(file_name)
     else:
-        raise XRITDecodeError("This is no 'image data' file: '%s'"%file_name)
+        raise XRITDecodeError("this is no 'image data' file: '%s'"%file_name)
     
     
 def read_gts_message(file_name):
@@ -333,7 +330,7 @@ def read_gts_message(file_name):
     if s.file_type == 1:
         return s
     else:
-        raise XRITDecodeError("This is no 'GTS Message' file: '%s'"%file_name)
+        raise XRITDecodeError("this is no 'GTS Message' file: '%s'"%file_name)
     
 def list(file_name, dump_data=False):
     fname = 'xrit.dat'

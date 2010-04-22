@@ -7,13 +7,11 @@
 #
 import math
 
-__all__ = ['GeosNavigation',
-           'px2latlon',
-           'latlon2px',
-           'NavigationError']
+import xrit
 
-class NavigationOutside(Exception):
-    pass
+__all__ = ['GeosNavigation',
+           'px2lonlat',
+           'lonlat2px']
 
 RAD2DEG = 180./math.pi
 DEG2RAD = math.pi/180.
@@ -71,7 +69,7 @@ def px2lonlat (px, nav, intermediate=False):
     aux3 = cosy*cosy + req2/rpol2*siny*siny
     aux4 = aux2*aux2 - aux3*aux1
     if aux4 < 0:
-        raise NavigationOutside("px2lonlat: point outside earth disk")
+        raise xrit.NavigationError("px2lonlat: point outside earth disk")
         
     sd = math.sqrt(aux4)
     sn = (aux2 - sd)/aux3
@@ -122,7 +120,7 @@ def lonlat2px(lonlat, nav, intermediate=False):
     halfsom = bd*rn/ad2
  
     if (delta2 < 0.) or (rn > halfsom):
-        raise NavigationOutside("lonlat2px: coordinates can not be seen from the satellite")
+        raise xrit.NavigationError("lonlat2px: coordinates can not be seen from the satellite")
     
     # Intermediate coordinates
     x = math.atan(-r2/r1)

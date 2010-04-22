@@ -1,6 +1,7 @@
 from StringIO import StringIO
 
 import xrit
+import xrit._convert
 
 BLOB_SIZE = 5120 # has to be a multiplum of 5
 HRPT_RECLEN = 11090

@@ -11,12 +11,10 @@ import sys
 import numpy
 
 import xrit
+import xrit.mda
 from xrit.bin_reader import *
 
 __all__ = ['read_metadata',]
-
-class SGSDecodeError(Exception):
-    pass
 
 def _read_sgs_common_header(fp):
     hdr = dict()

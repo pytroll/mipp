@@ -6,9 +6,10 @@
 import numpy
 
 import xrit
+import xrit.convert
 from xrit import logger
 
-__all__ = ['ImageSlicer', 'SatReaderError']
+__all__ = ['ImageSlicer',]
 
 class SatReaderError(Exception):
     pass
@@ -18,6 +19,8 @@ class _Region(object):
         self.rows = rows
         self.columns = columns
         self.shape = (rows.stop - rows.start, columns.stop - columns.start)
+    def __str__(self):
+        return 'rows:%s, columns:%s'%(str(self.rows), str(self.columns))
 
 def _null_converter(blob):
     return blob
@@ -37,56 +40,55 @@ class ImageSlicer(object):
     def __getitem__(self, item):
         if isinstance(item, slice):
             # specify rows and all columns
-            item = [item, self._allcolumns]
+            rows, columns = item, self._allcolumns
         elif isinstance(item, int):
             # specify one row and all columns
-            item = [slice(item, item + 1), self._allcolumns]
+            rows, columns = slice(item, item + 1), self._allcolumns
         elif isinstance(item, tuple):
-            # both row and column are specified
+            # both row and column are specified 
             if len(item) != 2:
                 raise IndexError("too many indexes")
-            item = list(item)
-            if isinstance(item[0], int):
-                item[0] = slice(item[0], item[0] + 1)
-            if isinstance(item[1], int):
-                item[1] = slice(item[1], item[1] + 1)
+            rows, columns = item
+            if isinstance(rows, int):
+                rows = slice(item[0], item[0] + 1)
+            if isinstance(columns, int):
+                columns = slice(item[1], item[1] + 1)
         else:
             raise IndexError("don't understand the indexes")
-        
-        if item[0].start == None:
-            item[0] = self._allrows
-        if item[1].start == None:
-            item[1] = self._allcolumns
+
+        # take care of [:]
+        if rows.start == None:
+            rows = self._allrows
+        if columns.start == None:
+            columns = self._allcolumns
             
-        if (item[0].step != 1 and item[0].step != None) or \
-           (item[1].step != 1 and item[1].step != None):
-            raise SatReaderError("Currently we don't support steps different from one")
+        if (rows.step != 1 and rows.step != None) or \
+               (columns.step != 1 and columns.step != None):
+            raise xrit.SatReaderError("currently we don't support steps different from one")
         
-        return self._read(_Region(item[0], item[1]))
+        return self._read(_Region(rows, columns))
     
     def __call__(self, center=None, size=None):
         if center and size:
             try:
                 px = self.mda.navigation.pixel(center)
-            except geosnav.NavigationOutside:
-                raise SatReaderError("Center for slice is outside image")                
-            columns = (px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
-            rows = (px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
-            if columns[0] < 0 or columns[1] > self.mda.image_size[0] or \
-                   rows[0] < 0 or rows[1] > self.mda.image_size[1]:
-                raise SatReaderError("Slice is outside image")
-            rows = slice(rows[0], rows[1])
-            columns = slice(columns[0], columns[1])
+            except xrit.NavigationError:
+                raise xrit.SatReaderError("center for slice is outside image")                
+            columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
+            rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
         elif bool(center) ^ bool(size):
-            raise SatReaderError("When slicing, both center and size has to be specified ... please")
+            raise xrit.SatReaderError("when slicing, both center and size has to be specified ... please")
         else:
-            #full disc.
             rows = self._allrows
             columns = self._allcolumns
             
-        return self[rows, columns]
+        return self._read(_Region(rows, columns))
 
     def _read(self, region):
+        if region.columns.start < 0 or region.columns.stop > self.mda.image_size[0] or \
+               region.rows.start < 0 or region.rows.stop > self.mda.image_size[1]:
+            raise IndexError("index out of range")
+            
         mda = self.mda
         image_files = self.image_files
         
@@ -117,7 +119,7 @@ class ImageSlicer(object):
         elif mda.data_type == 16:
             data_type = numpy.uint16
         else:
-            raise SatReaderError("Unknown data type: %d bit per pixel"%mda.data_type)
+            raise xrit.SatReaderError("unknown data type: %d bit per pixel"%mda.data_type)
         
 
         #
@@ -254,8 +256,17 @@ class ImageSlicer(object):
             mda.navigation.coff = mda.image_size[0] - mda.navigation.coff
             mda.navigation.cfac *= -1
             mda.navigation.lfac *= -1
-        mda.center = mda.navigation.lonlat((mda.image_size[0]//2, mda.image_size[1]//2))
 
+        #
+        # New center
+        #
+        try:
+            mda.center = mda.navigation.lonlat((mda.image_size[0]//2, mda.image_size[1]//2))
+        except xrit.NavigationError:
+            # this is OK, but maybe not expected
+            logger.warning("Image slice center is outside earth disk")
+            mda.center = None
+        
         #
         # Calibrate ?
         #
@@ -291,6 +302,6 @@ class ImageSlicer(object):
             offset = cal[0][1] - cal[0][0]*scale
             image = numpy.select([image == mda.no_data_value*scale], [mda.no_data_value], default=offset + image*scale)
         else:
-            raise SatDecodeError("Could not recognize the shape %s of the calibration table"%str(cal.shape))
+            raise xrit.SatDecodeError("could not recognize the shape %s of the calibration table"%str(cal.shape))
         mda.calibrated = True
         return image

@@ -10,6 +10,7 @@ import sys
 from StringIO import StringIO
 
 import xrit
+import xrit.mda
 from xrit.bin_reader import *
 
 __all__ = ['read_metadata',]
