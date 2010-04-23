@@ -6,6 +6,9 @@ base=$(dirname $(dirname $(realpath $0)))
 last_processed=$XRIT_IN_DIR/fsd_processor.last
 
 for pro_file in $(find $XRIT_IN_DIR -newer $last_processed -name '*-PRO______-*'); do
+    # check if we handle this satellite
+    process_fsd --check-satellite $pro_file || continue    
+
     # check segments
     process_fsd --check $pro_file || continue
     echo $(basename $pro_file) > $last_processed

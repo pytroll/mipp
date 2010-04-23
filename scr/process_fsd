@@ -14,7 +14,7 @@ from xrit import logger
 max_age = {'MET7': timedelta(seconds=25*60),
            'GOES11' : timedelta(seconds=5*60),
            'GOES12' : timedelta(seconds=5*60),
-           'METSAT1R' : timedelta(seconds=5*60)}
+           'MTSAT1R' : timedelta(seconds=5*60)}
 
 max_product_age = timedelta(seconds=35*60)
 
@@ -22,6 +22,9 @@ max_product_age = timedelta(seconds=35*60)
 
 def usage():
     print >>sys.stderr, """\
+    process_fsd --check-satellite <prologue-file>
+        check if we handle this satellite
+        
     process_fsd --check [-l] <prologue-file>
         check if number of image segments are as planned
         -l, list corresponding image segment files
@@ -30,15 +33,18 @@ def usage():
         decompress files to output-dir (default is working directory)
         -l, list decompressed files
         
-   process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
+    process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
         print meta-data
         
-    process_fsd [h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
+    process_fsd [-h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
         -h, save image data to a HDF5 file (default is binary dump of image-data and ascii dump of meta-data)\
     """
     sys.exit(2)
 
 #-----------------------------------------------------------------------------
+
+def check_platform(prologue):
+    return max_age.has_key(prologue.platform)
 
 def check_segments(prologue, listit=False):
     dname, fname = os.path.split(prologue.file_name)
@@ -95,10 +101,11 @@ def process(prologue, image_files, outdir='.', saveashdf5=False):
 
 #-----------------------------------------------------------------------------
 
-long_options = ['check', 'decompress', 'metadata']
+long_options = ['check', 'check-satellite', 'decompress', 'metadata']
 nlopt = 0
 outdir = '.'
 check = False
+check_satellite = False
 decomp = False
 metadata = False
 listit = False
@@ -110,6 +117,9 @@ for k, v in opts:
         nlopt += 1
     elif k == '--check':
         check = True
+        nlopt += 1
+    elif k == '--check-satellite':
+        check_satellite = True
         nlopt += 1
     elif k == '--metadata':
         nlopt += 1
@@ -128,7 +138,7 @@ if nlopt > 1:
 pro_file = ''
 image_files = []
 try:
-    if check:
+    if check or check_satellite:
         pro_file = args[0]
     elif decomp:
         image_files = args
@@ -147,6 +157,10 @@ return_code = 0
 
 if check:
     if not check_segments(prologue, listit):
+        return_code = 1
+        
+elif check_satellite:
+    if not check_platform(prologue):
         return_code = 1
         
 elif decomp:
