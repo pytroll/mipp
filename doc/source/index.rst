@@ -13,8 +13,6 @@ This is a presentation of:
 
    introduction
 
-(and an exercise in sphinx)
-
 Indices and tables
 ==================
 

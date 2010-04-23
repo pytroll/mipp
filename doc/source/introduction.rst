@@ -1,13 +1,15 @@
-======================
- mipp an introduction
-======================
+============================
+ python-mipp an introduction
+============================
 
 ``mipp`` is a Meteorological Ingest-Processing Package (http://github.com/loerum/mipp).
 
  It's a Python libray and it's main task is to convert satellite level-1.5 data into a 
- format understood by ``mpop`` (http://github.com/mraspaud/mpop).
+ format understood by ``mpop`` (http://github.com/mraspaud/mpop). 
 
-In the beginning, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R**,
+ A more sophisticated interface to satellite data objects is supported by ``mpop``.
+
+In the start, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R**,
 "eumetcasted" FSD data::
 
   L-000-MTP___-MET7________-00_7_057E-PRO______-201002261600-__
@@ -25,9 +27,12 @@ In the beginning, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R*
 
 
 ``mipp`` will:
-  * decompress XRIT files.
+  * decompress XRIT files (if Eumetsat's ``xRITDecompress`` is available).
   * decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
-  * catenate image data into a numpy-array (if needed convert 10 bit data to 16 bit).
+  * catenate image data into a numpy-array.
+
+    * if needed, convert 10 bit data to 16 bit
+    * if a region is defined (by a slice or center, size), only read what is specified.
 
 .. note::
 
@@ -42,49 +47,55 @@ Code Layout
 .. describe:: xrit.py
 
   It knows about the genric HRIT/XRIT format
-    * ``headers = read_headers(file_handle)``
+
+  * ``headers = read_headers(file_handle)``
 
 .. describe:: MTP.py
 
   It knows about the specific format OpenMTP for MET7
-    * ``mda = read_metadata(prologue, image_file)``
+
+  * ``mda = read_metadata(prologue, image_file)``
 
 .. describe:: SGS.py
 
   It knows about the specific format Support Ground Segments for GOES and MTSAT
-    * ``mda = read_metadata(prologue, image_files)``
+
+  * ``mda = read_metadata(prologue, image_files)``
 
 .. describe:: sat.py
 
   It knows about satellites base on configurations files. 
   It returns a slice-able object (see below).
-    * ``image = load('met7', time_stamp, channel, mask=False, calibrated=True)``
-    * ``image = load_files(prologue, image_files, **kwarg)``
+
+  * ``image = load('met7', time_stamp, channel, mask=False, calibrated=True)``
+  * ``image = load_files(prologue, image_files, **kwarg)``
 
 .. describe:: slicer.py
 
-  It knows how to slice a satellites image (result from ``load(...)``).
+  It knows how to slice satellite images (return from ``load(...)``).
   It returns meta-data and a numpy array.
-    * ``mda, image_data = image[1300:1800,220:520]``
-    * ``mda, image_data = image(center, size)``
+
+  * ``mda, image_data = image[1300:1800,220:520]``
+  * ``mda, image_data = image(center, size)``
 
 **Utilities**
 
 .. describe:: cfg.py
 
-  It knows how to read configuration files, describing satellite (see below).
+  It knows how to read configuration files, describing satellites (see below).
 
 .. describe:: convert.py
 
-  10 to 16 byte converter (uses a little C extension)
+  10 to 16 byte converter (uses a C extension)
 
 .. describe:: bin_reader.py
 
   It reads binary data (network byte order)
-   * ``read_uint1(buf)``
-   * ``read_uint2(buf)``
-   * ``read_float4(buf)``
-   * ...
+
+  * ``read_uint1(buf)``
+  * ``read_uint2(buf)``
+  * ``read_float4(buf)``
+  * ...
 
 .. describe:: mda.py
 
@@ -92,18 +103,18 @@ Code Layout
 
 .. describe:: geosnav.py
 
-  It will convert from/to pixel values to geographical longitude, latitude values.
+  It will convert from/to pixel coordinates to/from geographical longitude, latitude coordinates.
 
-Example definition of satellites
-------------------------
-::
+Example definition of a satellite
+---------------------------------
+.. code-block:: ini
 
   # An item like:
   #   name = value
   # is read in python like:
   #   try:
   #       name = eval(value)
-  #   except NameError:
+  #   except:
   #       name = str(value)
   #
 
@@ -118,7 +129,7 @@ Example definition of satellites
 
   [mviri-level1]
   format = 'xrit/MTP'
-  dir = '/data/ras/eumetcast/in'
+  dir = '/data/eumetcast/in'
   filename = 'L-000-MTP___-MET7________-%(channel)s_057E-%(segment)s-%Y%m%d%H%M-__'
 
   [mviri-1]
@@ -155,9 +166,9 @@ Usage
     image_data.tofile(fp)
     fp.close()
 
-process_fsd
------------
-::
+A script, process_fsd
+---------------------
+.. code-block:: text
 
     process_fsd --check-satellite <prologue-file>
         check if we handle this satellite
