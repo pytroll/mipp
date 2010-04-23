@@ -56,11 +56,23 @@ Code Layout
 
 .. describe:: sat.py
 
-  It knows about satellites 
-    * ``mda, image_date = read(prologue, image_files, only_metadata=False)``
-    * ``mda = read_metadata(prologue, image_files)``
+  It knows about satellites base on configurations files. 
+  It returns a slice-able object (see below).
+    * ``image = load('met7', time_stamp, channel, mask=False, calibrated=True)``
+    * ``image = load_files(prologue, image_files, **kwarg)``
+
+.. describe:: slicer.py
+
+  It knows how to slice a satellites image (result from ``load(...)``).
+  It returns meta-data and a numpy array.
+    * ``mda, image_data = image[1300:1800,220:520]``
+    * ``mda, image_data = image(center, size)``
 
 **Utilities**
+
+.. describe:: cfg.py
+
+  It knows how to read configuration files, describing satellite (see below).
 
 .. describe:: convert.py
 
@@ -78,56 +90,54 @@ Code Layout
 
   A simple (anonymous) metadata reader and writer
 
-.. describe::  hdfdmi.py
+.. describe:: geosnav.py
 
-  DMI's hdf5 format (writer)
+  It will convert from/to pixel values to geographical longitude, latitude values.
 
-Definition of satellites
+Example definition of satellites
 ------------------------
 ::
 
-    satellites = {
-        'MET7': 
-        SatelliteReader('MET7',
-                        '057E',
-                        {'00_7': (5000, 2.24849),   # channel width and pixel size
-                         '06_4': (2500, 4.49698),
-                         '11_5': (2500, 4.49698)},
-                        MTP.read_metadata
-                        ),
-        'GOES11':
-        SatelliteReader('GOES11',
-                        '135W',
-                        {'00_7': (2816, 4.0065756),
-                         '03_9': (2816, 4.0065756),
-                         '06_8': (1408, 8.013151),
-                         '10_7': (2816, 4.0065756)},
-                        SGS.read_metadata),
-        'GOES12':
-        SatelliteReader('GOES12',
-                        '075W',
-                        {'00_7': (2816, 4.0065756),
-                         '03_9': (2816, 4.0065756),
-                         '06_6': (2816, 4.0065756),
-                         '10_7': (2816, 4.0065756)},
-                        SGS.read_metadata),
-        'MTSAT1R':  
-        SatelliteReader('MTSAT1R',
-                        '140E',
-                        {'00_7': (2752, 4.0),
-                         '03_8': (2752, 4.0),
-                         '06_8': (2752, 4.0),
-                         '10_8': (2752, 4.0)},
-                        SGS.read_metadata)
-        }  
-            
+  # An item like:
+  #   name = value
+  # is read in python like:
+  #   try:
+  #       name = eval(value)
+  #   except NameError:
+  #       name = str(value)
+  #
 
-    def read(prologue, image_files):
-        prologue = xrit.read_prologue(prologue)
-        sd = satellites.get(prologue.platform, None)
-        if sd == None:
-            raise SatDecodeError("Unknown satellite: '%s'"%prologue.platform)
-        return sd.read(prologue, image_files)
+  [satellite]
+  satname = 'meteosat'
+  number = '07'
+  instruments = ('mviri',)
+  projection = 'geos(57.0)'
+
+  [mviri-level2]
+  format = 'mipp'
+
+  [mviri-level1]
+  format = 'xrit/MTP'
+  dir = '/data/ras/eumetcast/in'
+  filename = 'L-000-MTP___-MET7________-%(channel)s_057E-%(segment)s-%Y%m%d%H%M-__'
+
+  [mviri-1]
+  name = '00_7' 
+  frequency = (0.5, 0.7, 0.9)
+  resolution = 2248.49
+  size = (5000, 5000)
+
+  [mviri-2]
+  name = '06_4'
+  frequency = (5.7, 6.4, 7.1)
+  resolution = 4496.98
+  size = (2500, 2500)
+
+  [mviri-3]
+  name = '11_5'
+  frequency = (10.5, 11.5, 12.5)
+  resolution = 4496.98
+  size = (2500, 2500)
 
 
 Usage
@@ -136,7 +146,8 @@ Usage
 
     import xrit
 
-    mda, image_data = xrit.sat.read(sys.argv[1], sys.argv[2:])
+    image = xrit.sat.load('meteosat07', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)
+    mda, image_data = image(center=(50., 10.), size=(600, 500))
     print mda
     fname = './' + mda.product_name + '.dat'
     print >>sys.stderr, 'Writing', fname
@@ -144,13 +155,13 @@ Usage
     image_data.tofile(fp)
     fp.close()
 
-Script
-------
-
-.. describe:: process_fsd
-
+process_fsd
+-----------
 ::
 
+    process_fsd --check-satellite <prologue-file>
+        check if we handle this satellite
+        
     process_fsd --check [-l] <prologue-file>
         check if number of image segments are as planned
         -l, list corresponding image segment files
@@ -162,15 +173,8 @@ Script
     process_fsd --metadata <prologue-file> <image-segment> ... <image-segment>
         print meta-data
         
-    process_fsd [h] [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
-        -h, save image data to a HDF5 file
-            (default is binary dump of image-data and ascii dump of meta-data)\
-
-Next
-----
-Make ``mpop`` more happy (and ``mipp`` more useful):
-  * Interface: ``mda, image_data = xrit.sat.load_meteosat07(time_slot, channel)``
-  * An option that ``image_data`` should be in physical units (if possible).
+    process_fsd [-o<output-dir>] <prologue-file> <image-segment> ... <image-segment>
+        it will binary dump image-data and ascii dump of meta-data)
 
 
 ==============================
