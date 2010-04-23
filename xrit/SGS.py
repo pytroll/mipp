@@ -45,6 +45,7 @@ def read_metadata(prologue, image_files):
     md = xrit.mda.Metadata()
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
+    md.region_name = 'full disc'
     md.product_name = prologue.product_id
     md.channel = prologue.product_name[:4]
     ssp = float(im.product_name[5:-1].replace('_','.'))

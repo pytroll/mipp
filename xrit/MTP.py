@@ -93,6 +93,7 @@ def read_metadata(prologue, image_files):
     md.satname = pf.lower()
     md.channel = prologue.product_name[:4]
     md.product_type = asc_hdr['ProductType']
+    md.region_name = 'full disc'
     md.sublon = bin_hdr['ssp']
     md.first_pixel = asc_hdr['FirstPixelOri']
     md.data_type = bin_hdr['dtype']*8

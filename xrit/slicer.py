@@ -250,6 +250,8 @@ class ImageSlicer(object):
         delattr(mda, 'line_offset')
         delattr(mda, 'first_pixel')
         mda.image_size = image.shape[1], image.shape[0]
+        if (region.rows != self._allrows) or (region.columns != self._allcolumns):
+            mda.region_name = 'sliced'            
         mda.navigation.loff -= region.rows.start
         mda.navigation.coff -= region.columns.start
         if factor_col == -1:
