@@ -27,7 +27,7 @@ def _null_converter(blob):
         
 class ImageSlicer(object):
     
-    def __init__(self, mda, image_files, mask=False, calibrate=True):
+    def __init__(self, mda, image_files, mask=False, calibrate=False):
         self.mda = mda
         self.image_files = image_files
         self.do_mask = mask
