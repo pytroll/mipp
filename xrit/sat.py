@@ -19,6 +19,7 @@ __all__ = ['load_meteosat07',
            'load_goes11',
            'load_goes12',
            'load_mtsat1r',
+           'load',
            'load_files']
 
 class SatelliteLoader(object):
@@ -171,8 +172,9 @@ if __name__ == '__main__':
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True)(center=(50., 10.), size=(600, 500))
     
-    image = load_goes13(datetime(2010, 4, 27, 11, 0), '10_7', mask=True) 
-    mda, img = image(center=(-80.8, 25.1), size=(600, 500))
+    image = load_goes13(datetime(2010, 4, 27, 11, 0), '10_7', mask=False, calibrate=False) 
+    mda, img = image(center=(-50.0, 45.5), size=(600, 500))
+    #mda, img = image(center=(-80.8, 25.1), size=(600, 500)) # Miami
 
     #image = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True) 
     #mda, img = image(center=(50., 10.), size=(600, 500))
@@ -186,7 +188,7 @@ if __name__ == '__main__':
     #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '00_7', mask=True)()
     #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '10_7', mask=True)( center=(-110, 23.5), size=(500,500))
     print mda
-    print 'min/max =', "%.3f/%.3f %s"%(img.min(), img.max(), mda.calibration_unit)
+    print 'min/max =', "%.3f/%.3f"%(img.min(), img.max())
     fname = './' + mda.product_name + '.png'
     print >>sys.stderr, 'Writing', fname
     img = ((img - img.min()) * 255.0 /
