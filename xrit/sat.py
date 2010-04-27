@@ -155,6 +155,9 @@ def load_goes11(time_stamp, channel, **kwarg):
 def load_goes12(time_stamp, channel, **kwarg):
     return load('goes12', time_stamp, channel, **kwarg)
  
+def load_goes13(time_stamp, channel, **kwarg):
+    return load('goes13', time_stamp, channel, **kwarg)
+ 
 def load_mtsat1r(time_stamp, channel, **kwarg):
     return load('mtsat1r', time_stamp, channel, **kwarg)
 
@@ -168,8 +171,11 @@ if __name__ == '__main__':
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True)(center=(50., 10.), size=(600, 500))
     
-    image = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True) 
-    mda, img = image(center=(50., 10.), size=(600, 500))
+    image = load_goes13(datetime(2010, 4, 27, 11, 0), '10_7', mask=True) 
+    mda, img = image(center=(-80.8, 25.1), size=(600, 500))
+
+    #image = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True) 
+    #mda, img = image(center=(50., 10.), size=(600, 500))
     #mda, img = image()
     #mda, img = image[500:600, 500:600]
     #mda, img = image[2737:3237, 2539:3139]

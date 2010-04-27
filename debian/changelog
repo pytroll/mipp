@@ -1,3 +1,9 @@
+python-mipp (0.2-2) unstable; urgency=low
+
+  * Introducing GOES13
+
+ -- Lars Ørum Rasmussen <ras@dmi.dk>  Tue, 27 Apr 2010 12:24:40 +0000
+
 python-mipp (0.2-1) unstable; urgency=low
 
   * Addede GPL lisence.
