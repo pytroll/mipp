@@ -27,7 +27,7 @@ def _null_converter(blob):
         
 class ImageSlicer(object):
     
-    def __init__(self, mda, image_files, mask=False, calibrate=True):
+    def __init__(self, mda, image_files, mask=False, calibrate=False):
         self.mda = mda
         self.image_files = image_files
         self.do_mask = mask
@@ -64,7 +64,7 @@ class ImageSlicer(object):
             
         if (rows.step != 1 and rows.step != None) or \
                (columns.step != 1 and columns.step != None):
-            raise xrit.SatReaderError("currently we don't support steps different from one")
+            raise IndexError("currently we don't support steps different from one")
         
         return self._read(_Region(rows, columns))
     
@@ -77,7 +77,7 @@ class ImageSlicer(object):
             columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
             rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
         elif bool(center) ^ bool(size):
-            raise xrit.SatReaderError("when slicing, both center and size has to be specified ... please")
+            raise xrit.SatReaderError("when slicing, if center or size are specified, both has to be specified ... please")
         else:
             rows = self._allrows
             columns = self._allcolumns
@@ -163,6 +163,8 @@ class ImageSlicer(object):
             first_line = region.shape[0] - 1
             increment_line = -1
             factor_col = -1
+        else:
+            raise xrit.SatReaderError("unknown geographical orientation of first pixel: '%s'"%mda.first_pixel)
         
         #
         # Generate final image with no data
@@ -248,6 +250,8 @@ class ImageSlicer(object):
         delattr(mda, 'line_offset')
         delattr(mda, 'first_pixel')
         mda.image_size = image.shape[1], image.shape[0]
+        if (region.rows != self._allrows) or (region.columns != self._allcolumns):
+            mda.region_name = 'sliced'            
         mda.navigation.loff -= region.rows.start
         mda.navigation.coff -= region.columns.start
         if factor_col == -1:

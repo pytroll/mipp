@@ -3,9 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-MIPP and SMHI/DMI's Common Processing Environment
-=================================================
-.. centered:: Norrkoping, 3 March 2010
+MIPP
+====
 
 This is a presentation of:
 
@@ -13,11 +12,6 @@ This is a presentation of:
    :maxdepth: 1
 
    introduction
-   mpop_experience
-   mpop_mipp
-   discuss
-
-(and an exercise in sphinx)
 
 Indices and tables
 ==================
