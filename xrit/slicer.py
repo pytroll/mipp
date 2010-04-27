@@ -64,7 +64,7 @@ class ImageSlicer(object):
             
         if (rows.step != 1 and rows.step != None) or \
                (columns.step != 1 and columns.step != None):
-            raise xrit.SatReaderError("currently we don't support steps different from one")
+            raise IndexError("currently we don't support steps different from one")
         
         return self._read(_Region(rows, columns))
     
@@ -77,7 +77,7 @@ class ImageSlicer(object):
             columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
             rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
         elif bool(center) ^ bool(size):
-            raise xrit.SatReaderError("when slicing, both center and size has to be specified ... please")
+            raise xrit.SatReaderError("when slicing, if center or size are specified, both has to be specified ... please")
         else:
             rows = self._allrows
             columns = self._allcolumns
