@@ -14,9 +14,8 @@ from xrit import logger
 max_age = {'MET7': timedelta(seconds=25*60),
            'GOES11' : timedelta(seconds=5*60),
            'GOES12' : timedelta(seconds=5*60),
+           'GOES13' : timedelta(seconds=5*60),
            'MTSAT1R' : timedelta(seconds=5*60)}
-
-max_product_age = timedelta(seconds=35*60)
 
 #-----------------------------------------------------------------------------
 
@@ -61,8 +60,6 @@ def check_segments(prologue, listit=False):
     now = datetime.now()
     im = xrit.read_imagedata(image_files[-1])
     if im.segment.planned_end_seg_no == im.segment.seg_no:
-        return True
-    elif now - im.time_stamp > max_product_age:
         return True
     elif now - ctime > max_age[im.platform]:
         return True

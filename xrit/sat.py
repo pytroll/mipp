@@ -3,9 +3,7 @@
 #
 import sys
 import numpy
-import types
 import glob
-import types
 import imp
 import types
 

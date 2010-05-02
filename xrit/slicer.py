@@ -268,7 +268,7 @@ class ImageSlicer(object):
             mda.center = mda.navigation.lonlat((mda.image_size[0]//2, mda.image_size[1]//2))
         except xrit.NavigationError:
             # this is OK, but maybe not expected
-            logger.warning("Image slice center is outside earth disk")
+            logger.warning("Image slice center is outside earth disc")
             mda.center = None
         
         #
