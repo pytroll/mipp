@@ -101,14 +101,9 @@ def read_metadata(prologue, image_files):
     md.image_size = (int(asc_hdr['NumberOfPixels']), int(asc_hdr['NumberOfLines']))
     md.line_offset = int(asc_hdr['LineOffset'])
     # handle 24 hour clock
-    d = datetime.strptime(asc_hdr['Date'], "%y%m%d")
-    t = int(asc_hdr['Time'])
-    h = t//100
-    m = t%100
-    if h == 24:
-        d += timedelta(hours=24, minutes=m)
-    else:
-        d += timedelta(hours=h, minutes=m)        
+    d, t = datetime.strptime(asc_hdr['Date'], "%y%m%d"), int(asc_hdr['Time'])
+    h, m = t//100, m = t%100
+    d += timedelta(hours=h, minutes=m)        
     md.time_stamp = d
     md.production_time = datetime.strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
     md.calibration_name = ''
