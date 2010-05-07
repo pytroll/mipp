@@ -100,8 +100,8 @@ def read_metadata(prologue, image_files):
     md.data_type = bin_hdr['dtype']*8
     md.image_size = (int(asc_hdr['NumberOfPixels']), int(asc_hdr['NumberOfLines']))
     md.line_offset = int(asc_hdr['LineOffset'])
-    # 24 hour is valid ... but not for us.
-    d = datetime(asc_hdr['Date'], "%y%m%d")
+    # handle 24 hour clock
+    d = datetime.strptime(asc_hdr['Date'], "%y%m%d")
     t = int(asc_hdr['Time'])
     h = t//100
     m = t%100
