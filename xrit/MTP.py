@@ -7,7 +7,7 @@
 """
 
 import sys
-from datetime import date, time, datetime, timedelta
+from datetime import datetime, timedelta
 from StringIO import StringIO
 
 import xrit
@@ -102,9 +102,7 @@ def read_metadata(prologue, image_files):
     md.line_offset = int(asc_hdr['LineOffset'])
     # handle 24 hour clock
     d, t = datetime.strptime(asc_hdr['Date'], "%y%m%d"), int(asc_hdr['Time'])
-    h, m = t//100, m = t%100
-    d += timedelta(hours=h, minutes=m)        
-    md.time_stamp = d
+    md.time_stamp = d + timedelta(hours=t//100, minutes=t%100)
     md.production_time = datetime.strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
     md.calibration_name = ''
     md.calibration_unit = ''

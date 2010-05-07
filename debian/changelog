@@ -1,4 +1,4 @@
-python-mipp (0.2-4) unstable; urgency=low
+python-mipp (0.2-5) unstable; urgency=low
 
   * Correct handling of 24 hour clock in MTP.py
 
