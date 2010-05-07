@@ -1,3 +1,9 @@
+python-mipp (0.2-4) unstable; urgency=low
+
+  * Correct handling of 24 hour clock in MTP.py
+
+ -- Lars Ørum Rasmussen <ras@dmi.dk>  Fri,  7 May 2010 08:42:00 +0000
+
 python-mipp (0.2-2) unstable; urgency=low
 
   * Introducing GOES13
