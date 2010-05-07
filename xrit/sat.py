@@ -3,9 +3,7 @@
 #
 import sys
 import numpy
-import types
 import glob
-import types
 import imp
 import types
 
@@ -18,6 +16,7 @@ from slicer import ImageSlicer
 __all__ = ['load_meteosat07',
            'load_goes11',
            'load_goes12',
+           'load_goes13',
            'load_mtsat1r',
            'load',
            'load_files']
