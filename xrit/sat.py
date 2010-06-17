@@ -14,6 +14,7 @@ import geosnav
 from slicer import ImageSlicer
 
 __all__ = ['load_meteosat07',
+           'load_meteosat09',
            'load_goes11',
            'load_goes12',
            'load_goes13',
@@ -58,6 +59,7 @@ class SatelliteLoader(object):
         self._config_reader = config_reader
         self.satname = self.satname + self.number
         self.no_data_value = 0
+        self.satnumber = self.number
         delattr(self, 'number')
 
     def load(self, time_stamp, channel, **kwarg):
@@ -65,12 +67,15 @@ class SatelliteLoader(object):
             raise xrit.SatReaderError("unknown channel name '%s'"%channel)
         opt = self._config_reader('level1')
         val = {}
-        val["channel"] = channel
+        val["channel"] = channel + '*'
         val["segment"] = "PRO".ljust(9, '_')
+        #if self.satname.startswith('meteosat') and int(self.satnumber) > 7:
+        #    val['channel'] = channel.ljust(9, '_')
+        filename_pro = opt.get('filename_pro', opt['filename'])
         prologue = glob.glob(opt['dir'] + '/' + \
-                             (time_stamp.strftime(opt['filename'])%val))
+                             (time_stamp.strftime(filename_pro)%val))
         if not prologue:
-            raise xrit.SatNoFiles("missing prologue file: '%s'"%(time_stamp.strftime(opt['filename'])%val))
+            raise xrit.SatNoFiles("missing prologue file: '%s'"%(time_stamp.strftime(filename_pro)%val))
         prologue = prologue[0]
             
         val["segment"] = "0????????"
@@ -161,6 +166,9 @@ def load_goes13(time_stamp, channel, **kwarg):
 def load_mtsat1r(time_stamp, channel, **kwarg):
     return load('mtsat1r', time_stamp, channel, **kwarg)
 
+def load_meteosat09(time_stamp, channel, **kwarg):
+    return load('meteosat09', time_stamp, channel, **kwarg)
+
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
     from datetime import datetime
@@ -171,8 +179,8 @@ if __name__ == '__main__':
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True)(center=(50., 10.), size=(600, 500))
     
-    image = load_goes13(datetime(2010, 4, 27, 11, 0), '10_7', mask=False, calibrate=False) 
-    mda, img = image(center=(-50.0, 45.5), size=(600, 500))
+    image = load_meteosat09(datetime(2010, 6, 11, 11, 0), 'IR_108', mask=False, calibrate=False) 
+    mda, img = image() #center=(-50.0, 45.5), size=(600, 500))
     #mda, img = image(center=(-80.8, 25.1), size=(600, 500)) # Miami
 
     #image = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True) 
