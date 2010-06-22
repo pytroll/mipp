@@ -79,6 +79,12 @@ def _read_binary_header(fp, product_type):
         fp.read(16*3030)
     return hdr
 
+class _Calibrator:
+    def __init__(self, *args):
+        pass
+    def __call__(self, image):
+        # don't know how to calibrate
+        raise xrit.CalibrationError("Not implemented")
 
 def read_metadata(prologue, image_files):
     """ Selected items from the Meteosat-7 prolog file.
@@ -98,6 +104,7 @@ def read_metadata(prologue, image_files):
     md.sublon = bin_hdr['ssp']
     md.first_pixel = asc_hdr['FirstPixelOri']
     md.data_type = bin_hdr['dtype']*8
+    md.no_data_value = 0
     md.image_size = (int(asc_hdr['NumberOfPixels']), int(asc_hdr['NumberOfLines']))
     md.line_offset = int(asc_hdr['LineOffset'])
     # handle 24 hour clock
@@ -107,6 +114,7 @@ def read_metadata(prologue, image_files):
     md.calibration_name = ''
     md.calibration_unit = ''
     md.calibration_table = None
+    md.calibrate = _Calibrator()
     return md
 
 if __name__ == '__main__':

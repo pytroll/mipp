@@ -58,7 +58,6 @@ class SatelliteLoader(object):
         self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon
         self._config_reader = config_reader
         self.satname = self.satname + self.number
-        self.no_data_value = 0
         self.satnumber = self.number
         delattr(self, 'number')
 
@@ -154,6 +153,9 @@ def load(satname, time_stamp, channel, **kwarg):
 def load_meteosat07(time_stamp, channel, **kwarg):
     return load('meteosat07', time_stamp, channel, **kwarg)
  
+def load_meteosat09(time_stamp, channel, **kwarg):
+    return load('meteosat09', time_stamp, channel, **kwarg)
+
 def load_goes11(time_stamp, channel, **kwarg):
     return load('goes11', time_stamp, channel, **kwarg)
  
@@ -166,21 +168,18 @@ def load_goes13(time_stamp, channel, **kwarg):
 def load_mtsat1r(time_stamp, channel, **kwarg):
     return load('mtsat1r', time_stamp, channel, **kwarg)
 
-def load_meteosat09(time_stamp, channel, **kwarg):
-    return load('meteosat09', time_stamp, channel, **kwarg)
-
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
     from datetime import datetime
     import Image as pil
 
-    #mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True)(center=(130, -30), size=(500,500))
+    #mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True, calibrate=True)(center=(130, -30), size=(500,500))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)()
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
-    #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True)(center=(50., 10.), size=(600, 500))
+    #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True, calibrate=True)(center=(50., 10.), size=(600, 500))
     
-    image = load_meteosat09(datetime(2010, 6, 11, 11, 0), 'IR_108', mask=False, calibrate=False) 
-    mda, img = image() #center=(-50.0, 45.5), size=(600, 500))
+    #image = load_meteosat09(datetime(2010, 6, 11, 11, 0), 'IR_108', mask=False, calibrate=False) 
+    #mda, img = image() #center=(-50.0, 45.5), size=(600, 500))
     #mda, img = image(center=(-80.8, 25.1), size=(600, 500)) # Miami
 
     #image = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True) 
@@ -193,7 +192,7 @@ if __name__ == '__main__':
     #mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7', mask=True)()
     #mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7', mask=True, calibrate=True)(center=(-110, 23.5), size=(500,600))
     #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '00_7', mask=True)()
-    #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '10_7', mask=True)( center=(-110, 23.5), size=(500,500))
+    mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '10_7', mask=True, calibrate=True)( center=(-110, 23.5), size=(500,500))
     print mda
     print 'min/max =', "%.3f/%.3f"%(img.min(), img.max())
     fname = './' + mda.product_name + '.png'

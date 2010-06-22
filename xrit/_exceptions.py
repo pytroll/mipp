@@ -51,3 +51,11 @@ class SatConfigReaderError(MippError):
 #-----------------------------------------------------------------------------
 class NavigationError(MippError):
     pass
+
+#-----------------------------------------------------------------------------
+#
+# Calibrations error
+#
+#-----------------------------------------------------------------------------
+class CalibrationError(MippError):
+    pass

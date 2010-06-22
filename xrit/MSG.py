@@ -5,11 +5,18 @@
 'MSG Level 1.5 Image Data Format Description', EUM/MSG/ICD/105, v5A, 22 August 2007
 """
 #raise NotImplementedError
+import xrit
 import xrit.mda
 import sys
 from StringIO import StringIO
 from xrit.bin_reader import *
 import numpy as np
+
+class _Calibrator:
+    def __init__(self, *args):
+        pass
+    def __call__(self, image):
+        raise xrit.CalibrationError("Not implemented ... yet")
 
 def read_header(fp):
     """Read the msg header.
@@ -455,9 +462,11 @@ def read_metadata(prologue, image_files):
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
     md.data_type = im.structure.nb
+    md.no_data_value = 0
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
+    md.calibrate = _Calibrator()
 
     return md
 

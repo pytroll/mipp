@@ -29,7 +29,7 @@ class NullHandler(Handler):
 
 #-----------------------------------------------------------------------------
 
-loglevel = loglevels[os.environ.get("LOGLEVEL", "INFO")]
+loglevel = loglevels[os.environ.get("LOGLEVEL", "NULL")]
 if os.environ.get("DEBUG", ''):
     loglevel = DEBUG
 

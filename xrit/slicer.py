@@ -274,38 +274,17 @@ class ImageSlicer(object):
         #
         # Calibrate ?
         #
-        mda.calibrated = self.do_calibrate
+        mda.is_calibrated = False
         if self.do_calibrate:
             # do this before masking.
-            image = self._calibrate(image)
+            image = mda.calibrate(image)
+            mda.is_calibrated = True
 
         #
-        # With ot without mask ?
+        # With or without mask ?
         #
         if self.do_mask:
             image = numpy.ma.array(image, mask=(image == mda.no_data_value), copy=False)
             
         return mda, image
 
-    def _calibrate(self, image):
-        mda = self.mda
-        mda.calibrated = False
-        cal = mda.__dict__.pop('calibration_table', None)
-    
-        if cal == None or len(cal) == 0:
-            return image
-        if type(cal) != numpy.ndarray:
-            cal = numpy.array(cal)
-
-        if cal.shape == (256, 2):
-            cal = cal[:,1] # nasty !!!
-            cal[int(mda.no_data_value)] = mda.no_data_value
-            image = cal[image] # this does not work on masked arrays !!!
-        elif cal.shape ==(2, 2):
-            scale = (cal[1][1] - cal[0][1])/(cal[1][0] - cal[0][0])
-            offset = cal[0][1] - cal[0][0]*scale
-            image = numpy.select([image == mda.no_data_value*scale], [mda.no_data_value], default=offset + image*scale)
-        else:
-            raise xrit.SatDecodeError("could not recognize the shape %s of the calibration table"%str(cal.shape))
-        mda.calibrated = True
-        return image

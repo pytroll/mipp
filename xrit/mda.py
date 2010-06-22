@@ -34,7 +34,7 @@ class Metadata(object):
         fp = open(file_name, 'w')
         fp.write(str(self) + '\n')
         fp.close()
-            
+
     def __str__(self):
         keys = sorted(self.__dict__.keys())
         s = ''
