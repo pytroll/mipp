@@ -12,11 +12,137 @@ from StringIO import StringIO
 from xrit.bin_reader import *
 import numpy as np
 
+#Reflectance factor for visible bands
+HRV_F    = 25.15
+VIS006_F = 20.76
+VIS008_F = 23.30
+IR_016_F = 19.73
+
+#Central wavenumber (in cm-1) values for conversion between radiances to bt
+VC_IR_039 = 2568.832
+VC_WV_062 = 1600.548
+VC_WV_073 = 1360.330
+VC_IR_087 = 1148.620
+VC_IR_097 = 1035.289
+VC_IR_108 =  931.700
+VC_IR_120 =  836.445
+VC_IR_134 =  751.792
+
+#ALPHA values for conversion between radiances to bt
+ALPHA_IR_039 = 0.9954  
+ALPHA_WV_062 = 0.9963
+ALPHA_WV_073 = 0.9991
+ALPHA_IR_087 = 0.9996
+ALPHA_IR_097 = 0.9999
+ALPHA_IR_108 = 0.9983
+ALPHA_IR_120 = 0.9988
+ALPHA_IR_134 = 0.9981
+
+#BETA values for conversion between radiances to bt
+BETA_IR_039 = 3.438
+BETA_WV_062 = 2.185
+BETA_WV_073 = 0.470
+BETA_IR_087 = 0.179
+BETA_IR_097 = 0.056
+BETA_IR_108 = 0.640
+BETA_IR_120 = 0.408
+BETA_IR_134 = 0.561
+
+#Polynomial coefficients for spectral-effective BT fits
+BTFIT_A_IR_039 =  0.0
+BTFIT_A_WV_062 =  0.00001805700
+BTFIT_A_WV_073 =  0.00000231818
+BTFIT_A_IR_087 = -0.00002332000
+BTFIT_A_IR_097 = -0.00002055330 
+BTFIT_A_IR_108 = -0.00007392770
+BTFIT_A_IR_120 = -0.00007009840
+BTFIT_A_IR_134 = -0.00007293450
+
+BTFIT_B_IR_039 =  1.011751900
+BTFIT_B_WV_062 =  1.000255533 
+BTFIT_B_WV_073 =  1.000668281
+BTFIT_B_IR_087 =  1.011803400
+BTFIT_B_IR_097 =  1.009370670  
+BTFIT_B_IR_108 =  1.032889800 
+BTFIT_B_IR_120 =  1.031314600
+BTFIT_B_IR_134 =  1.030424800
+
+BTFIT_C_IR_039 =  -3.550400
+BTFIT_C_WV_062 =  -1.790930
+BTFIT_C_WV_073 =  -0.456166
+BTFIT_C_IR_087 =  -1.507390
+BTFIT_C_IR_097 =  -1.030600
+BTFIT_C_IR_108 =  -3.296740
+BTFIT_C_IR_120 =  -3.181090
+BTFIT_C_IR_134 =  -2.645950
+
+
+C1 = 1.19104273e-16
+C2 = 0.0143877523
+
+
 class _Calibrator:
-    def __init__(self, *args):
-        pass
+    def __init__(self, hdr, md):
+        self.hdr = hdr
+        self.md = md
+        
     def __call__(self, image):
-        raise xrit.CalibrationError("Not implemented ... yet")
+        """Computes the radiances and reflectances/bt of a given channel.
+        """
+        hdr = self.hdr
+        
+        channels = {"VIS006": 1,
+                    "VIS008": 2,
+                    "IR_016": 3,
+                    "IR_039": 4,
+                    "WV_062": 5,
+                    "WV_073": 6,
+                    "IR_087": 7,
+                    "IR_097": 8,
+                    "IR_108": 9,
+                    "IR_120": 10,
+                    "IR_134": 11,
+                    "HRV": 12}
+
+        cal_type = (hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
+        chn_nb = channels[self.md.channel] - 1
+
+        img = np.ma.MaskedArray(image,
+                                mask=(image == self.md.no_data_value))
+
+        radiances = (img *
+                     hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope'] +
+                     hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset'])
+        radiances = np.where(radiances < 0.0, 0.0, radiances)
+
+        if self.md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
+            solar_irradiance = eval(self.md.channel + "_F")
+            return radiances / solar_irradiance * 100.
+
+        wavenumber = eval("VC_" + self.md.channel)
+        if cal_type[chn_nb] == 2:
+            #computation based on effective radiance
+            alpha = eval("ALPHA_" + self.md.channel)
+            beta = eval("BETA_" + self.md.channel)
+            cal_data = (((C2 * 100. * wavenumber /
+                          np.log(C1 * 1.0e6 * wavenumber ** 3 /
+                                 (1.0e-5 * radiances) + 1)) -
+                         beta) / alpha)
+            
+        elif cal_type[chn_nb] == 1:
+            #computation based on spectral radiance
+            cal_data = (C2 * 100. * wavenumber /
+                        np.log(C1 * 1.0e6 * wavenumber ** 3 /
+                               (1.0e-5 * radiances) + 1))
+            coef_a = eval("BTFIT_A_" + self.md.channel)
+            coef_b = eval("BTFIT_B_" + self.md.channel)
+            coef_c = eval("BTFIT_C_" + self.md.channel)
+            cal_data = cal_data ** 2 * coef_a + cal_data * coef_b + coef_c
+
+        else:
+            raise RuntimeError("Something is seriously wrong in the metadata.")
+
+        return cal_data
 
 def read_header(fp):
     """Read the msg header.
@@ -466,7 +592,7 @@ def read_metadata(prologue, image_files):
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
-    md.calibrate = _Calibrator()
+    md.calibrate = _Calibrator(hdr, md)
 
     return md
 
