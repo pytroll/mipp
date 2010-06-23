@@ -144,7 +144,7 @@ class _Calibrator:
 
         return cal_data
 
-def read_header(fp):
+def read_proheader(fp):
     """Read the msg header.
     """
     hdr = dict()
@@ -561,14 +561,71 @@ def read_header(fp):
 
     return hdr
 
+def read_epiheader(fp):
+    """Read the msg header.
+    """
+    ftr = dict()
+    ftr["15TRAILERVersion"] = ord(fp.read(1))
+    ftr["SateliteID"] = read_uint2(fp.read(2))
+    ftr["NominalImageScanning"] = ord(fp.read(1)) > 0
+    ftr["ReducedScan"] = ord(fp.read(1)) > 0
+    ftr["ForwardScanStart"] = read_cds_time(fp.read(6))
+    ftr["ForwardScanEnd"] = read_cds_time(fp.read(6))
+    ftr["NominalBehaviour"] = ord(fp.read(1)) > 0
+    ftr["RadScanIrregularity"] = ord(fp.read(1)) > 0
+    ftr["RadStoppage"] = ord(fp.read(1)) > 0
+    ftr["RepeatCycleNotCompleted"] = ord(fp.read(1)) > 0
+    ftr["GainChangeTookPlace"] = ord(fp.read(1)) > 0
+    ftr["DecontaminationTookPlace"] = ord(fp.read(1)) > 0
+    ftr["NoBBCalibrationAchieved"] = ord(fp.read(1)) > 0
+    ftr["IncorrectTemperature"] = ord(fp.read(1)) > 0
+    ftr["InvalidBBData"] = ord(fp.read(1)) > 0
+    ftr["InvalidAuxOrHKTMData"] = ord(fp.read(1)) > 0
+    ftr["RefocusingMechanismActuated"] = ord(fp.read(1)) > 0
+    ftr["MirrorBackToReferencePos"] = ord(fp.read(1)) > 0
+    ftr["PlannedNumberOfL10Lines"] = np.fromstring(fp.read(12 * 4),
+                                                   dtype=">u4")
+    ftr["NumberOfMissingL10Lines"] = np.fromstring(fp.read(12 * 4),
+                                                   dtype=">u4")
+    ftr["NumberOfCorruptedL10Lines"] = np.fromstring(fp.read(12 * 4),
+                                                   dtype=">u4")
+    ftr["NumberOfReplacedL10Lines"] = np.fromstring(fp.read(12 * 4),
+                                                   dtype=">u4")
+    validitytype = np.dtype([('NominalImage', '>u1'),
+                             ('NonNominalBecauseIncomplete', '>u1'),
+                             ('NonNominalRadiometricQuality', '>u1'),
+                             ('NonNominalGeometricQuality', '>u1'),
+                             ('NonNominalTimeliness', '>u1'),
+                             ('IncompleteL15', '>u1')])
+    ftr["L15ImageValidity"] = np.fromstring(fp.read(12 * 6),
+                                            dtype=validitytype)
 
-def read_metadata(prologue, image_files):
+    ftr["SouthernLineActual"] = read_int4(fp.read(4))
+    ftr["NorthernLineActual"] = read_int4(fp.read(4))
+    ftr["EasternColumnActual"] = read_int4(fp.read(4))
+    ftr["WesternColumnActual"] = read_int4(fp.read(4))
+    ftr["LowerSouthLineActual"] = read_int4(fp.read(4))
+    ftr["LowerNorthLineActual"] = read_int4(fp.read(4))
+    ftr["LowerEastColumnActual"] = read_int4(fp.read(4))
+    ftr["LowerWestColumnActual"] = read_int4(fp.read(4))
+    ftr["UpperSouthLineActual"] = read_int4(fp.read(4))
+    ftr["UpperNorthLineActual"] = read_int4(fp.read(4))
+    ftr["UpperEastColumnActual"] = read_int4(fp.read(4))
+    ftr["UpperWestColumnActual"] = read_int4(fp.read(4))
+
+    return ftr
+
+def read_metadata(prologue, image_files, epilogue):
     """ Selected items from the Meteosat-7 prolog file.
     """
     md = xrit.mda.Metadata()
-    fp = StringIO(prologue.data)
 
-    hdr = read_header(fp)
+    fp = StringIO(prologue.data)
+    hdr = read_proheader(fp)
+
+    fp = StringIO(epilogue.data)
+    ftr = read_epiheader(fp)
+    
     md.sublon = hdr["SatelliteDefinition"]["NominalLongitude"]
     im = xrit.read_imagedata(image_files[0])
     md.product_name = str(im)
@@ -587,21 +644,21 @@ def read_metadata(prologue, image_files):
     if md.channel == "HRV":
         md.first_pixel = hdr["ReferenceGridHRV"]["GridOrigin"]
         md.boundaries = np.array([[
-            hdr["PlannedCoverageHRV"]["LowerSouthLinePlanned"],
-            hdr["PlannedCoverageHRV"]["LowerNorthLinePlanned"],
-            hdr["PlannedCoverageHRV"]["LowerEastColumnPlanned"],
-            hdr["PlannedCoverageHRV"]["LowerWestColumnPlanned"]],
-           [hdr["PlannedCoverageHRV"]["UpperSouthLinePlanned"],
-            hdr["PlannedCoverageHRV"]["UpperNorthLinePlanned"],
-            hdr["PlannedCoverageHRV"]["UpperEastColumnPlanned"],
-            hdr["PlannedCoverageHRV"]["UpperWestColumnPlanned"]]])
+            ftr["LowerSouthLineActual"],
+            ftr["LowerNorthLineActual"],
+            ftr["LowerEastColumnActual"],
+            ftr["LowerWestColumnActual"]],
+           [ftr["UpperSouthLineActual"],
+            ftr["UpperNorthLineActual"],
+            ftr["UpperEastColumnActual"],
+            ftr["UpperWestColumnActual"]]])
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
         md.boundaries = np.array([[
-            hdr["PlannedCoverageVIS_IR"]["SouthernLinePlanned"],
-            hdr["PlannedCoverageVIS_IR"]["NorthernLinePlanned"],
-            hdr["PlannedCoverageVIS_IR"]["EasternColumnPlanned"],
-            hdr["PlannedCoverageVIS_IR"]["WesternColumnPlanned"]]])
+            ftr["SouthernLineActual"],
+            ftr["NorthernLineActual"],
+            ftr["EasternColumnActual"],
+            ftr["WesternColumnActual"]]])
 
     md.data_type = im.structure.nb
     md.no_data_value = 0

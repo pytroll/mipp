@@ -67,16 +67,20 @@ class SatelliteLoader(object):
         opt = self._config_reader('level1')
         val = {}
         val["channel"] = channel + '*'
+
+        # Prologue
+        
         val["segment"] = "PRO".ljust(9, '_')
-        #if self.satname.startswith('meteosat') and int(self.satnumber) > 7:
-        #    val['channel'] = channel.ljust(9, '_')
+
         filename_pro = opt.get('filename_pro', opt['filename'])
         prologue = glob.glob(opt['dir'] + '/' + \
                              (time_stamp.strftime(filename_pro)%val))
         if not prologue:
             raise xrit.SatNoFiles("missing prologue file: '%s'"%(time_stamp.strftime(filename_pro)%val))
         prologue = prologue[0]
-            
+
+        # Regular channels
+           
         val["segment"] = "0????????"
         image_files = glob.glob(opt['dir'] + '/' + \
                                 time_stamp.strftime(opt['filename'])%val)
@@ -91,6 +95,23 @@ class SatelliteLoader(object):
         logger.info(str)
 
         prologue = xrit.read_prologue(prologue)
+
+        # Epilogue
+
+        val["segment"] = "EPI".ljust(9, '_')
+
+        filename_epi = opt.get('filename_pro', opt['filename'])
+        epilogue = glob.glob(opt['dir'] + '/' + \
+                             (time_stamp.strftime(filename_epi)%val))
+
+        if not epilogue:
+            logger.info("No epilogue file to read.")
+        else:
+            epilogue = epilogue[0]
+            epilogue = xrit.read_epilogue(epilogue)
+            return self.load_files(prologue, image_files,
+                                   epilogue=epilogue, **kwarg)
+        
         return self.load_files(prologue, image_files, **kwarg)
 
     def load_files(self, prologue, image_files, only_metadata=False, **kwargs):
@@ -101,9 +122,11 @@ class SatelliteLoader(object):
             return self._read(prologue, image_files, **kwargs)
         
 
-    def _read_metadata(self, prologue, image_files):
-        mda = self._metadata_reader(prologue, image_files)
-        
+    def _read_metadata(self, prologue, image_files, epilogue=None):
+        if epilogue:
+            mda = self._metadata_reader(prologue, image_files, epilogue)
+        else:
+            mda = self._metadata_reader(prologue, image_files)
         if "%.2f"%mda.sublon != "%.2f"%self.sublon:
             raise xrit.SatReaderError("sub satellite point is %.2f, for %s is should be %.2f"%
                                       (mda.sublon, self.satname, self.sublon))
@@ -125,8 +148,11 @@ class SatelliteLoader(object):
         
         return mda
 
-    def _read(self, prologue, image_files, **kwargs):
-        mda = self._read_metadata(prologue, image_files)
+    def _read(self, prologue, image_files, epilogue=None, **kwargs):
+        if epilogue:
+            mda = self._read_metadata(prologue, image_files, epilogue)
+        else:
+            mda = self._read_metadata(prologue, image_files)
 	len_img = (((mda.image_size[0] + mda.line_offset)*mda.image_size[1])*mda.data_type)//8
         logger.info("Data size: %dx%d pixels, %d bytes, %d bits per pixel",
                     mda.image_size[0], mda.image_size[1], len_img, mda.data_type)
@@ -178,7 +204,8 @@ if __name__ == '__main__':
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True, calibrate=True)(center=(50., 10.), size=(600, 500))
 
-    image = load_meteosat09(datetime(2009, 10, 8, 14, 30), 'HRV', mask=False, calibrate=True)
+    #image = load_meteosat09(datetime(2009, 10, 8, 14, 30), 'VIS006', mask=False, calibrate=False)
+    image = load_meteosat07(datetime(2010, 6, 23, 8, 0), '00_7', mask=False, calibrate=False)
     tic = datetime.now()
     mda, img = image()#center=(0, 25), size=(600, 500)) # Over the met09 HRV break
     toc = datetime.now()
