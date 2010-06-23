@@ -177,9 +177,14 @@ if __name__ == '__main__':
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)()
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True, calibrate=True)(center=(50., 10.), size=(600, 500))
-    
-    #image = load_meteosat09(datetime(2010, 6, 11, 11, 0), 'IR_108', mask=False, calibrate=False) 
-    #mda, img = image() #center=(-50.0, 45.5), size=(600, 500))
+
+    image = load_meteosat09(datetime(2009, 10, 8, 14, 30), 'HRV', mask=False, calibrate=True)
+    tic = datetime.now()
+    mda, img = image()#center=(0, 25), size=(600, 500)) # Over the met09 HRV break
+    toc = datetime.now()
+    print "Loaded channel in: ", toc - tic
+    #mda, img = image(center=(0, 45.5), size=(600, 500)) # France and Spain
+
     #mda, img = image(center=(-80.8, 25.1), size=(600, 500)) # Miami
 
     #image = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True) 
@@ -192,7 +197,7 @@ if __name__ == '__main__':
     #mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7', mask=True)()
     #mda, img = load('goes12', datetime(2010, 1, 31, 12, 0), '10_7', mask=True, calibrate=True)(center=(-110, 23.5), size=(500,600))
     #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '00_7', mask=True)()
-    mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '10_7', mask=True, calibrate=True)( center=(-110, 23.5), size=(500,500))
+    #mda, img = load('goes11', datetime(2010, 2, 1, 3, 0), '10_7', mask=True, calibrate=True)( center=(-110, 23.5), size=(500,500))
     print mda
     print 'min/max =', "%.3f/%.3f"%(img.min(), img.max())
     fname = './' + mda.product_name + '.png'

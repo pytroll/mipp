@@ -300,6 +300,7 @@ def read_header(fp):
     hdr["RadiometerOperations"] = radiooper
 
     ## CelestialEvents
+    # CelestialBodiesPosition
 
     celbodies = {}
     celbodies["PeriodTimeStart"] = read_cds_time(fp.read(6))
@@ -573,11 +574,11 @@ def read_metadata(prologue, image_files):
     md.product_name = str(im)
     md.channel = im.product_name
     if md.channel == "HRV":
-        md.image_size = (hdr["ReferenceGridHRV"]["NumberOfLines"],
-                         hdr["ReferenceGridHRV"]["NumberOfColumns"])
+        md.image_size = np.array((hdr["ReferenceGridHRV"]["NumberOfLines"],
+                                  hdr["ReferenceGridHRV"]["NumberOfColumns"]))
     else:
-        md.image_size = (hdr["ReferenceGridVIS_IR"]["NumberOfLines"],
-                         hdr["ReferenceGridVIS_IR"]["NumberOfColumns"])
+        md.image_size = np.array((hdr["ReferenceGridVIS_IR"]["NumberOfLines"],
+                                  hdr["ReferenceGridVIS_IR"]["NumberOfColumns"]))
         
 
     md.satname = im.platform.lower()
@@ -585,14 +586,30 @@ def read_metadata(prologue, image_files):
     md.region_name = 'full disc'
     if md.channel == "HRV":
         md.first_pixel = hdr["ReferenceGridHRV"]["GridOrigin"]
+        md.boundaries = np.array([[
+            hdr["PlannedCoverageHRV"]["LowerSouthLinePlanned"],
+            hdr["PlannedCoverageHRV"]["LowerNorthLinePlanned"],
+            hdr["PlannedCoverageHRV"]["LowerEastColumnPlanned"],
+            hdr["PlannedCoverageHRV"]["LowerWestColumnPlanned"]],
+           [hdr["PlannedCoverageHRV"]["UpperSouthLinePlanned"],
+            hdr["PlannedCoverageHRV"]["UpperNorthLinePlanned"],
+            hdr["PlannedCoverageHRV"]["UpperEastColumnPlanned"],
+            hdr["PlannedCoverageHRV"]["UpperWestColumnPlanned"]]])
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
+        md.boundaries = np.array([[
+            hdr["PlannedCoverageVIS_IR"]["SouthernLinePlanned"],
+            hdr["PlannedCoverageVIS_IR"]["NorthernLinePlanned"],
+            hdr["PlannedCoverageVIS_IR"]["EasternColumnPlanned"],
+            hdr["PlannedCoverageVIS_IR"]["WesternColumnPlanned"]]])
+
     md.data_type = im.structure.nb
     md.no_data_value = 0
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
     md.calibrate = _Calibrator(hdr, md)
+
 
     return md
 
