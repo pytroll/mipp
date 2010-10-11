@@ -16,6 +16,7 @@ from xrit._exceptions import XRITDecodeError
 from xrit.bin_reader import *
 
 __all__ = ['read_prologue',
+           'read_epilogue',
            'read_imagedata',
            'read_gts_message',
            'decompress',
@@ -203,8 +204,8 @@ class UnknownHeader(object):
 
 def _decode_data_definition(buf):
     dd = dict()
-    as = [x.strip() for x in buf.strip().split('\r')]
-    for a in as:
+    lines = [x.strip() for x in buf.strip().split('\r')]
+    for a in lines:
         k, v = [x.strip() for x in a.split(':=')]
         if k[0] == '$':
             dd[k] = int(v)
@@ -316,6 +317,13 @@ def read_prologue(file_name):
         return s
     else:
         raise XRITDecodeError("this is no 'prologue' file: '%s'"%file_name)
+
+def read_epilogue(file_name):
+    s = Segment(file_name)
+    if s.file_type == 129:
+        return s
+    else:
+        raise XRITDecodeError("this is no 'epilogue' file: '%s'"%file_name)
 
 def read_imagedata(file_name):
     s = Segment(file_name)

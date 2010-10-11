@@ -70,14 +70,16 @@ class _ConfigReader(object):
         channels = {}
         for sec in self._config.sections():
             if rec.findall(sec):
-                c = _Channel(self._config.items(sec, raw=True))
+                c = _Channel(self._config.items(sec, raw=True), raw=True)
                 channels[c.name] = c
         return channels
     
 class _Channel:
-    def __init__(self, kv):
+    def __init__(self, kv, raw=False):
         for k, v in kv:
-            setattr(self, k, _eval(v))
+            if raw:
+                v = _eval(v)
+            setattr(self, k, v)
     def __str__(self):
         keys = sorted(self.__dict__.keys())
         s = ''
@@ -89,7 +91,7 @@ class _Channel:
                 v = "%.2f"%v
             elif k == 'frequency':
                 v = "(%.2f, %.2f, %.2f)"%v
-            s += k + ' = ' + str(v) + ', '
+            s += k + ': ' + str(v) + ', '
         return s[:-2]    
 
 def _eval(v):
@@ -100,11 +102,16 @@ def _eval(v):
 
 if __name__ == '__main__':
     import sys
-    cfg = read_config(sys.argv[1])
-    print cfg('satellite')
-    print cfg('level1')
-    print cfg(1)
-    print cfg(2)
-    print cfg(3)
+    dname, fname = os.path.split(sys.argv[1])
+    os.environ['PPP_CONFIG_DIR'] = dname
+    cfg = read_config(os.path.splitext(fname)[0])
+    for name in ('satellite', 'level1', 'level2'):
+        h = cfg(name)
+        print name
+        for k in sorted(h.keys()):
+            print '    ', k + ':',  h[k]
+    print _Channel(cfg(1).items())
+    print _Channel(cfg(2).items())
+    print _Channel(cfg(3).items())
     for name in cfg.channel_names:
-        print name + ':', cfg.get_channel(name)
+        print cfg.get_channel(name)

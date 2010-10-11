@@ -1,5 +1,5 @@
 #
-# Our logger, default loglevel is INFO and write to stderr.
+# Our logger, default loglevel is NULL and write to stderr.
 #
 #    * It can be controlled by environment variables DEBUG and LOGLEVEL.
 #    * If DEBUG is set it will overwrite LOGLEVEL.
@@ -29,7 +29,11 @@ class NullHandler(Handler):
 
 #-----------------------------------------------------------------------------
 
-loglevel = loglevels[os.environ.get("LOGLEVEL", "INFO")]
+loglevel = os.environ.get("LOGLEVEL", "NULL").upper()
+try:
+    loglevel = loglevels[loglevel]
+except:
+    raise KeyError, "Unknown LOGLEVEL '%s'"%loglevel
 if os.environ.get("DEBUG", ''):
     loglevel = DEBUG
 

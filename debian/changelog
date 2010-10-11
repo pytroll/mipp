@@ -1,20 +1,41 @@
+python-mipp (0.2-8) unstable; urgency=low
+
+  * Added option for 'no data' value for MTSAT data.
+  * proj4_params is a new keyword in satellite configuration files.
+  * Calibration type can be specified (0=no calibration, 1=default calibration).
+  * Satellite configuration files are now in a separate debian package.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Mon, 11 Oct 2010 08:40:10 +0000
+
+python-mipp (0.2-7) unstable; urgency=low
+
+  * Change varible name 'as'.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Wed, 06 Oct 2010 12:29:10 +0000
+
+python-mipp (0.2-6) unstable; urgency=low
+
+  * For Lucid.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Fri, 21 Jul 2010 11:45:58 +0000
+
 python-mipp (0.2-5) unstable; urgency=low
 
   * Correct handling of 24 hour clock in MTP.py
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Fri,  7 May 2010 08:42:00 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Fri,  7 May 2010 08:42:00 +0000
 
 python-mipp (0.2-2) unstable; urgency=low
 
   * Introducing GOES13
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Tue, 27 Apr 2010 12:24:40 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 27 Apr 2010 12:24:40 +0000
 
 python-mipp (0.2-1) unstable; urgency=low
 
   * Addede GPL lisence.
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Fri, 23 Apr 2010 08:16:00 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Fri, 23 Apr 2010 08:16:00 +0000
 
 python-mipp (0.2-0) unstable; urgency=low
 
@@ -31,14 +52,14 @@ python-mipp (0.2-0) unstable; urgency=low
     If LOGLEVEL=NULL and DEBUG not set it will be very quiet.
     Default log level is INFO.
   
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Thu, 22 Apr 2010 08:34:19 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Thu, 22 Apr 2010 08:34:19 +0000
 
 python-mipp (0.1-7) unstable; urgency=low
 
   * Now returns calibrated data
   * New satellite configuration file
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Wed, 24 Mar 2010 12:26:54 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Wed, 24 Mar 2010 12:26:54 +0000
 
 python-mipp (0.1-3) unstable; urgency=low
 
@@ -47,17 +68,17 @@ python-mipp (0.1-3) unstable; urgency=low
   * Removed hdfdmi.py
   * Cometic
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Tue, 23 Mar 2010 09:38:15 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 23 Mar 2010 09:38:15 +0000
 
 python-mipp (0.1-2) unstable; urgency=low
 
   * Now depends on python-tisat-numpy (Numpy version 1.3)
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Wed, 24 Feb 2010 12:05:48 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Wed, 24 Feb 2010 12:05:48 +0000
 
 python-mipp (0.1-1) unstable; urgency=low
 
   * Initial release.
 
- -- Lars Ørum Rasmussen <ras@dmi.dk>  Sun, 27 Apr 2008 15:48:52 +0000
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Sun, 27 Apr 2008 15:48:52 +0000
 

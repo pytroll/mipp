@@ -4,15 +4,13 @@
 # Inspired by NWCLIB
 #
 import numpy
+import types
 
 import xrit
 import xrit.convert
 from xrit import logger
 
 __all__ = ['ImageSlicer',]
-
-class SatReaderError(Exception):
-    pass
 
 class _Region(object):
     def __init__(self, rows, columns):
@@ -30,7 +28,7 @@ class ImageSlicer(object):
     def __init__(self, mda, image_files, mask=False, calibrate=False):
         self.mda = mda
         self.image_files = image_files
-        self.do_mask = mask
+        self.do_mask = mask        
         self.do_calibrate = calibrate
         # full disc and square
         self._allrows = slice(0, self.mda.image_size[0]) # !!!
@@ -64,29 +62,121 @@ class ImageSlicer(object):
             
         if (rows.step != 1 and rows.step != None) or \
                (columns.step != 1 and columns.step != None):
-            raise IndexError("currently we don't support steps different from one")
+            raise IndexError("Currently we don't support steps different from one")
         
-        return self._read(_Region(rows, columns))
+
+        ns_ = self.mda.first_pixel.split()[0]
+        ew_ = self.mda.first_pixel.split()[1]
+
+        if not hasattr(self.mda, "boundaries"):
+            mda, image = self._read(_Region(rows, columns))
+
+        else:
+            #
+            # Here we handle the case of partly defined channels.
+            # (for example MSG's HRV channel)
+            #
+            image = None
+
+            offset = 0
+            offset_position = 0
+
+            for region in (self.mda.boundaries - 1):
+                offset += region[0] - offset_position
+                offset_position = region[1] + 1
+
+                rlines = slice(region[0], region[1] + 1)
+                rcols = slice(region[2], region[3] + 1)
+
+                # check is we are outside the region
+                if (rows.start > rlines.stop or
+                    rows.stop < rlines.start or
+                    columns.start > rcols.stop or
+                    columns.stop < rcols.start):
+                    continue
+
+                lines = slice(max(rows.start, rlines.start) - offset,
+                              min(rows.stop, rlines.stop) - offset)
+                cols =  slice(max(columns.start, rcols.start) - rcols.start,
+                              min(columns.stop, rcols.stop) - rcols.start)
+                mda, rdata = self._read(_Region(lines, cols))
+                lines = slice(max(rows.start, rlines.start) - rows.start,
+                              min(rows.stop, rlines.stop) - rows.start)
+                cols =  slice(max(columns.start, rcols.start) - columns.start,
+                              min(columns.stop, rcols.stop) - columns.start)
+                if image is None:
+                    image = (numpy.zeros((rows.stop - rows.start,
+                                          columns.stop - columns.start),
+                                         dtype=rdata.dtype)
+                             + mda.no_data_value)
+
+                if ns_ == "south":
+                    lines = slice(image.shape[0] - lines.stop,
+                                  image.shape[0] - lines.start)
+                if ew_ == "east":
+                    cols = slice(image.shape[1] - cols.stop,
+                                 image.shape[1] - cols.start)
+
+                image[lines, cols] = rdata
+
+        #
+        # Update meta-data
+        #
+
+        if (rows != self._allrows) or (columns != self._allcolumns):
+            mda.region_name = 'sliced'
+
+        mda.image_size = numpy.array([image.shape[1], image.shape[0]])
+        mda.navigation.loff -= rows.start
+        mda.navigation.coff -= columns.start
+        if ew_ == "east":
+            # rotate 180 degrees
+            mda.navigation.loff = mda.image_size[1] - mda.navigation.loff
+            mda.navigation.coff = mda.image_size[0] - mda.navigation.coff
+            mda.navigation.cfac *= -1
+            mda.navigation.lfac *= -1
+
+        #
+        # New center
+        #
+        try:
+            mda.center = mda.navigation.lonlat((mda.image_size[0]//2,
+                                                mda.image_size[1]//2))
+        except xrit.NavigationError:
+            # this is OK, but maybe not expected
+            logger.warning("Image slice center is outside earth disc")
+            mda.center = None
+
+
+        delattr(mda, 'line_offset')
+        delattr(mda, 'first_pixel')
+
+        return mda, image
     
     def __call__(self, center=None, size=None):
         if center and size:
             try:
                 px = self.mda.navigation.pixel(center)
             except xrit.NavigationError:
-                raise xrit.SatReaderError("center for slice is outside image")                
+                raise xrit.SatReaderError("center for slice is outside image")
             columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
             rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
         elif bool(center) ^ bool(size):
-            raise xrit.SatReaderError("when slicing, if center or size are specified, both has to be specified ... please")
+            raise xrit.SatReaderError("when slicing, if center or size are"
+                                      " specified, both has to be specified"
+                                      " ... please")
         else:
             rows = self._allrows
             columns = self._allcolumns
-            
-        return self._read(_Region(rows, columns))
+
+        return self[rows, columns]
+
 
     def _read(self, region):
-        if region.columns.start < 0 or region.columns.stop > self.mda.image_size[0] or \
-               region.rows.start < 0 or region.rows.stop > self.mda.image_size[1]:
+        if (region.columns.start < 0 or
+            region.columns.stop > self.mda.image_size[0] or
+            region.rows.start < 0 or
+            region.rows.stop > self.mda.image_size[1]):
             raise IndexError("index out of range")
             
         mda = self.mda
@@ -112,15 +202,18 @@ class ImageSlicer(object):
         converter = _null_converter
         if mda.data_type == 8:        
             data_type = numpy.uint8
+            data_type_len = 8
         elif mda.data_type == 10:
             converter = xrit.convert.dec10216
             data_type = numpy.uint16
-            mda.data_type = 16
+            data_type_len = 16
         elif mda.data_type == 16:
             data_type = numpy.uint16
+            data_type_len = 16
         else:
-            raise xrit.SatReaderError("unknown data type: %d bit per pixel"%mda.data_type)
-        
+            raise xrit.SatReaderError("unknown data type: %d bit per pixel"
+                                      %mda.data_type)
+
 
         #
         # Calculate initial and final line and column.
@@ -129,9 +222,9 @@ class ImageSlicer(object):
         # line_init, line_end : 1-based
         #
         line_init = region.rows.start + 1
-        line_end = line_init + region.rows.stop - region.rows.start - 1    
+        line_end = line_init + region.rows.stop - region.rows.start - 1
         col_count = region.shape[1]
-        col_offset = (region.columns.start)*mda.data_type//8
+        col_offset = (region.columns.start)*data_type_len//8
 
         #
         # Calculate initial and final segments
@@ -164,8 +257,9 @@ class ImageSlicer(object):
             increment_line = -1
             factor_col = -1
         else:
-            raise xrit.SatReaderError("unknown geographical orientation of first pixel: '%s'"%mda.first_pixel)
-        
+            raise xrit.SatReaderError("unknown geographical orientation of "
+                                      "first pixel: '%s'"%mda.first_pixel)
+
         #
         # Generate final image with no data
         #
@@ -175,7 +269,7 @@ class ImageSlicer(object):
         # Begin the segment processing.
         #
         seg_no = seg_init
-        line_in_image = first_line;
+        line_in_image = first_line
         while seg_no <= seg_end:
             line_in_segment = 1
       
@@ -183,10 +277,11 @@ class ImageSlicer(object):
             # Calculate initial line in actual segment.
             #
             if seg_no == seg_init:
-                init_line_in_segment = line_init - (segment_nlines*(seg_init - 1))
+                init_line_in_segment = (line_init
+                                        - (segment_nlines*(seg_init - 1)))
             else:
                 init_line_in_segment = 1
-        
+
             #
             # Calculate final line in actual segment.
             #
@@ -206,7 +301,7 @@ class ImageSlicer(object):
                 logger.warning("Segment number %d not found"%seg_no)
 
                 # all image lines are already set to no-data count.
-                line_in_segment = init_line_in_segment;
+                line_in_segment = init_line_in_segment
                 while line_in_segment <= end_line_in_segment:
                     line_in_segment += 1
                     line_in_image += increment_line
@@ -229,8 +324,11 @@ class ImageSlicer(object):
                 while line_in_segment <= end_line_in_segment:
                     line = seg.readline()[mda.line_offset:]
                     line = converter(line)
-                
-                    line = numpy.frombuffer(line, dtype=data_type, count=col_count, offset=col_offset)[::factor_col]
+
+                    line = (numpy.frombuffer(line,
+                                             dtype=data_type,
+                                             count=col_count,
+                                             offset=col_offset)[::factor_col])
                 
                     #
                     # Insert image data.
@@ -245,67 +343,25 @@ class ImageSlicer(object):
             seg_no += 1
 
         #
-        # Update meta-data
-        #
-        delattr(mda, 'line_offset')
-        delattr(mda, 'first_pixel')
-        mda.image_size = image.shape[1], image.shape[0]
-        if (region.rows != self._allrows) or (region.columns != self._allcolumns):
-            mda.region_name = 'sliced'            
-        mda.navigation.loff -= region.rows.start
-        mda.navigation.coff -= region.columns.start
-        if factor_col == -1:
-            # rotate 180 degrees
-            mda.navigation.loff = mda.image_size[1] - mda.navigation.loff
-            mda.navigation.coff = mda.image_size[0] - mda.navigation.coff
-            mda.navigation.cfac *= -1
-            mda.navigation.lfac *= -1
-
-        #
-        # New center
-        #
-        try:
-            mda.center = mda.navigation.lonlat((mda.image_size[0]//2, mda.image_size[1]//2))
-        except xrit.NavigationError:
-            # this is OK, but maybe not expected
-            logger.warning("Image slice center is outside earth disc")
-            mda.center = None
-        
-        #
         # Calibrate ?
         #
-        mda.calibrated = self.do_calibrate
+        mda.is_calibrated = False
         if self.do_calibrate:
             # do this before masking.
-            image = self._calibrate(image)
+            calibrate = self.do_calibrate
+            if type(calibrate) == types.BooleanType:
+                # allow boolean True/False for 1/0
+                calibrate = int(calibrate)
+            image = mda.calibrate(image, calibrate=calibrate)
+            mda.is_calibrated = True
 
         #
-        # With ot without mask ?
+        # With or without mask ?
         #
         if self.do_mask:
-            image = numpy.ma.array(image, mask=(image == mda.no_data_value), copy=False)
+            image = numpy.ma.array(image,
+                                   mask=(image == mda.no_data_value),
+                                   copy=False)
             
         return mda, image
 
-    def _calibrate(self, image):
-        mda = self.mda
-        mda.calibrated = False
-        cal = mda.__dict__.pop('calibration_table', None)
-    
-        if cal == None or len(cal) == 0:
-            return image
-        if type(cal) != numpy.ndarray:
-            cal = numpy.array(cal)
-
-        if cal.shape == (256, 2):
-            cal = cal[:,1] # nasty !!!
-            cal[int(mda.no_data_value)] = mda.no_data_value
-            image = cal[image] # this does not work on masked arrays !!!
-        elif cal.shape ==(2, 2):
-            scale = (cal[1][1] - cal[0][1])/(cal[1][0] - cal[0][0])
-            offset = cal[0][1] - cal[0][0]*scale
-            image = numpy.select([image == mda.no_data_value*scale], [mda.no_data_value], default=offset + image*scale)
-        else:
-            raise xrit.SatDecodeError("could not recognize the shape %s of the calibration table"%str(cal.shape))
-        mda.calibrated = True
-        return image
