@@ -109,6 +109,8 @@ class ImageSlicer(object):
                                           columns.stop - columns.start),
                                          dtype=rdata.dtype)
                              + mda.no_data_value)
+                    if self.do_mask:
+                        image = numpy.ma.array(image)
 
                 if ns_ == "south":
                     lines = slice(image.shape[0] - lines.stop,
@@ -359,9 +361,8 @@ class ImageSlicer(object):
         # With or without mask ?
         #
         if self.do_mask:
-            image = numpy.ma.array(image,
-                                   mask=(image == mda.no_data_value),
-                                   copy=False)
-            
+            image = numpy.ma.masked_equal(image,
+                                          mda.no_data_value,
+                                          copy=False)
         return mda, image
 
