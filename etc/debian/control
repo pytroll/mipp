@@ -1,0 +1,12 @@
+Source: mipp-config
+Section: misc
+Priority: optional
+Maintainer: Lars Orum Rasmussen <ras@dmi.dk>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: mipp-config
+Architecture: any
+Depends: 
+Description: DMI/TI, configuration files for python-mipp
+ 
