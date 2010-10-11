@@ -14,6 +14,8 @@ import xrit
 import xrit.mda
 from xrit.bin_reader import *
 
+_min_val_as_no_data_val = False
+
 __all__ = ['read_metadata',]
 
 def _read_sgs_common_header(fp):
@@ -42,7 +44,7 @@ class _Calibrator:
     def __init__(self, calibration_table, no_data_value):
         self.calibration_table = calibration_table
         self.no_data_value = no_data_value
-    def __call__(self, image):
+    def __call__(self, image, calibrate=1):
         cal = self.calibration_table
     
         if type(cal) != numpy.ndarray:
@@ -84,13 +86,23 @@ def read_metadata(prologue, image_files):
     md.calibration_name = im.data_function.data_definition['_NAME']
     md.calibration_unit = im.data_function.data_definition['_UNIT']
     md.calibration_table = dict()
-    md.no_data_value = 0
     dd = []
     keys = sorted(im.data_function.data_definition.keys())
+    min_key = 0
+    min_val = numpy.inf
     for k in keys:
         if type(k) == type(1):
+            if min_val > im.data_function.data_definition[k]:
+                min_val = im.data_function.data_definition[k]
+                min_key = k
             v = im.data_function.data_definition[k]
             dd.append([float(k), v])
+
+    if _min_val_as_no_data_val:
+        md.no_data_value = min_key
+    else:
+        md.no_data_value = 0
+    
     md.calibration_table = numpy.array(dd, dtype=numpy.float32)
     md.calibrate = _Calibrator(md.calibration_table, md.no_data_value)
     return md

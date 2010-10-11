@@ -204,8 +204,8 @@ class UnknownHeader(object):
 
 def _decode_data_definition(buf):
     dd = dict()
-    as = [x.strip() for x in buf.strip().split('\r')]
-    for a in as:
+    lines = [x.strip() for x in buf.strip().split('\r')]
+    for a in lines:
         k, v = [x.strip() for x in a.split(':=')]
         if k[0] == '$':
             dd[k] = int(v)

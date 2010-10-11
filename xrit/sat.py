@@ -19,6 +19,7 @@ __all__ = ['load_meteosat07',
            'load_goes12',
            'load_goes13',
            'load_mtsat1r',
+           'load_mtsat2',
            'load',
            'load_files']
 
@@ -55,7 +56,8 @@ class SatelliteLoader(object):
         #
         self.__dict__.update(sat)    
         self.sublon = sublon
-        self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon
+        if not hasattr(self, 'proj4_params'):
+            self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon
         self._config_reader = config_reader
         self.satname = self.satname + self.number
         self.satnumber = self.number
@@ -194,22 +196,25 @@ def load_goes13(time_stamp, channel, **kwarg):
 def load_mtsat1r(time_stamp, channel, **kwarg):
     return load('mtsat1r', time_stamp, channel, **kwarg)
 
+def load_mtsat2(time_stamp, channel, **kwarg):
+    return load('mtsat2', time_stamp, channel, **kwarg)
+
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
     from datetime import datetime
     import Image as pil
 
-    #mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True, calibrate=True)(center=(130, -30), size=(500,500))
+    mda, img = load_mtsat1r(datetime(2010, 2, 1, 9, 0), '10_8', mask=True, calibrate=True)(center=(130, -30), size=(500,500))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)()
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '00_7', mask=True)(center=(7.036, 55.137), size=(560, 560))
     #mda, img = load('met7', datetime(2010, 2, 1, 10, 0), '11_5', mask=True, calibrate=True)(center=(50., 10.), size=(600, 500))
 
     #image = load_meteosat09(datetime(2009, 10, 8, 14, 30), 'VIS006', mask=False, calibrate=False)
-    image = load_meteosat07(datetime(2010, 6, 23, 8, 0), '00_7', mask=False, calibrate=False)
-    tic = datetime.now()
-    mda, img = image()#center=(0, 25), size=(600, 500)) # Over the met09 HRV break
-    toc = datetime.now()
-    print "Loaded channel in: ", toc - tic
+    #image = load_meteosat07(datetime(2010, 6, 23, 8, 0), '00_7', mask=False, calibrate=False)
+    #tic = datetime.now()
+    #mda, img = image()#center=(0, 25), size=(600, 500)) # Over the met09 HRV break
+    #toc = datetime.now()
+    #print "Loaded channel in: ", toc - tic
     #mda, img = image(center=(0, 45.5), size=(600, 500)) # France and Spain
 
     #mda, img = image(center=(-80.8, 25.1), size=(600, 500)) # Miami

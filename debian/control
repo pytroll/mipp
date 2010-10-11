@@ -1,12 +1,13 @@
 Source: python-mipp
 Section: misc
 Priority: optional
-Maintainer: Lars Ørum Rasmussen <ras@dmi.dk>
+Maintainer: Lars Orum Rasmussen <ras@dmi.dk>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.2
 
 Package: python-mipp
 Architecture: any
-Depends: python-tisat-numpy
+#Depends: python-tisat-numpy
+Depends: mipp-config, python-numpy
 Description: DMI/TI, this is a Meteorological Ingest-Processing Package (mipp).
  

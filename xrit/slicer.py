@@ -4,15 +4,13 @@
 # Inspired by NWCLIB
 #
 import numpy
+import types
 
 import xrit
 import xrit.convert
 from xrit import logger
 
 __all__ = ['ImageSlicer',]
-
-class SatReaderError(Exception):
-    pass
 
 class _Region(object):
     def __init__(self, rows, columns):
@@ -30,7 +28,7 @@ class ImageSlicer(object):
     def __init__(self, mda, image_files, mask=False, calibrate=False):
         self.mda = mda
         self.image_files = image_files
-        self.do_mask = mask
+        self.do_mask = mask        
         self.do_calibrate = calibrate
         # full disc and square
         self._allrows = slice(0, self.mda.image_size[0]) # !!!
@@ -64,8 +62,7 @@ class ImageSlicer(object):
             
         if (rows.step != 1 and rows.step != None) or \
                (columns.step != 1 and columns.step != None):
-            raise IndexError("Currently we don't support steps different from "
-                             "one")
+            raise IndexError("Currently we don't support steps different from one")
         
 
         ns_ = self.mda.first_pixel.split()[0]
@@ -351,7 +348,11 @@ class ImageSlicer(object):
         mda.is_calibrated = False
         if self.do_calibrate:
             # do this before masking.
-            image = mda.calibrate(image)
+            calibrate = self.do_calibrate
+            if type(calibrate) == types.BooleanType:
+                # allow boolean True/False for 1/0
+                calibrate = int(calibrate)
+            image = mda.calibrate(image, calibrate=calibrate)
             mda.is_calibrated = True
 
         #

@@ -82,7 +82,7 @@ def _read_binary_header(fp, product_type):
 class _Calibrator:
     def __init__(self, *args):
         pass
-    def __call__(self, image):
+    def __call__(self, image, calibrate=1):
         # don't know how to calibrate
         raise xrit.CalibrationError("Not implemented")
 

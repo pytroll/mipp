@@ -22,8 +22,8 @@ unsigned int dec10216(unsigned char *in_buffer, unsigned int in_length,
     unsigned int tail = in_length%5;
 
     if (tail != 0) {
-	in_length -= tail;
-	fprintf(stderr, "10216 warning: input buffer size is not a multiplum of 5 bytes (size is reduced by %d bytes)\n", tail);
+        in_length -= tail;
+        fprintf(stderr, "10216 warning: input buffer size is not a multiplum of 5 bytes (size is reduced by %d bytes)\n", tail);
     }
 
     for(i=0, j=0; i<in_length; i+=IN_JUMP, j+=OUT_JUMP) {

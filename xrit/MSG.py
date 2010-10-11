@@ -86,7 +86,7 @@ class _Calibrator:
         self.hdr = hdr
         self.md = md
         
-    def __call__(self, image):
+    def __call__(self, image, calibrate=1):
         """Computes the radiances and reflectances/bt of a given channel.
         """
         hdr = self.hdr
