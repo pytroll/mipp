@@ -169,11 +169,16 @@ class SatelliteLoader(object):
 # Interface
 #
 #-----------------------------------------------------------------------------
-def load_files(prologue, image_files, **kwarg):
+def load_files(prologue, image_files, epilogue=None, **kwarg):
     if type(prologue) == type('string'):
         prologue = xrit.read_prologue(prologue)
+    if epilogue and type(epilogue) == type('string'):
+        epilogue = xrit.read_epilogue(epilogue)
     satname = prologue.platform.lower()
-    return SatelliteLoader(xrit.cfg.read_config(satname)).load_files(prologue, image_files, **kwarg)
+    return SatelliteLoader(xrit.cfg.read_config(satname)).load_files(prologue, 
+                                                                     image_files, 
+                                                                     epilogue=epilogue, 
+                                                                     **kwarg)
  
 def load(satname, time_stamp, channel, **kwarg):
     return SatelliteLoader(xrit.cfg.read_config(satname)).load(time_stamp, channel, **kwarg)
