@@ -1,0 +1,28 @@
+satellite
+     instruments: ('seviri',)
+     number: 09
+     proj4_params: proj=geos lon_0=0.00 lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00
+     projection: geos(0.0)
+     satname: meteosat
+level1
+     dir: /data/xrit/out
+     filename: H-000-MSG2__-MSG2________-%(channel)s-%(segment)s-%Y%m%d%H%M-__
+     filename_pro: H-000-MSG2__-MSG2________-_________-%(segment)s-%Y%m%d%H%M-__
+     format: xrit/MSG
+level2
+     format: mipp
+frequency: (0.56, 0.64, 0.71), name: VIS006, resolution: 3000.40, size: (3712, 3712)
+frequency: (0.74, 0.81, 0.88), name: VIS008, resolution: 3000.40, size: (3712, 3712)
+frequency: (1.50, 1.64, 1.78), name: IR_016, resolution: 3000.40, size: (3712, 3712)
+frequency: (0.50, 0.70, 0.90), name: HRV, resolution: 1000.13, size: (11136, 11136)
+frequency: (1.50, 1.64, 1.78), name: IR_016, resolution: 3000.40, size: (3712, 3712)
+frequency: (3.48, 3.92, 4.36), name: IR_039, resolution: 3000.40, size: (3712, 3712)
+frequency: (8.30, 8.70, 9.10), name: IR_087, resolution: 3000.40, size: (3712, 3712)
+frequency: (9.38, 9.66, 9.94), name: IR_097, resolution: 3000.40, size: (3712, 3712)
+frequency: (9.80, 10.80, 11.80), name: IR_108, resolution: 3000.40, size: (3712, 3712)
+frequency: (11.00, 12.00, 13.00), name: IR_120, resolution: 3000.40, size: (3712, 3712)
+frequency: (12.40, 13.40, 14.40), name: IR_134, resolution: 3000.40, size: (3712, 3712)
+frequency: (0.56, 0.64, 0.71), name: VIS006, resolution: 3000.40, size: (3712, 3712)
+frequency: (0.74, 0.81, 0.88), name: VIS008, resolution: 3000.40, size: (3712, 3712)
+frequency: (5.35, 6.25, 7.15), name: WV_062, resolution: 3000.40, size: (3712, 3712)
+frequency: (6.85, 7.35, 7.85), name: WV_073, resolution: 3000.40, size: (3712, 3712)
