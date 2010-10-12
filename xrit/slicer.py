@@ -5,6 +5,7 @@
 #
 import numpy
 import types
+import copy
 
 import xrit
 import xrit.convert
@@ -26,7 +27,7 @@ def _null_converter(blob):
 class ImageSlicer(object):
     
     def __init__(self, mda, image_files, mask=False, calibrate=False):
-        self.mda = mda
+        self.mda = copy.copy(mda)
         self.image_files = image_files
         self.do_mask = mask        
         self.do_calibrate = calibrate
