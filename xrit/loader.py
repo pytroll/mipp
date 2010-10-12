@@ -11,7 +11,7 @@ import xrit
 import xrit.convert
 from xrit import logger
 
-__all__ = ['ImageSlicer',]
+__all__ = ['ImageLoader',]
 
 class _Region(object):
     def __init__(self, rows, columns):
@@ -24,7 +24,7 @@ class _Region(object):
 def _null_converter(blob):
     return blob
         
-class ImageSlicer(object):
+class ImageLoader(object):
     
     def __init__(self, mda, image_files, mask=False, calibrate=False):
         self.mda = copy.copy(mda)

@@ -11,7 +11,7 @@ import xrit
 import xrit.cfg
 from xrit import logger
 import geosnav
-from slicer import ImageSlicer
+from loader import ImageLoader
 
 __all__ = ['load_meteosat07',
            'load_meteosat09',
@@ -26,7 +26,7 @@ __all__ = ['load_meteosat07',
 class SatelliteLoader(object):
     # Currently this one only works for geos satellites
     #
-    # We will return an ImageSlicer object where access to data is like:
+    # We will return an ImageLoader object where access to data is like:
     # image[:], image[] or image() will return full disk
     # image[2:56, 1020:1070]
     # image(center, size)
@@ -162,7 +162,7 @@ class SatelliteLoader(object):
         #
         # Return a proxy slicer
         #
-        return ImageSlicer(mda, image_files, **kwargs)
+        return ImageLoader(mda, image_files, **kwargs)
             
 #-----------------------------------------------------------------------------
 #
