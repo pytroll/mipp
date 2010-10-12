@@ -1,0 +1,4 @@
+#!/bin/sh
+python setup.py build
+echo "nosetests -w tests"
+nosetests -w tests

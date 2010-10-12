@@ -5,6 +5,7 @@
 #
 import numpy
 import types
+import copy
 
 import xrit
 import xrit.convert
@@ -26,7 +27,7 @@ def _null_converter(blob):
 class ImageSlicer(object):
     
     def __init__(self, mda, image_files, mask=False, calibrate=False):
-        self.mda = mda
+        self.mda = copy.copy(mda)
         self.image_files = image_files
         self.do_mask = mask        
         self.do_calibrate = calibrate
@@ -109,6 +110,8 @@ class ImageSlicer(object):
                                           columns.stop - columns.start),
                                          dtype=rdata.dtype)
                              + mda.no_data_value)
+                    if self.do_mask:
+                        image = numpy.ma.array(image)
 
                 if ns_ == "south":
                     lines = slice(image.shape[0] - lines.stop,
@@ -359,9 +362,8 @@ class ImageSlicer(object):
         # With or without mask ?
         #
         if self.do_mask:
-            image = numpy.ma.array(image,
-                                   mask=(image == mda.no_data_value),
-                                   copy=False)
-            
+            image = numpy.ma.masked_equal(image,
+                                          mda.no_data_value,
+                                          copy=False)
         return mda, image
 
