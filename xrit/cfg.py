@@ -110,8 +110,5 @@ if __name__ == '__main__':
         print name
         for k in sorted(h.keys()):
             print '    ', k + ':',  h[k]
-    print _Channel(cfg(1).items())
-    print _Channel(cfg(2).items())
-    print _Channel(cfg(3).items())
     for name in cfg.channel_names:
         print cfg.get_channel(name)

@@ -56,6 +56,7 @@ class Test(unittest.TestCase):
         mda, img = loader[1308:1508,1308:1508]
         cross_sum = img.sum()
         make_image(mda, img)
+        self.assertTrue(img.shape == (200, 200), msg='GOES image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, goes_sum, 3, msg='GOES image reading/slicing failed')
 
     def test_mtsat(self):
@@ -63,6 +64,7 @@ class Test(unittest.TestCase):
         mda, img = loader[1276:1476,1276:1476]
         cross_sum = img.sum()
         make_image(mda, img)
+        self.assertTrue(img.shape == (200, 200), msg='MTSAT image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, mtsat_sum, 3, msg='MTSAT image reading/slicing failed')
 
     def test_met7(self):
@@ -70,6 +72,7 @@ class Test(unittest.TestCase):
         mda, img = loader[2300:2900,2000:3000]
         cross_sum = img.sum()
         make_image(mda, img)
+        self.assertTrue(img.shape == (600, 1000), msg='MET7 image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, met7_sum, 3, msg='MET7 image reading/slicing failed')
 
     def test_msg(self):
@@ -77,6 +80,7 @@ class Test(unittest.TestCase):
         mda, img = loader[1756:2056,1056:1956]
         cross_sum = img.sum()
         make_image(mda, img)
+        self.assertTrue(img.shape == (300, 900), msg='MSG image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed')
 
     def test_hrv(self):
@@ -84,6 +88,7 @@ class Test(unittest.TestCase):
         mda, img = loader[5368:5968,5068:6068]
         cross_sum = img.sum()
         make_image(mda, img)
+        self.assertTrue(img.shape == (600, 1000), msg='MSG-HRV image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, hrv_sum, 3, msg='MSG-HRV image reading/slicing failed')
 
 if __name__ == '__main__':
