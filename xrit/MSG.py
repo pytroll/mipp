@@ -678,8 +678,5 @@ def read_metadata(prologue, image_files, epilogue):
 if __name__ == '__main__':
     import xrit
     p = xrit.read_prologue(sys.argv[1])
-    print dir(p)
-    print p.platform
-    print p.segment_id
-    print p.is_compressed
-    #print read_metadata(p, sys.argv[2:])
+    e = xrit.read_epilogue(sys.argv[-1])
+    print read_metadata(p, sys.argv[2:-1], e)
