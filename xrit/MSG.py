@@ -616,7 +616,7 @@ def read_epiheader(fp):
     return ftr
 
 def read_metadata(prologue, image_files, epilogue):
-    """ Selected items from the Meteosat-7 prolog file.
+    """ Selected items from the Meteosat-9 prolog file.
     """
     md = xrit.mda.Metadata()
 
