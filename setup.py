@@ -10,6 +10,6 @@ setup(name = 'xrit',
       package_dir = {'xrit': 'xrit'},
       packages = ['xrit'],
       ext_modules = [ext,],
-      test_suite = 'nose.collector',
-      tests_require = ['nose>=0.11'],
+#      test_suite = 'nose.collector',
+#      tests_require = ['nose>=0.11'],
       )
