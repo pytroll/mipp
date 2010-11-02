@@ -1,0 +1,21 @@
+boundaries: [[1, 3712, 1, 3712]]
+calibration_unit: K
+center: (9.5060013230464353, 1.360922049758422)
+channel: IR_108
+data_type: 16
+image_size: [900, 300]
+instruments: ('seviri',)
+is_calibrated: True
+navigation: sublon=0.00 cfac=13642337 lfac=13642337 coff=100 loff=200
+no_data_value: 0
+pixel_size: [3000.403076171875, 3000.403076171875]
+product_name: MSG2_IR_108_000004_20101011_1400
+product_type: full disc
+production_time: 2010-10-11 14:15:10.623000
+proj4_params: proj=geos lon_0=0.00 lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00
+projection: geos(0.0)
+region_name: sliced
+satname: meteosat09
+satnumber: 09
+sublon: 0.0
+time_stamp: 2010-10-11 14:00:00

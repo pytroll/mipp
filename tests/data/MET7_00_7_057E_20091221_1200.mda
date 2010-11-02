@@ -1,0 +1,22 @@
+calibration_name: 
+calibration_table: None
+calibration_unit: 
+center: (57.0, 2.0342562015807721)
+channel: 00_7
+data_type: 8
+image_size: [1000, 600]
+instruments: ('mviri',)
+is_calibrated: False
+navigation: sublon=57.00 cfac=18204444 lfac=18204444 coff=500 loff=400
+no_data_value: 0
+pixel_size: [2248.489990234375, 2248.489990234375]
+product_name: MET7_00_7_057E_20091221_1200
+product_type: PVISBAN
+production_time: 2009-12-21 11:36:00
+proj4_params: proj=geos lon_0=57.00 lat_0=0.00 a=6378140.00 b=6356755.00 h=35785831.00
+projection: geos(57.0)
+region_name: sliced
+satname: meteosat07
+satnumber: 07
+sublon: 57.0
+time_stamp: 2009-12-21 12:00:00

@@ -1,5 +1,5 @@
 #!/bin/sh
 cd $(dirname $0)
 python setup.py build
-echo "nosetests -w tests"
-nosetests -w tests
+echo "nosetests "$1" -w tests"
+nosetests "$1" -w tests

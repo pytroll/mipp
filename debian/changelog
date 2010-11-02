@@ -1,3 +1,11 @@
+python-mipp (0.2-9) unstable; urgency=low
+
+  * Fixed bug in sat.py, mda.data_type is now correct
+  * mda.py more stable
+  * Now also test for metadata
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 02 Nov 2010 15:06:00 +0000
+
 python-mipp (0.2-8) unstable; urgency=low
 
   * Added option for 'no data' value for MTSAT data.
