@@ -216,7 +216,7 @@ class ImageLoader(object):
         else:
             raise xrit.SatReaderError("unknown data type: %d bit per pixel"
                                       %mda.data_type)
-
+        mda.data_type = data_type_len
 
         #
         # Calculate initial and final line and column.

@@ -4,7 +4,7 @@
 import numpy
 
 class Metadata(object):
-    token = ': '
+    token = ':'
     def read(self, file_name):
         """Read until empty line, 'EOH' or 'EOF'.
         """
@@ -20,10 +20,11 @@ class Metadata(object):
                     # just a comment
                     continue
                 k, v = [s.strip() for s in line.split(self.token, 1)]
-                try:
-                    v = eval(v)
-                except:
-                    pass
+                if k != 'satnumber': # eval handles octal numbers (09 != 9)
+                    try:
+                        v = eval(v)
+                    except:
+                        pass
                 if k:
                     setattr(self, k, v)
         finally:
@@ -40,10 +41,10 @@ class Metadata(object):
         s = ''
         for k in keys:
             v = getattr(self, k)
-            if k[0] != '_' and k != 'image_data':
+            if k[0] != '_' and k != 'image_data' and k != 'calibrate':
                 if type(v) == numpy.ndarray:
                     v = v.tolist()
-                s += k + self.token + str(v) + '\n'
+                s += k + self.token + ' ' + str(v) + '\n'
         return s[:-1]
 
 if __name__ == '__main__':

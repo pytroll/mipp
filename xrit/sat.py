@@ -1,7 +1,6 @@
 #
 # $Id$ 
 #
-import sys
 import numpy
 import glob
 import imp
