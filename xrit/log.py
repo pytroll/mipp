@@ -9,7 +9,7 @@ import os
 import sys
 from logging import *
 
-__all__ = ['logger',]
+__all__ = ['logger', 'set_logger']
 
 loglevels = {'CRITICAL': CRITICAL,
              'ERROR': ERROR,
@@ -46,6 +46,12 @@ handler.setFormatter(Formatter(format))
 logger = getLogger(name)
 logger.setLevel(loglevel)
 logger.addHandler(handler)
+
+def set_logger(other_logger):
+    """Overwrite default logger
+    """
+    global logger
+    logger = other_logger
 
 #-----------------------------------------------------------------------------
 
