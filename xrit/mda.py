@@ -7,7 +7,6 @@ class Metadata(object):
     token = ':'
     _ignore_attributes = ('image_data', 'calibrate')
     _dont_eval = ('satnumber',)
-
     def read(self, file_name):
         """Read until empty line, 'EOH' or 'EOF'.
         """
