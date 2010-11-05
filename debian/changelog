@@ -1,3 +1,9 @@
+python-mipp (0.2-10) unstable; urgency=low
+
+  * Now method to overwrite deafult logger.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Fri, 05 Nov 2010 09:26:47 +0000
+
 python-mipp (0.2-9) unstable; urgency=low
 
   * Fixed bug in sat.py, mda.data_type is now correct
