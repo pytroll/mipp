@@ -1,3 +1,9 @@
+python-mipp (0.2-11) unstable; urgency=low
+
+  * Pulled Esbens mods for "don't do any fancy operations on masked arrays"
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 09 Nov 2010 14:35:38 +0000
+
 python-mipp (0.2-10) unstable; urgency=low
 
   * Now method to overwrite deafult logger.
