@@ -107,14 +107,14 @@ class _Calibrator:
         cal_type = (hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
         chn_nb = channels[self.md.channel] - 1
 
-        img = np.ma.MaskedArray(image,
-                                mask=(image == self.md.no_data_value))
-
-        radiances = (img *
+        mask = (image == self.md.no_data_value)
+        
+        radiances = (image *
                      hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope'] +
                      hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset'])
-        radiances = np.where(radiances < 0.0, 0.0, radiances)
-
+        
+        radiances[radiances < 0.0] = 0.0
+        
         if self.md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
             solar_irradiance = eval(self.md.channel + "_F")
             return radiances / solar_irradiance * 100.
@@ -124,6 +124,7 @@ class _Calibrator:
             #computation based on effective radiance
             alpha = eval("ALPHA_" + self.md.channel)
             beta = eval("BETA_" + self.md.channel)
+            
             cal_data = (((C2 * 100. * wavenumber /
                           np.log(C1 * 1.0e6 * wavenumber ** 3 /
                                  (1.0e-5 * radiances) + 1)) -
@@ -141,7 +142,8 @@ class _Calibrator:
 
         else:
             raise RuntimeError("Something is seriously wrong in the metadata.")
-
+        
+        cal_data = np.ma.MaskedArray(cal_data, mask=mask)
         return cal_data
 
 def read_proheader(fp):
