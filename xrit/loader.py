@@ -27,7 +27,7 @@ def _null_converter(blob):
 class ImageLoader(object):
     
     def __init__(self, mda, image_files, mask=False, calibrate=False):
-        self.mda = copy.copy(mda)
+        self.mda = mda
         self.image_files = image_files
         self.do_mask = mask        
         self.do_calibrate = calibrate
@@ -129,6 +129,7 @@ class ImageLoader(object):
         if (rows != self._allrows) or (columns != self._allcolumns):
             mda.region_name = 'sliced'
 
+        mda.data_type = 8*image.itemsize
         mda.image_size = numpy.array([image.shape[1], image.shape[0]])
         mda.navigation.loff -= rows.start
         mda.navigation.coff -= columns.start
@@ -181,8 +182,10 @@ class ImageLoader(object):
             region.rows.start < 0 or
             region.rows.stop > self.mda.image_size[1]):
             raise IndexError("index out of range")
-            
-        mda = self.mda
+
+        # copy meta data,
+        # then the same loader can be called several times for different slicing.
+        mda = copy.copy(self.mda)
         image_files = self.image_files
         
         #
@@ -216,7 +219,6 @@ class ImageLoader(object):
         else:
             raise xrit.SatReaderError("unknown data type: %d bit per pixel"
                                       %mda.data_type)
-        mda.data_type = data_type_len
 
         #
         # Calculate initial and final line and column.
