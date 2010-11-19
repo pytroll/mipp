@@ -55,6 +55,7 @@ class Test(unittest.TestCase):
         loader = xrit.sat.load_files(goes_files[0], goes_files[1:], calibrate=True)
         mda, img = loader[1308:1508,1308:1508]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
         self.assertTrue(str(mda) == str(mdac), msg='GOES metadata differ')
@@ -65,6 +66,7 @@ class Test(unittest.TestCase):
         loader = xrit.sat.load_files(mtsat_files[0], mtsat_files[1:], calibrate=True)
         mda, img = loader[1276:1476,1276:1476]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
         self.assertTrue(str(mda) == str(mdac), msg='MTSAT metadata differ')
@@ -85,6 +87,7 @@ class Test(unittest.TestCase):
         loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], calibrate=True)
         mda, img = loader[1756:2056,1056:1956]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
         self.assertTrue(str(mda) == str(mdac), msg='MSG metadata differ')
@@ -95,6 +98,7 @@ class Test(unittest.TestCase):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
         mda, img = loader[5368:5968,5068:6068]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
         self.assertTrue(str(mda) == str(mdac), msg='MSG-HRV metadata differ')
