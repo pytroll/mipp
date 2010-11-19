@@ -87,10 +87,16 @@ class _Calibrator:
         self.md = md
         
     def __call__(self, image, calibrate=1):
-        """Computes the radiances and reflectances/bt of a given channel.
+        """Computes the radiances and reflectances/bt of a given channel.  The
+        *calibrate* argument should be set to 0 for no calibration, 1 for
+        default reflectances/bt calibration, and 2 for returning radiances. The
+        default value is 1.
         """
         hdr = self.hdr
-        
+
+        if calibrate == 0:
+            return image
+
         channels = {"VIS006": 1,
                     "VIS008": 2,
                     "IR_016": 3,
@@ -114,6 +120,9 @@ class _Calibrator:
                      hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset'])
         
         radiances[radiances < 0.0] = 0.0
+
+        if calibrate == 2:
+            return radiances
         
         if self.md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
             solar_irradiance = eval(self.md.channel + "_F")
