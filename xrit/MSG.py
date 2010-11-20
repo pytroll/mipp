@@ -639,7 +639,7 @@ def read_metadata(prologue, image_files, epilogue):
     
     md.sublon = hdr["SatelliteDefinition"]["NominalLongitude"]
     im = xrit.read_imagedata(image_files[0])
-    md.product_name = str(im)
+    md.product_name = im.product_id
     md.channel = im.product_name
     if md.channel == "HRV":
         md.image_size = np.array((hdr["ReferenceGridHRV"]["NumberOfLines"],
