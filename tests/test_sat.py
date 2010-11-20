@@ -37,6 +37,11 @@ hrv_files = [datadir + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111
              datadir + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
 hrv_sum = 11328375.846757833
 
+hrv2_files = [datadir + '/H-000-MSG2__-MSG2________-_________-PRO______-201011091200-__',
+              datadir + '/H-000-MSG2__-MSG2________-HRV______-000018___-201011091200-__',
+              datadir + '/H-000-MSG2__-MSG2________-_________-EPI______-201011091200-__']
+hrv2_sum = 44049725.5234
+
 def make_image(mda, img, outdir='.'):
     if not os.environ.has_key('DEBUG'):
         return
@@ -97,6 +102,7 @@ class Test(unittest.TestCase):
     def test_hrv(self):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
         mda, img = loader[5368:5968,5068:6068]
+        print 'xxx', mda.product_name
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -104,6 +110,17 @@ class Test(unittest.TestCase):
         self.assertTrue(str(mda) == str(mdac), msg='MSG-HRV metadata differ')
         self.assertTrue(img.shape == (600, 1000), msg='MSG-HRV image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, hrv_sum, 3, msg='MSG-HRV image reading/slicing failed')
+
+    def test_hrv2(self):
+        loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
+        mda, img = loader[7900:8350, 1390:10388]
+        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac.data_type = 8*img.itemsize
+        cross_sum = img.sum()
+        make_image(mda, img)
+        self.assertTrue(str(mda) == str(mdac), msg='MSG-HRV metadata differ')
+        self.assertTrue(img.shape == (450, 8998), msg='MSG-HRV image reading/slicing failed, wrong shape')
+        self.failUnlessAlmostEqual(cross_sum, hrv2_sum, 3, msg='MSG-HRV image reading/slicing failed')
 
 if __name__ == '__main__':
     import nose

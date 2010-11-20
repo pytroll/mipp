@@ -1,0 +1,21 @@
+boundaries: [[1, 8128, 1, 5568], [8129, 11136, 1860, 7427]]
+calibration_unit: %
+center: (-3.2129970573343214, 24.240768396985857)
+channel: HRV
+data_type: 64
+image_size: [8998, 450]
+instruments: ('seviri',)
+is_calibrated: True
+navigation: sublon=0.00 cfac=40927014 lfac=40927014 coff=4820 loff=2782
+no_data_value: 0
+pixel_size: [1000.1343383789062, 1000.1343383789062]
+product_name: MSG2_HRV_20101109_1200
+product_type: full disc
+production_time: 2010-11-09 12:15:10.269000
+proj4_params: proj=geos lon_0=0.00 lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00
+projection: geos(0.0)
+region_name: sliced
+satname: meteosat09
+satnumber: 09
+sublon: 0.0
+time_stamp: 2010-11-09 12:00:00
