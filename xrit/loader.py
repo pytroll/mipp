@@ -37,6 +37,8 @@ class ImageLoader(object):
         self.region = _Region(self._allrows, self._allcolumns)
 
     def __getitem__(self, item):
+        # make a copy of meta-data, so ImageLoader instance can be reused.
+        mda = copy.copy(self.mda)
         if isinstance(item, slice):
             # specify rows and all columns
             rows, columns = item, self._allcolumns
@@ -66,11 +68,11 @@ class ImageLoader(object):
             raise IndexError("Currently we don't support steps different from one")
         
 
-        ns_ = self.mda.first_pixel.split()[0]
-        ew_ = self.mda.first_pixel.split()[1]
+        ns_ = mda.first_pixel.split()[0]
+        ew_ = mda.first_pixel.split()[1]
 
-        if not hasattr(self.mda, "boundaries"):
-            mda, image = self._read(_Region(rows, columns))
+        if not hasattr(mda, "boundaries"):
+            image = self._read(_Region(rows, columns), mda)
 
         else:
             #
@@ -82,7 +84,7 @@ class ImageLoader(object):
             offset = 0
             offset_position = 0
 
-            for region in (self.mda.boundaries - 1):
+            for region in (mda.boundaries - 1):
                 offset += region[0] - offset_position
                 offset_position = region[1] + 1
 
@@ -100,7 +102,7 @@ class ImageLoader(object):
                               min(rows.stop, rlines.stop) - offset)
                 cols =  slice(max(columns.start, rcols.start) - rcols.start,
                               min(columns.stop, rcols.stop) - rcols.start)
-                mda, rdata = self._read(_Region(lines, cols))
+                rdata = self._read(_Region(lines, cols), mda)
                 lines = slice(max(rows.start, rlines.start) - rows.start,
                               min(rows.stop, rlines.stop) - rows.start)
                 cols =  slice(max(columns.start, rcols.start) - columns.start,
@@ -176,16 +178,15 @@ class ImageLoader(object):
         return self[rows, columns]
 
 
-    def _read(self, region):
+    def _read(self, region, mda):
         if (region.columns.start < 0 or
-            region.columns.stop > self.mda.image_size[0] or
+            region.columns.stop > mda.image_size[0] or
             region.rows.start < 0 or
-            region.rows.stop > self.mda.image_size[1]):
+            region.rows.stop > mda.image_size[1]):
             raise IndexError("index out of range")
 
         # copy meta data,
         # then the same loader can be called several times for different slicing.
-        mda = copy.copy(self.mda)
         image_files = self.image_files
         
         #
@@ -367,5 +368,5 @@ class ImageLoader(object):
             image = numpy.ma.masked_equal(image,
                                           mda.no_data_value,
                                           copy=False)
-        return mda, image
+        return image
 
