@@ -81,7 +81,7 @@ class Test(unittest.TestCase):
     def test_met7(self):
         loader = xrit.sat.load_files(met7_files[0], met7_files[1:], calibrate=False)
         print 'met7', loader.mda.first_pixel
-        mda, img = loader._getitem((slice(2300,2900), slice(2000,3000)))
+        mda, img = loader.raw_slicing((slice(2300,2900), slice(2000,3000)))
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         cross_sum = img.sum()
         make_image(mda, img)
@@ -92,7 +92,7 @@ class Test(unittest.TestCase):
     def test_msg(self):
         loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], calibrate=True)
         print 'msg', loader.mda.first_pixel
-        mda, img = loader._getitem((slice(1756,2056), slice(1056,1956)))
+        mda, img = loader.raw_slicing((slice(1756,2056), slice(1056,1956)))
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -104,7 +104,7 @@ class Test(unittest.TestCase):
     def test_hrv(self):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
         print 'hrv', loader.mda.first_pixel
-        mda, img = loader._getitem((slice(5368,5968), slice(5068,6068)))
+        mda, img = loader.raw_slicing((slice(5368,5968), slice(5068,6068)))
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -115,7 +115,7 @@ class Test(unittest.TestCase):
 
     def test_hrv2(self):
         loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
-        mda, img = loader._getitem((slice(7900,8350), slice(1390,10388)))
+        mda, img = loader.raw_slicing((slice(7900,8350), slice(1390,10388)))
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()

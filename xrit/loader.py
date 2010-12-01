@@ -36,18 +36,8 @@ class ImageLoader(object):
         self._allcolumns = slice(0, self.mda.image_size[0])        
         self.region = _Region(self._allrows, self._allcolumns)
 
-    def __getitem__(self, item):
-        # Note: if needed it will return the rotated image.
-        rows, columns = self._handle_item(item)
-        ns_ = self.mda.first_pixel.split()[0]
-        ew_ = self.mda.first_pixel.split()[1]
-        if ns_ == 'south':
-            rows = slice(self.mda.image_size[1] - rows.stop, self.mda.image_size[1] - rows.start)
-        if ew_ == 'east':
-            columns = slice(self.mda.image_size[0] - columns.stop, self.mda.image_size[0] - columns.start)             
-        return self._getitem((rows, columns))
-
-    def _getitem(self, item):
+    def raw_slicing(self, item):
+        # Note: raw slicing, not rotation is done.
         # make a copy of meta-data, so ImageLoader instance can be reused.
         mda = copy.copy(self.mda)
         rows, columns = self._handle_item(item)
@@ -147,6 +137,35 @@ class ImageLoader(object):
 
         return mda, image
     
+    def __getitem__(self, item):
+        # Note: if needed, image will be rotated.
+        rows, columns = self._handle_item(item)
+        ns_ = self.mda.first_pixel.split()[0]
+        ew_ = self.mda.first_pixel.split()[1]
+        if ns_ == 'south':
+            rows = slice(self.mda.image_size[1] - rows.stop, self.mda.image_size[1] - rows.start)
+        if ew_ == 'east':
+            columns = slice(self.mda.image_size[0] - columns.stop, self.mda.image_size[0] - columns.start)             
+        return self.raw_slicing((rows, columns))
+
+    def __call__(self, center=None, size=None):
+        if center and size:
+            try:
+                px = self.mda.navigation.pixel(center)
+            except xrit.NavigationError:
+                raise xrit.SatReaderError("center for slice is outside image")
+            columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
+            rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
+        elif bool(center) ^ bool(size):
+            raise xrit.SatReaderError("when slicing, if center or size are"
+                                      " specified, both has to be specified"
+                                      " ... please")
+        else:
+            rows = self._allrows
+            columns = self._allcolumns
+
+        return self.raw_slicing((rows, columns))
+
     def _handle_item(self, item):
         if isinstance(item, slice):
             # specify rows and all columns
@@ -177,24 +196,6 @@ class ImageLoader(object):
             raise IndexError("Currently we don't support steps different from one")
 
         return rows, columns
-
-    def __call__(self, center=None, size=None):
-        if center and size:
-            try:
-                px = self.mda.navigation.pixel(center)
-            except xrit.NavigationError:
-                raise xrit.SatReaderError("center for slice is outside image")
-            columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
-            rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
-        elif bool(center) ^ bool(size):
-            raise xrit.SatReaderError("when slicing, if center or size are"
-                                      " specified, both has to be specified"
-                                      " ... please")
-        else:
-            rows = self._allrows
-            columns = self._allcolumns
-
-        return self._getitem((rows, columns))
 
     def _read(self, region, mda):
         if (region.columns.start < 0 or
