@@ -88,13 +88,8 @@ class SatelliteLoader(object):
         if not image_files:
             raise xrit.SatNoFiles("no data files: '%s'"%(time_stamp.strftime(opt['filename'])%val))
         image_files.sort()
-        str = 'Files:\n'
-        str += '    ' + prologue + '\n'
-        for f in image_files:
-            str += '    ' + f + '\n'
-        str = str[:-1]
-        logger.info(str)
 
+        logger.info("Read %s"%prologue)
         prologue = xrit.read_prologue(prologue)
 
         # Epilogue
@@ -109,6 +104,7 @@ class SatelliteLoader(object):
             logger.info("No epilogue file to read.")
         else:
             epilogue = epilogue[0]
+            logger.info("Read %s"%epilogue)
             epilogue = xrit.read_epilogue(epilogue)
             return self.load_files(prologue, image_files,
                                    epilogue=epilogue, **kwarg)
@@ -170,8 +166,10 @@ class SatelliteLoader(object):
 #-----------------------------------------------------------------------------
 def load_files(prologue, image_files, epilogue=None, **kwarg):
     if type(prologue) == type('string'):
+        logger.info("Read %s"%prologue)
         prologue = xrit.read_prologue(prologue)
     if epilogue and type(epilogue) == type('string'):
+        logger.info("Read %s"%epilogue)
         epilogue = xrit.read_epilogue(epilogue)
     satname = prologue.platform.lower()
     return SatelliteLoader(xrit.cfg.read_config(satname)).load_files(prologue, 
