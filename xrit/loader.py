@@ -37,36 +37,20 @@ class ImageLoader(object):
         self.region = _Region(self._allrows, self._allcolumns)
 
     def __getitem__(self, item):
+        # Note: if needed it will return the rotated image.
+        rows, columns = self._handle_item(item)
+        ns_ = self.mda.first_pixel.split()[0]
+        ew_ = self.mda.first_pixel.split()[1]
+        if ns_ == 'south':
+            rows = slice(self.mda.image_size[1] - rows.stop, self.mda.image_size[1] - rows.start)
+        if ew_ == 'east':
+            columns = slice(self.mda.image_size[0] - columns.stop, self.mda.image_size[0] - columns.start)             
+        return self._getitem((rows, columns))
+
+    def _getitem(self, item):
         # make a copy of meta-data, so ImageLoader instance can be reused.
         mda = copy.copy(self.mda)
-        if isinstance(item, slice):
-            # specify rows and all columns
-            rows, columns = item, self._allcolumns
-        elif isinstance(item, int):
-            # specify one row and all columns
-            rows, columns = slice(item, item + 1), self._allcolumns
-        elif isinstance(item, tuple):
-            # both row and column are specified 
-            if len(item) != 2:
-                raise IndexError("too many indexes")
-            rows, columns = item
-            if isinstance(rows, int):
-                rows = slice(item[0], item[0] + 1)
-            if isinstance(columns, int):
-                columns = slice(item[1], item[1] + 1)
-        else:
-            raise IndexError("don't understand the indexes")
-
-        # take care of [:]
-        if rows.start == None:
-            rows = self._allrows
-        if columns.start == None:
-            columns = self._allcolumns
-            
-        if (rows.step != 1 and rows.step != None) or \
-               (columns.step != 1 and columns.step != None):
-            raise IndexError("Currently we don't support steps different from one")
-        
+        rows, columns = self._handle_item(item)
 
         ns_ = mda.first_pixel.split()[0]
         ew_ = mda.first_pixel.split()[1]
@@ -124,10 +108,13 @@ class ImageLoader(object):
 
                 image[lines, cols] = rdata
 
+        if not hasattr(image, 'shape'):
+            logger.warning("Produced no image")
+            return None, None
+
         #
         # Update meta-data
         #
-
         if (rows != self._allrows) or (columns != self._allcolumns):
             mda.region_name = 'sliced'
 
@@ -137,6 +124,7 @@ class ImageLoader(object):
         mda.navigation.coff -= columns.start
         if ew_ == "east":
             # rotate 180 degrees
+            logger.debug("Rotating image 180 degrees")
             mda.navigation.loff = mda.image_size[1] - mda.navigation.loff
             mda.navigation.coff = mda.image_size[0] - mda.navigation.coff
             mda.navigation.cfac *= -1
@@ -159,6 +147,37 @@ class ImageLoader(object):
 
         return mda, image
     
+    def _handle_item(self, item):
+        if isinstance(item, slice):
+            # specify rows and all columns
+            rows, columns = item, self._allcolumns
+        elif isinstance(item, int):
+            # specify one row and all columns
+            rows, columns = slice(item, item + 1), self._allcolumns
+        elif isinstance(item, tuple):
+            # both row and column are specified 
+            if len(item) != 2:
+                raise IndexError("too many indexes")
+            rows, columns = item
+            if isinstance(rows, int):
+                rows = slice(item[0], item[0] + 1)
+            if isinstance(columns, int):
+                columns = slice(item[1], item[1] + 1)
+        else:
+            raise IndexError("don't understand the indexes")
+
+        # take care of [:]
+        if rows.start == None:
+            rows = self._allrows
+        if columns.start == None:
+            columns = self._allcolumns
+            
+        if (rows.step != 1 and rows.step != None) or \
+               (columns.step != 1 and columns.step != None):
+            raise IndexError("Currently we don't support steps different from one")
+
+        return rows, columns
+
     def __call__(self, center=None, size=None):
         if center and size:
             try:
@@ -175,8 +194,7 @@ class ImageLoader(object):
             rows = self._allrows
             columns = self._allcolumns
 
-        return self[rows, columns]
-
+        return self._getitem((rows, columns))
 
     def _read(self, region, mda):
         if (region.columns.start < 0 or
@@ -315,6 +333,7 @@ class ImageLoader(object):
                 #
                 # Data for this segment.
                 #
+                logger.info("Read %s"%seg_file)
                 seg = xrit.read_imagedata(seg_file)
             
                 #
