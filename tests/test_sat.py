@@ -91,8 +91,7 @@ class Test(unittest.TestCase):
 
     def test_msg(self):
         loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], calibrate=True)
-        print 'msg', loader.mda.first_pixel
-        mda, img = loader.raw_slicing((slice(1756,2056), slice(1056,1956)))
+        mda, img = loader[1656:1956,1756:2656]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -104,7 +103,7 @@ class Test(unittest.TestCase):
     def test_hrv(self):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
         print 'hrv', loader.mda.first_pixel
-        mda, img = loader.raw_slicing((slice(5368,5968), slice(5068,6068)))
+        mda, img = loader[5168:5768,5068:6068]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -115,7 +114,7 @@ class Test(unittest.TestCase):
 
     def test_hrv2(self):
         loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
-        mda, img = loader.raw_slicing((slice(7900,8350), slice(1390,10388)))
+        mda, img = loader[2786:3236,748:9746]
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
