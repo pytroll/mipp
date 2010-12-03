@@ -124,10 +124,13 @@ class ImageLoader(object):
 
                 image[lines, cols] = rdata
 
+        if not hasattr(image, 'shape'):
+            logger.warning("Produced no image")
+            return None, None
+
         #
         # Update meta-data
         #
-
         if (rows != self._allrows) or (columns != self._allcolumns):
             mda.region_name = 'sliced'
 
@@ -137,6 +140,7 @@ class ImageLoader(object):
         mda.navigation.coff -= columns.start
         if ew_ == "east":
             # rotate 180 degrees
+            logger.debug("Rotating image 180 degrees")
             mda.navigation.loff = mda.image_size[1] - mda.navigation.loff
             mda.navigation.coff = mda.image_size[0] - mda.navigation.coff
             mda.navigation.cfac *= -1
@@ -315,6 +319,7 @@ class ImageLoader(object):
                 #
                 # Data for this segment.
                 #
+                logger.info("Read %s"%seg_file)
                 seg = xrit.read_imagedata(seg_file)
             
                 #
