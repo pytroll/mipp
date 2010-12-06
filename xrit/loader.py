@@ -369,6 +369,12 @@ class ImageLoader(object):
             seg_no += 1
 
         #
+        # Compute mask before calibration
+        #
+
+        mask = (image ==  mda.no_data_value)
+
+        #
         # Calibrate ?
         #
         mda.is_calibrated = False
@@ -385,8 +391,7 @@ class ImageLoader(object):
         # With or without mask ?
         #
         if self.do_mask:
-            image = numpy.ma.masked_equal(image,
-                                          mda.no_data_value,
-                                          copy=False)
+            image = numpy.ma.array(image, mask=mask, copy=False)
+            
         return image
 
