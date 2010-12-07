@@ -87,7 +87,7 @@ class ImageLoader(object):
                                          dtype=rdata.dtype)
                              + mda.no_data_value)
                     if self.do_mask:
-                        image = numpy.ma.array(image)
+                        image = numpy.ma.masked_all_like(image)
 
                 if ns_ == "south":
                     lines = slice(image.shape[0] - lines.stop,
@@ -95,7 +95,8 @@ class ImageLoader(object):
                 if ew_ == "east":
                     cols = slice(image.shape[1] - cols.stop,
                                  image.shape[1] - cols.start)
-
+                if self.do_mask:
+                    image.mask[lines, cols] = rdata.mask
                 image[lines, cols] = rdata
 
         if not hasattr(image, 'shape'):
