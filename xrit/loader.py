@@ -89,7 +89,7 @@ class ImageLoader(object):
                                          dtype=rdata.dtype)
                              + mda.no_data_value)
                     if self.do_mask:
-                        image = numpy.ma.array(image)
+                        image = numpy.ma.masked_all_like(image)
 
                 if ns_ == "south":
                     lines = slice(image.shape[0] - lines.stop,
@@ -97,7 +97,8 @@ class ImageLoader(object):
                 if ew_ == "east":
                     cols = slice(image.shape[1] - cols.stop,
                                  image.shape[1] - cols.start)
-
+                if self.do_mask:
+                    image.mask[lines, cols] = rdata.mask
                 image[lines, cols] = rdata
 
         if not hasattr(image, 'shape'):
@@ -371,6 +372,12 @@ class ImageLoader(object):
             seg_no += 1
 
         #
+        # Compute mask before calibration
+        #
+
+        mask = (image ==  mda.no_data_value)
+
+        #
         # Calibrate ?
         #
         mda.is_calibrated = False
@@ -387,8 +394,7 @@ class ImageLoader(object):
         # With or without mask ?
         #
         if self.do_mask:
-            image = numpy.ma.masked_equal(image,
-                                          mda.no_data_value,
-                                          copy=False)
+            image = numpy.ma.array(image, mask=mask, copy=False)
+            
         return image
 

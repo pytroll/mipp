@@ -22,6 +22,19 @@ __all__ = ['read_prologue',
            'decompress',
            'list']
 
+
+if sys.version_info < (2, 5):
+    import time
+    def strptime(s, fmt=None):
+        """This function is available in the datetime module only
+        from Python >= 2.5.
+        """
+
+        return datetime(*time.strptime(s, fmt)[:6])
+else:
+    strptime = datetime.strptime
+
+
 def decompress(infile, outdir='.'):
     """Will decompress a XRIT data file and return the path to the decompressed file.
     It expect to find Eumetsat's xRITDecompress through the environment variable XRIT_DECOMPRESS_PATH 
@@ -131,7 +144,7 @@ class AnnotationHeader(object):
         self.platform = a[3]
         self.product_name = a[4]
         self.segment_name = a[5]
-        self.time_stamp = datetime.strptime(a[6], "%Y%m%d%H%M")
+        self.time_stamp = strptime(a[6], "%Y%m%d%H%M")
         self.flags = a[7]
         self.segment_id = a[3] + '_' + a[4] + '_' + a[5] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
         self.product_id = a[3] + '_' + a[4] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
