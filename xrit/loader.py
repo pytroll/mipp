@@ -37,7 +37,9 @@ class ImageLoader(object):
         self.region = _Region(self._allrows, self._allcolumns)
 
     def raw_slicing(self, item):
-        # Note: raw slicing, not rotation is done.
+        # note: raw slicing, no rotation is done.
+        # all data reading should end up here.
+
         # make a copy of meta-data, so ImageLoader instance can be reused.
         mda = copy.copy(self.mda)
         rows, columns = self._handle_item(item)
@@ -138,7 +140,7 @@ class ImageLoader(object):
         return mda, image
     
     def __getitem__(self, item):
-        # Note: if needed, image will be rotated.
+        # note: the default slicing handle a rotated image. 
         rows, columns = self._handle_item(item)
         ns_ = self.mda.first_pixel.split()[0]
         ew_ = self.mda.first_pixel.split()[1]
