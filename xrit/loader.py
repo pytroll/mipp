@@ -169,15 +169,34 @@ class ImageLoader(object):
         return self.raw_slicing((rows, columns))
 
     def area_extent(self, area_extent):
-        # slice according to (ll_x, ll_y, ur_x, ur_y)        
-        lx, ly, ux, uy = area_extent
-        sx, sy = self.mda.image_size
-        rx, ry = self.mda.pixel_size
-        rows = slice((sy - 1) - int(round(uy/ry + sy/2.)),
-                     (sy - 1) - int(round(ly/ry + sy/2.)))
-        columns = slice(int(round(lx/rx + sx/2.)),
-                        int(round(ux/rx + sx/2.)))
-        return self.__getitem__((rows, columns))
+        """Slice according to (ll_x, ll_y, ur_x, ur_y).
+        """
+        ns_, ew_ = self.mda.first_pixel.split()
+
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - self.mda.loff
+        else:
+            loff = self.mda.loff
+
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - self.mda.coff
+        else:
+            coff = self.mda.coff
+            
+        line_size = self.mda.pixel_size[0]
+        col_size = self.mda.pixel_size[1]
+        
+        col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
+        line_end = int(numpy.round(area_extent[1] / -line_size + loff - 0.5))
+        col_end = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
+        line_start = int(numpy.round(area_extent[3] / -line_size + loff + 0.5))
+
+        self.mda.actual_area_extent = ((col_start - coff - 0.5) * col_size,
+                                       (line_end - loff + 0.5) * -line_size,
+                                       (col_end - coff + 0.5) * col_size,
+                                       (line_start - loff - 0.5) * -line_size)
+
+        return self[line_start:line_end + 1, col_start:col_end + 1]
 
     def _handle_item(self, item):
         if isinstance(item, slice):

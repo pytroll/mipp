@@ -652,6 +652,7 @@ def read_metadata(prologue, image_files, epilogue):
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
     md.region_name = 'full disc'
+    ns_, ew_ = md.first_pixel.split()
     if md.channel == "HRV":
         md.first_pixel = hdr["ReferenceGridHRV"]["GridOrigin"]
         md.boundaries = np.array([[
@@ -663,6 +664,13 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["UpperNorthLineActual"],
             ftr["UpperEastColumnActual"],
             ftr["UpperWestColumnActual"]]])
+        md.coff = (min(ftr["Lower"+ew_.capitalize()+"ColumnActual"],
+                       ftr["Upper"+ew_.capitalize()+"ColumnActual"])
+                   + im.navigation.coff - 1)
+        md.loff = (min(ftr["Lower"+ns_.capitalize()+"LineActual"],
+                       ftr["Upper"+ns_.capitalize()+"LineActual"])
+                   + im.navigation.loff - 1)
+        
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
         md.boundaries = np.array([[
@@ -670,6 +678,11 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["NorthernLineActual"],
             ftr["EasternColumnActual"],
             ftr["WesternColumnActual"]]])
+
+        md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
+                   + im.navigation.coff - 1)
+        md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
+                   + im.navigation.loff - 1)
 
     if md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
         md.calibration_unit = "%"
