@@ -651,9 +651,9 @@ def read_metadata(prologue, image_files, epilogue):
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
     md.region_name = 'full disc'
-    ns_, ew_ = md.first_pixel.split()
     if md.channel == "HRV":
         md.first_pixel = hdr["ReferenceGridHRV"]["GridOrigin"]
+        ns_, ew_ = md.first_pixel.split()
         md.boundaries = np.array([[
             ftr["LowerSouthLineActual"],
             ftr["LowerNorthLineActual"],
@@ -672,6 +672,7 @@ def read_metadata(prologue, image_files, epilogue):
         
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
+        ns_, ew_ = md.first_pixel.split()
         md.boundaries = np.array([[
             ftr["SouthernLineActual"],
             ftr["NorthernLineActual"],
