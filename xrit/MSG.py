@@ -392,7 +392,6 @@ def read_proheader(fp):
     covvisir["WesternColumnPlanned"] = read_int4(fp.read(4))
 
     hdr["PlannedCoverageVIS_IR"] = covvisir
-
     
     # PlannedCoverageHRV
 

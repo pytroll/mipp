@@ -37,6 +37,8 @@ class ImageLoader(object):
         self.region = _Region(self._allrows, self._allcolumns)
 
     def raw_slicing(self, item):
+        """Raw slicing, no rotation is done.
+        """
         # note: raw slicing, no rotation is done.
         # all data reading should end up here.
 
@@ -146,9 +148,11 @@ class ImageLoader(object):
         ns_ = self.mda.first_pixel.split()[0]
         ew_ = self.mda.first_pixel.split()[1]
         if ns_ == 'south':
-            rows = slice(self.mda.image_size[1] - rows.stop, self.mda.image_size[1] - rows.start)
+            rows = slice(self.mda.image_size[1] - rows.stop,
+                         self.mda.image_size[1] - rows.start)
         if ew_ == 'east':
-            columns = slice(self.mda.image_size[0] - columns.stop, self.mda.image_size[0] - columns.start)             
+            columns = slice(self.mda.image_size[0] - columns.stop,
+                            self.mda.image_size[0] - columns.start)             
         return self.raw_slicing((rows, columns))
 
     def __call__(self, center=None, size=None):
@@ -199,6 +203,8 @@ class ImageLoader(object):
         return self[line_start:line_end + 1, col_start:col_end + 1]
 
     def _handle_item(self, item):
+        """Transform item into slice(s).
+        """
         if isinstance(item, slice):
             # specify rows and all columns
             rows, columns = item, self._allcolumns
