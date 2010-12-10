@@ -166,8 +166,18 @@ class ImageLoader(object):
         else:
             rows = self._allrows
             columns = self._allcolumns
-
         return self.raw_slicing((rows, columns))
+
+    def area_extent(self, area_extent):
+        # slice according to (ll_x, ll_y, ur_x, ur_y)        
+        lx, ly, ux, uy = area_extent
+        sx, sy = self.mda.image_size
+        rx, ry = self.mda.pixel_size
+        rows = slice((sy - 1) - int(round(uy/ry + sy/2.)),
+                     (sy - 1) - int(round(ly/ry + sy/2.)))
+        columns = slice(int(round(lx/rx + sx/2.)),
+                        int(round(ux/rx + sx/2.)))
+        return self.__getitem__((rows, columns))
 
     def _handle_item(self, item):
         if isinstance(item, slice):
