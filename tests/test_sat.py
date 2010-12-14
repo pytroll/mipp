@@ -59,6 +59,7 @@ class Test(unittest.TestCase):
     def test_goes(self):
         loader = xrit.sat.load_files(goes_files[0], goes_files[1:], calibrate=True)
         mda, img = loader[1308:1508,1308:1508]
+        ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -70,6 +71,7 @@ class Test(unittest.TestCase):
     def test_mtsat(self):
         loader = xrit.sat.load_files(mtsat_files[0], mtsat_files[1:], calibrate=True)
         mda, img = loader[1276:1476,1276:1476]
+        ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -82,6 +84,7 @@ class Test(unittest.TestCase):
         loader = xrit.sat.load_files(met7_files[0], met7_files[1:], calibrate=False)
         print 'met7', loader.mda.first_pixel
         mda, img = loader.raw_slicing((slice(2300,2900), slice(2000,3000)))
+        ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         cross_sum = img.sum()
         make_image(mda, img)
@@ -92,6 +95,7 @@ class Test(unittest.TestCase):
     def test_msg(self):
         loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], calibrate=True)
         mda, img = loader[1656:1956,1756:2656]
+        ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -104,6 +108,7 @@ class Test(unittest.TestCase):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
         print 'hrv', loader.mda.first_pixel
         mda, img = loader[5168:5768,5068:6068]
+        ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -115,6 +120,7 @@ class Test(unittest.TestCase):
     def test_hrv2(self):
         loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
         mda, img = loader[2786:3236,748:9746]
+        ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
@@ -125,4 +131,5 @@ class Test(unittest.TestCase):
 
 if __name__ == '__main__':
     import nose
+    sys.argv.append('-s')
     nose.run()

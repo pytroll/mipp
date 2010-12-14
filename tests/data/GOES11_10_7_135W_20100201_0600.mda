@@ -1,13 +1,12 @@
+area_extent: [-402660.84375, -398654.28125, 398654.28125, 402660.84375]
 calibration_name: calibrated infrared
 calibration_table: [[0.0, 170.0], [1023.0, 340.0]]
 calibration_unit: degree Kelvin
-center: (-135.0, -0.0)
 channel: 10_7
-data_type: 16
+data_type: 32
 image_size: [200, 200]
 instruments: ('mviri',)
 is_calibrated: True
-navigation: sublon=-135.00 cfac=10216334 lfac=10216334 coff=100 loff=100
 no_data_value: 0
 pixel_size: [4006.57568359375, 4006.57568359375]
 product_name: GOES11_10_7_135W_20100201_0600

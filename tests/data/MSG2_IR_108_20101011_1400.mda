@@ -1,12 +1,10 @@
-boundaries: [[1, 3712, 1, 3712]]
+area_extent: [-301540.5, 3878021.0, 2398822.25, 4778142.0]
 calibration_unit: K
-center: (9.5060013230464353, 1.360922049758422)
 channel: IR_108
-data_type: 16
+data_type: 64
 image_size: [900, 300]
 instruments: ('seviri',)
 is_calibrated: True
-navigation: sublon=0.00 cfac=13642337 lfac=13642337 coff=100 loff=200
 no_data_value: 0
 pixel_size: [3000.403076171875, 3000.403076171875]
 product_name: MSG2_IR_108_20101011_1400

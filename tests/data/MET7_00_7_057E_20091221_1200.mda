@@ -1,13 +1,12 @@
+area_extent: [-1125369.25, -448573.75, 1123120.75, 900520.25]
 calibration_name: 
 calibration_table: None
 calibration_unit: 
-center: (57.0, 2.0342562015807721)
 channel: 00_7
 data_type: 8
 image_size: [1000, 600]
 instruments: ('mviri',)
 is_calibrated: False
-navigation: sublon=57.00 cfac=18204444 lfac=18204444 coff=500 loff=400
 no_data_value: 0
 pixel_size: [2248.489990234375, 2248.489990234375]
 product_name: MET7_00_7_057E_20091221_1200

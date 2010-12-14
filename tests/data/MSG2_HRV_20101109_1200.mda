@@ -1,12 +1,10 @@
-boundaries: [[1, 8128, 1, 5568], [8129, 11136, 1860, 7427]]
+area_extent: [-4823148.0, 10223873.0, 4176061.0, 10673934.0]
 calibration_unit: %
-center: (-3.2129970573343214, 24.240768396985857)
 channel: HRV
 data_type: 64
 image_size: [8998, 450]
 instruments: ('seviri',)
 is_calibrated: True
-navigation: sublon=0.00 cfac=40927014 lfac=40927014 coff=4820 loff=2782
 no_data_value: 0
 pixel_size: [1000.1343383789062, 1000.1343383789062]
 product_name: MSG2_HRV_20101109_1200
