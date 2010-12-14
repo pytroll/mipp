@@ -158,18 +158,18 @@ class ImageLoader(object):
         else:
             coff = self.mda.coff
             
-        line_size = self.mda.pixel_size[0]
+        row_size = self.mda.pixel_size[0]
         col_size = self.mda.pixel_size[1]
         
         col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
-        line_stop = int(numpy.round(area_extent[1] / -line_size + loff - 0.5))
+        row_stop = int(numpy.round(area_extent[1] / -row_size + loff - 0.5))
         col_stop = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
-        line_start = int(numpy.round(area_extent[3] / -line_size + loff + 0.5))
+        row_start = int(numpy.round(area_extent[3] / -row_size + loff + 0.5))
 
-        line_stop += 1
+        row_stop += 1
         col_stop += 1
 
-        return self[line_start:line_stop, col_start:col_stop]
+        return self[row_start:row_stop, col_start:col_stop]
 
     def _handle_item(self, item):
         """Transform item into slice(s).
@@ -233,13 +233,13 @@ class ImageLoader(object):
         rows = slice(rows.start, rows.stop - 1)
         columns = slice(columns.start, columns.stop - 1)
 
-        line_size = self.mda.pixel_size[0]
+        row_size = self.mda.pixel_size[0]
         col_size = self.mda.pixel_size[1]
       
         ll_x = (columns.start - coff - 0.5)*col_size
-        ll_y = -(rows.stop - loff + 0.5)*line_size
+        ll_y = -(rows.stop - loff + 0.5)*row_size
         ur_x = (columns.stop - coff + 0.5)*col_size
-        ur_y = -(rows.start - loff - 0.5)*line_size
+        ur_y = -(rows.start - loff - 0.5)*row_size
     
         return [ll_x, ll_y, ur_x, ur_y]
 
