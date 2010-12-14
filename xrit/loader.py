@@ -143,7 +143,7 @@ class ImageLoader(object):
         # full disc
         return self[:]
 
-    def area_extent(self, area_extent):
+    def _area_extent(self, area_extent):
         """Slice according to (ll_x, ll_y, ur_x, ur_y).
         """
         ns_, ew_ = self.mda.first_pixel.split()
