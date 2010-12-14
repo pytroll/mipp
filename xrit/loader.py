@@ -248,8 +248,6 @@ class ImageLoader(object):
             rows.stop > mda.image_size[1]):
             raise IndexError, "index out of range"
 
-        # copy meta data,
-        # then the same loader can be called several times for different slicing.
         image_files = self.image_files
         
         #
@@ -416,7 +414,7 @@ class ImageLoader(object):
         # Compute mask before calibration
         #
 
-        mask = (image ==  mda.no_data_value)
+        mask = (image == mda.no_data_value)
 
         #
         # Calibrate ?
