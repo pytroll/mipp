@@ -9,7 +9,6 @@ import types
 import xrit
 import xrit.cfg
 from xrit import logger
-import geosnav
 from loader import ImageLoader
 
 __all__ = ['load_meteosat07',
@@ -28,7 +27,7 @@ class SatelliteLoader(object):
     # We will return an ImageLoader object where access to data is like:
     # image[:], image[] or image() will return full disk
     # image[2:56, 1020:1070]
-    # image(center, size)
+    # image.area_extent(area_extent)
     #
     def __init__(self, config_reader):
         #
@@ -138,10 +137,6 @@ class SatelliteLoader(object):
                 setattr(mda, k, v)
                 
         img = xrit.read_imagedata(image_files[0])
-        # !!! fishy
-        mda.navigation = geosnav.GeosNavigation(mda.sublon, img.navigation.cfac, img.navigation.lfac,
-                                                mda.image_size[0]//2,mda.image_size[0]//2)
-        mda.center = (mda.sublon, 0.0)
         
         return mda
 

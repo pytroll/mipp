@@ -23,7 +23,7 @@ class _Region(object):
 
 def _null_converter(blob):
     return blob
-        
+
 class ImageLoader(object):
     
     def __init__(self, mda, image_files, mask=False, calibrate=False):
@@ -46,8 +46,7 @@ class ImageLoader(object):
         mda = copy.copy(self.mda)
         rows, columns = self._handle_item(item)
 
-        ns_ = mda.first_pixel.split()[0]
-        ew_ = mda.first_pixel.split()[1]
+        ns_, ew_ = mda.first_pixel.split()
 
         if not hasattr(mda, "boundaries"):
             image = self._read(_Region(rows, columns), mda)
@@ -110,67 +109,48 @@ class ImageLoader(object):
         #
         # Update meta-data
         #
+        mda.area_extent = numpy.array(self._slice2extent(rows, columns, rotated=True), dtype=numpy.float32)
         if (rows != self._allrows) or (columns != self._allcolumns):
             mda.region_name = 'sliced'
 
         mda.data_type = 8*image.itemsize
         mda.image_size = numpy.array([image.shape[1], image.shape[0]])
-        mda.navigation.loff -= rows.start
-        mda.navigation.coff -= columns.start
-        if ew_ == "east":
-            # rotate 180 degrees
-            logger.debug("Rotating image 180 degrees")
-            mda.navigation.loff = mda.image_size[1] - mda.navigation.loff
-            mda.navigation.coff = mda.image_size[0] - mda.navigation.coff
-            mda.navigation.cfac *= -1
-            mda.navigation.lfac *= -1
 
-        #
-        # New center
-        #
-        try:
-            mda.center = mda.navigation.lonlat((mda.image_size[0]//2,
-                                                mda.image_size[1]//2))
-        except xrit.NavigationError:
-            # this is OK, but maybe not expected
-            logger.warning("Image slice center is outside earth disc")
-            mda.center = None
-
-
+        # cleanup 
         delattr(mda, 'line_offset')
         delattr(mda, 'first_pixel')
+        delattr(mda, 'coff')
+        delattr(mda, 'loff')
+        try:
+            delattr(mda, 'boundaries')
+        except AttributeError:
+            pass
 
         return mda, image
     
     def __getitem__(self, item):
-        # note: the default slicing handle a rotated image. 
+        # note: the default slicing handles rotated images. 
         rows, columns = self._handle_item(item)
-        ns_ = self.mda.first_pixel.split()[0]
-        ew_ = self.mda.first_pixel.split()[1]
+        ns_, ew_ = self.mda.first_pixel.split()
         if ns_ == 'south':
             rows = slice(self.mda.image_size[1] - rows.stop,
                          self.mda.image_size[1] - rows.start)
         if ew_ == 'east':
             columns = slice(self.mda.image_size[0] - columns.stop,
-                            self.mda.image_size[0] - columns.start)             
+                            self.mda.image_size[0] - columns.start)
         return self.raw_slicing((rows, columns))
 
-    def __call__(self, center=None, size=None):
-        if center and size:
-            try:
-                px = self.mda.navigation.pixel(center)
-            except xrit.NavigationError:
-                raise xrit.SatReaderError("center for slice is outside image")
-            columns = slice(px[0] - (size[0]+1)//2, px[0] + (size[0]+1)//2)
-            rows = slice(px[1] - (size[1]+1)//2, px[1] + (size[1]+1)//2)
-        elif bool(center) ^ bool(size):
-            raise xrit.SatReaderError("when slicing, if center or size are"
-                                      " specified, both has to be specified"
-                                      " ... please")
-        else:
-            rows = self._allrows
-            columns = self._allcolumns
-        return self.raw_slicing((rows, columns))
+    def __call__(self, area_extent=None):
+        if area_extent:
+            # slice
+            if (isinstance(area_extent, tuple) or isinstance(area_extent, list)) and \
+                    len(area_extent) == 4:
+                return self.area_extent(area_extent)
+            else:
+                raise TypeError, '__call__ optional argument must be an area_extent (tuple or list with four items)'
+
+        # full disc
+        return self[:]
 
     def area_extent(self, area_extent):
         """Slice according to (ll_x, ll_y, ur_x, ur_y).
@@ -191,16 +171,14 @@ class ImageLoader(object):
         col_size = self.mda.pixel_size[1]
         
         col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
-        line_end = int(numpy.round(area_extent[1] / -line_size + loff - 0.5))
-        col_end = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
+        line_stop = int(numpy.round(area_extent[1] / -line_size + loff - 0.5))
+        col_stop = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
         line_start = int(numpy.round(area_extent[3] / -line_size + loff + 0.5))
 
-        self.mda.actual_area_extent = ((col_start - coff - 0.5) * col_size,
-                                       (line_end - loff + 0.5) * -line_size,
-                                       (col_end - coff + 0.5) * col_size,
-                                       (line_start - loff - 0.5) * -line_size)
+        line_stop += 1
+        col_stop += 1
 
-        return self[line_start:line_end + 1, col_start:col_end + 1]
+        return self[line_start:line_stop, col_start:col_stop]
 
     def _handle_item(self, item):
         """Transform item into slice(s).
@@ -212,16 +190,20 @@ class ImageLoader(object):
             # specify one row and all columns
             rows, columns = slice(item, item + 1), self._allcolumns
         elif isinstance(item, tuple):
-            # both row and column are specified 
-            if len(item) != 2:
-                raise IndexError("too many indexes")
-            rows, columns = item
-            if isinstance(rows, int):
-                rows = slice(item[0], item[0] + 1)
-            if isinstance(columns, int):
-                columns = slice(item[1], item[1] + 1)
+            if len(item) == 2:
+                # both row and column are specified 
+                rows, columns = item
+                if isinstance(rows, int):
+                    rows = slice(item[0], item[0] + 1)
+                if isinstance(columns, int):
+                    columns = slice(item[1], item[1] + 1)
+            else:
+                raise IndexError, "can only handle two indexes, not %d"%len(item)
+        elif item == None:
+            # full disc
+            rows, columns = self._allrows, self._allcolumns            
         else:
-            raise IndexError("don't understand the indexes")
+            raise IndexError, "don't understand the indexes"
 
         # take care of [:]
         if rows.start == None:
@@ -231,16 +213,51 @@ class ImageLoader(object):
             
         if (rows.step != 1 and rows.step != None) or \
                (columns.step != 1 and columns.step != None):
-            raise IndexError("Currently we don't support steps different from one")
+            raise IndexError, "Currently we don't support steps different from one"
 
         return rows, columns
+
+    def _slice2extent(self, rows, columns, rotated=True):
+        """ Calculate area extent.
+        If rotated=True then rows and columns are reflecting the actual rows and columns.
+        """
+        ns_, ew_ = self.mda.first_pixel.split()
+
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - self.mda.loff
+            if rotated:
+                rows = slice(self.mda.image_size[1] - rows.stop,
+                             self.mda.image_size[1] - rows.start)
+        else:
+            loff = self.mda.loff
+
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - self.mda.coff
+            if rotated:
+                columns = slice(self.mda.image_size[0] - columns.stop,
+                                self.mda.image_size[0] - columns.start)
+        else:
+            coff = self.mda.coff
+
+        rows = slice(rows.start, rows.stop - 1)
+        columns = slice(columns.start, columns.stop - 1)
+
+        line_size = self.mda.pixel_size[0]
+        col_size = self.mda.pixel_size[1]
+      
+        ll_x = (columns.start - coff - 0.5)*col_size
+        ll_y = -(rows.stop - loff + 0.5)*line_size
+        ur_x = (columns.stop - coff + 0.5)*col_size
+        ur_y = -(rows.start - loff - 0.5)*line_size
+    
+        return [ll_x, ll_y, ur_x, ur_y]
 
     def _read(self, region, mda):
         if (region.columns.start < 0 or
             region.columns.stop > mda.image_size[0] or
             region.rows.start < 0 or
             region.rows.stop > mda.image_size[1]):
-            raise IndexError("index out of range")
+            raise IndexError, "index out of range"
 
         # copy meta data,
         # then the same loader can be called several times for different slicing.
@@ -275,8 +292,8 @@ class ImageLoader(object):
             data_type = numpy.uint16
             data_type_len = 16
         else:
-            raise xrit.SatReaderError("unknown data type: %d bit per pixel"
-                                      %mda.data_type)
+            raise xrit.SatReaderError, "unknown data type: %d bit per pixel"\
+                %mda.data_type
 
         #
         # Calculate initial and final line and column.
@@ -320,8 +337,8 @@ class ImageLoader(object):
             increment_line = -1
             factor_col = -1
         else:
-            raise xrit.SatReaderError("unknown geographical orientation of "
-                                      "first pixel: '%s'"%mda.first_pixel)
+            raise xrit.SatReaderError, "unknown geographical orientation of " + \
+                "first pixel: '%s'"%mda.first_pixel
 
         #
         # Generate final image with no data
