@@ -115,6 +115,9 @@ def read_metadata(prologue, image_files):
     md.calibration_unit = ''
     md.calibration_table = None
     md.calibrate = _Calibrator()
+
+    md.loff = md.image_size[0]//2  # !!!
+    md.coff = md.image_size[0]//2  # !!!
     return md
 
 if __name__ == '__main__':

@@ -105,6 +105,9 @@ def read_metadata(prologue, image_files):
     
     md.calibration_table = numpy.array(dd, dtype=numpy.float32)
     md.calibrate = _Calibrator(md.calibration_table, md.no_data_value)
+
+    md.loff = md.image_size[0]//2  # !!!
+    md.coff = md.image_size[0]//2  # !!!
     return md
 
 def read_prologue_headers(fp):
