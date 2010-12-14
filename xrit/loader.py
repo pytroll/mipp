@@ -136,7 +136,7 @@ class ImageLoader(object):
             # slice
             if (isinstance(area_extent, tuple) or isinstance(area_extent, list)) and \
                     len(area_extent) == 4:
-                return self.area_extent(area_extent)
+                return self._area_extent(area_extent)
             else:
                 raise TypeError, '__call__ optional argument must be an area_extent (tuple or list with four items)'
 
