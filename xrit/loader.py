@@ -13,14 +13,6 @@ from xrit import logger
 
 __all__ = ['ImageLoader',]
 
-class _Region(object):
-    def __init__(self, rows, columns):
-        self.rows = rows
-        self.columns = columns
-        self.shape = (rows.stop - rows.start, columns.stop - columns.start)
-    def __str__(self):
-        return 'rows:%s, columns:%s'%(str(self.rows), str(self.columns))
-
 def _null_converter(blob):
     return blob
 
@@ -34,7 +26,6 @@ class ImageLoader(object):
         # full disc and square
         self._allrows = slice(0, self.mda.image_size[0]) # !!!
         self._allcolumns = slice(0, self.mda.image_size[0])        
-        self.region = _Region(self._allrows, self._allcolumns)
 
     def raw_slicing(self, item):
         """Raw slicing, no rotation is done.
@@ -49,7 +40,7 @@ class ImageLoader(object):
         ns_, ew_ = mda.first_pixel.split()
 
         if not hasattr(mda, "boundaries"):
-            image = self._read(_Region(rows, columns), mda)
+            image = self._read(rows, columns, mda)
 
         else:
             #
@@ -79,7 +70,7 @@ class ImageLoader(object):
                               min(rows.stop, rlines.stop) - offset)
                 cols =  slice(max(columns.start, rcols.start) - rcols.start,
                               min(columns.stop, rcols.stop) - rcols.start)
-                rdata = self._read(_Region(lines, cols), mda)
+                rdata = self._read(lines, cols, mda)
                 lines = slice(max(rows.start, rlines.start) - rows.start,
                               min(rows.stop, rlines.stop) - rows.start)
                 cols =  slice(max(columns.start, rcols.start) - columns.start,
@@ -252,11 +243,12 @@ class ImageLoader(object):
     
         return [ll_x, ll_y, ur_x, ur_y]
 
-    def _read(self, region, mda):
-        if (region.columns.start < 0 or
-            region.columns.stop > mda.image_size[0] or
-            region.rows.start < 0 or
-            region.rows.stop > mda.image_size[1]):
+    def _read(self, rows, columns, mda):
+        shape = (rows.stop - rows.start, columns.stop - columns.start)
+        if (columns.start < 0 or
+            columns.stop > mda.image_size[0] or
+            rows.start < 0 or
+            rows.stop > mda.image_size[1]):
             raise IndexError, "index out of range"
 
         # copy meta data,
@@ -301,10 +293,10 @@ class ImageLoader(object):
         # correct values relative to the image orientation. 
         # line_init, line_end : 1-based
         #
-        line_init = region.rows.start + 1
-        line_end = line_init + region.rows.stop - region.rows.start - 1
-        col_count = region.shape[1]
-        col_offset = (region.columns.start)*data_type_len//8
+        line_init = rows.start + 1
+        line_end = line_init + rows.stop - rows.start - 1
+        col_count = shape[1]
+        col_offset = (columns.start)*data_type_len//8
 
         #
         # Calculate initial and final segments
@@ -329,11 +321,11 @@ class ImageLoader(object):
             increment_line = 1
             factor_col = -1
         elif mda.first_pixel == 'south west':
-            first_line = region.shape[0] - 1
+            first_line = shape[0] - 1
             increment_line = -1
             factor_col = 1
         elif mda.first_pixel == 'south east':
-            first_line = region.shape[0] - 1
+            first_line = shape[0] - 1
             increment_line = -1
             factor_col = -1
         else:
@@ -343,7 +335,7 @@ class ImageLoader(object):
         #
         # Generate final image with no data
         #
-        image = numpy.zeros(region.shape, dtype=data_type) + mda.no_data_value
+        image = numpy.zeros(shape, dtype=data_type) + mda.no_data_value
     
         #
         # Begin the segment processing.
