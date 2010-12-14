@@ -28,10 +28,9 @@ class ImageLoader(object):
         self._allcolumns = slice(0, self.mda.image_size[0])        
 
     def raw_slicing(self, item):
-        """Raw slicing, no rotation is done.
+        """Raw slicing, no rotation of image.
         """
-        # note: raw slicing, no rotation is done.
-        # all data reading should end up here.
+        # All data reading should end up here.
 
         # make a copy of meta-data, so ImageLoader instance can be reused.
         mda = copy.copy(self.mda)
@@ -120,7 +119,8 @@ class ImageLoader(object):
         return mda, image
     
     def __getitem__(self, item):
-        # note: the default slicing handles rotated images. 
+        """Deafult slicing, handles rotated images.
+        """
         rows, columns = self._handle_item(item)
         ns_, ew_ = self.mda.first_pixel.split()
         if ns_ == 'south':
@@ -132,20 +132,17 @@ class ImageLoader(object):
         return self.raw_slicing((rows, columns))
 
     def __call__(self, area_extent=None):
-        if area_extent:
-            # slice
-            if (isinstance(area_extent, tuple) or isinstance(area_extent, list)) and \
-                    len(area_extent) == 4:
-                return self._area_extent(area_extent)
-            else:
-                raise TypeError, '__call__ optional argument must be an area_extent (tuple or list with four items)'
-
-        # full disc
-        return self[:]
-
-    def _area_extent(self, area_extent):
-        """Slice according to (ll_x, ll_y, ur_x, ur_y).
+        """Slice according to (ll_x, ll_y, ur_x, ur_y) or read fill disc.
         """
+        if not area_extent:
+            # full disc
+            return self[:]
+            
+        # slice
+        if not (isinstance(area_extent, tuple) or isinstance(area_extent, list)) or \
+                len(area_extent) != 4:
+            raise TypeError, '__call__ optional argument must be an area_extent'
+
         ns_, ew_ = self.mda.first_pixel.split()
 
         if ns_ == "south":
