@@ -164,10 +164,10 @@ class ImageLoader(object):
                          (int(numpy.round((area_extent[2] - area_extent[0])/col_size)),\
                          int(numpy.round((area_extent[3] - area_extent[1])/row_size))))
         
-        col_start = int(area_extent[0]/col_size + coff)
-        row_stop = int(area_extent[1]/-row_size + loff)
-        col_stop = int(area_extent[2]/col_size + coff)
-        row_start = int(area_extent[3]/-row_size + loff)
+        col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
+        row_stop = int(numpy.round(area_extent[1] / -row_size + loff - 0.5))
+        col_stop = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
+        row_start = int(numpy.round(area_extent[3] / -row_size + loff + 0.5))
 
         row_stop += 1
         col_stop += 1
@@ -246,7 +246,6 @@ class ImageLoader(object):
         ur_x = (columns.stop - coff + 0.5)*col_size
         ur_y = -(rows.start - loff - 0.5)*row_size
 
-        print [ll_x, ll_y, ur_x, ur_y]
         return [ll_x, ll_y, ur_x, ur_y]
 
     def _read(self, rows, columns, mda):
