@@ -7,9 +7,11 @@ import numpy
 import types
 import copy
 
+import logging
+logger = logging.getLogger('mipp')
+
 import xrit
 import xrit.convert
-from xrit import logger
 
 __all__ = ['ImageLoader',]
 
@@ -132,16 +134,16 @@ class ImageLoader(object):
         return self.raw_slicing((rows, columns))
 
     def __call__(self, area_extent=None):
-        """Slice according to (ll_x, ll_y, ur_x, ur_y) or read fill disc.
+        """Slice according to (ll_x, ll_y, ur_x, ur_y) or read full disc.
         """
-        if not area_extent:
+        if area_extent == None:
             # full disc
             return self[:]
             
         # slice
-        if not (isinstance(area_extent, tuple) or isinstance(area_extent, list)) or \
-                len(area_extent) != 4:
-            raise TypeError, '__call__ optional argument must be an area_extent'
+        area_extent = tuple(area_extent)
+        if len(area_extent) != 4:
+            raise TypeError, "optional argument must be an area_extent"
 
         ns_, ew_ = self.mda.first_pixel.split()
 
@@ -158,6 +160,7 @@ class ImageLoader(object):
         row_size = self.mda.pixel_size[0]
         col_size = self.mda.pixel_size[1]
 
+        logger.debug('area_extent: %.2f, %.2f, %.2f, %.2f'%tuple(area_extent))
         logger.debug('area_extent: resolution %.2f, %.2f'%(row_size, col_size))
         logger.debug('area_extent: loff, coff %d, %d'%(loff, coff))
         logger.debug('area_extent: expected size %d, %d'%\
@@ -171,8 +174,6 @@ class ImageLoader(object):
 
         row_stop += 1
         col_stop += 1
-
-        logger.debug('area_extent: computed size %d, %d'%(row_stop - row_start, col_stop - col_start))
 
         return self[row_start:row_stop, col_start:col_stop]
 
@@ -235,6 +236,9 @@ class ImageLoader(object):
         else:
             coff = self.mda.coff
 
+        logger.debug('slice2extent: final size %d, %d'% \
+                         (rows.stop - rows.start, columns.stop - columns.start))
+
         rows = slice(rows.start, rows.stop - 1)
         columns = slice(columns.start, columns.stop - 1)
 
@@ -246,7 +250,12 @@ class ImageLoader(object):
         ur_x = (columns.stop - coff + 0.5)*col_size
         ur_y = -(rows.start - loff - 0.5)*row_size
 
-        print [ll_x, ll_y, ur_x, ur_y]
+        logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f'% \
+                         (ll_x, ll_y, ur_x, ur_y))
+        logger.debug('slice2extent: computed size %d, %d'% \
+                         (int(numpy.round((ur_x - ll_x)/col_size)), \
+                              int(numpy.round((ur_y - ll_y)/row_size))))
+
         return [ll_x, ll_y, ur_x, ur_y]
 
     def _read(self, rows, columns, mda):
