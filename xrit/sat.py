@@ -6,9 +6,11 @@ import glob
 import imp
 import types
 
+import logging
+logger = logging.getLogger('mipp')
+
 import xrit
 import xrit.cfg
-from xrit import logger
 from loader import ImageLoader
 
 __all__ = ['load_meteosat07',

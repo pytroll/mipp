@@ -5,11 +5,14 @@
 #    * If DEBUG is set it will overwrite LOGLEVEL.
 #    * If LOGLEVEL=NULL it will be very quiet.
 #
+# This should, in princip, only be loaded by a main, modules get whatever
+# is created of loggers by calling logging.getLogger(<my-name>)
+#
 import os
 import sys
 from logging import *
 
-__all__ = ['logger', 'set_logger']
+__all__ = ['get_logger', 'set_logger']
 
 loglevels = {'CRITICAL': CRITICAL,
              'ERROR': ERROR,
@@ -19,7 +22,6 @@ loglevels = {'CRITICAL': CRITICAL,
              'NULL': None}
 
 format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-name = "mipp"
 
 #-----------------------------------------------------------------------------
 
@@ -43,9 +45,8 @@ else:
     handler = NullHandler()
 handler.setFormatter(Formatter(format))
     
-logger = getLogger(name)
-logger.setLevel(loglevel)
-logger.addHandler(handler)
+getLogger('').setLevel(loglevel)
+getLogger('').addHandler(handler)
 
 def set_logger(other_logger):
     """Overwrite default logger
@@ -53,9 +54,13 @@ def set_logger(other_logger):
     global logger
     logger = other_logger
 
+def get_logger(name):
+    return getLogger(name)
+
 #-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    logger = get_logger('mipp')
     logger.debug("this is a debug message")
     logger.info("this is just an info message")
     logger.warning("and here is warning no %d", 22)
