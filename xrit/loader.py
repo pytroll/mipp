@@ -175,6 +175,8 @@ class ImageLoader(object):
         row_stop += 1
         col_stop += 1
 
+        logger.debug('area_extent: computed size %d, %d'%(col_stop - col_start, row_stop - row_start))
+
         return self[row_start:row_stop, col_start:col_stop]
 
     def _handle_item(self, item):
@@ -236,8 +238,8 @@ class ImageLoader(object):
         else:
             coff = self.mda.coff
 
-        logger.debug('slice2extent: final size %d, %d'% \
-                         (rows.stop - rows.start, columns.stop - columns.start))
+        logger.debug('slice2extent: size %d, %d'% \
+                         (columns.stop - columns.start, rows.stop - rows.start))
 
         rows = slice(rows.start, rows.stop - 1)
         columns = slice(columns.start, columns.stop - 1)
