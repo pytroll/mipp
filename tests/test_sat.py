@@ -82,7 +82,6 @@ class Test(unittest.TestCase):
 
     def test_met7(self):
         loader = xrit.sat.load_files(met7_files[0], met7_files[1:], calibrate=False)
-        print 'met7', loader.mda.first_pixel
         mda, img = loader.raw_slicing((slice(2300,2900), slice(2000,3000)))
         ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
@@ -104,9 +103,11 @@ class Test(unittest.TestCase):
         self.assertTrue(img.shape == (300, 900), msg='MSG image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed')
 
+        mda, img = loader(mda.area_extent)
+        self.assertTrue(str(mda) == str(mdac), msg='MSG metadata differ, when using area_extent')
+
     def test_hrv(self):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
-        print 'hrv', loader.mda.first_pixel
         mda, img = loader[5168:5768,5068:6068]
         ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
