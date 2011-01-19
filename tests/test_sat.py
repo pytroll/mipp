@@ -104,7 +104,9 @@ class Test(unittest.TestCase):
         self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed')
 
         mda, img = loader(mda.area_extent)
+        cross_sum = img.sum()
         self.assertTrue(str(mda) == str(mdac), msg='MSG metadata differ, when using area_extent')
+        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed, when using area_extent')
 
     def test_hrv(self):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
