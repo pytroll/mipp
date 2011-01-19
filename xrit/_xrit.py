@@ -19,6 +19,7 @@ __all__ = ['read_prologue',
            'read_epilogue',
            'read_imagedata',
            'read_gts_message',
+           'read_mpef_clm',
            'decompress',
            'list']
 
@@ -299,6 +300,13 @@ class Segment(object):
             fp.close
         return self._blob
 
+    def pprint(self):
+        keys = self.__dict__.keys()
+        keys.sort()
+        for k in keys:
+            if not k.startswith('_'):
+                print k + ':', self.__dict__[k]
+
     def __str__(self):
         return self.segment_id
 
@@ -352,6 +360,13 @@ def read_gts_message(file_name):
     else:
         raise XRITDecodeError("this is no 'GTS Message' file: '%s'"%file_name)
     
+def read_mpef_clm(file_name):
+    s = Segment(file_name)
+    if s.file_type == 144:
+        return s
+    else:
+        raise XRITDecodeError("this is no 'MPEF cloud mask' file: '%s'"%file_name)
+    
 def list(file_name, dump_data=False):
     fname = 'xrit.dat'
     fp = open(file_name)
@@ -369,4 +384,13 @@ def list(file_name, dump_data=False):
     
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
-    list(sys.argv[1])
+    args = sys.argv[1:]
+    if len(args) > 1:
+        if args[0] == '-d':
+            dump_data = True
+        filename = args[1]
+    else:
+        dump_data = False
+        filename = args[0]
+        
+    list(filename, dump_data)
