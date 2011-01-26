@@ -663,11 +663,10 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["UpperNorthLineActual"],
             ftr["UpperEastColumnActual"],
             ftr["UpperWestColumnActual"]]])
-        md.coff = (min(ftr["Lower"+ew_.capitalize()+"ColumnActual"],
-                       ftr["Upper"+ew_.capitalize()+"ColumnActual"])
+
+        md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
                    + im.navigation.coff - 1)
-        md.loff = (min(ftr["Lower"+ns_.capitalize()+"LineActual"],
-                       ftr["Upper"+ns_.capitalize()+"LineActual"])
+        md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
                    + im.navigation.loff - 1)
         
     else:
