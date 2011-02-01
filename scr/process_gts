@@ -3,9 +3,11 @@
 import sys
 import os
 import getopt
+import logging
 
 import xrit
-from xrit import logger
+
+logger = logging.getLogger('gts')
 
 #-----------------------------------------------------------------------------
 
