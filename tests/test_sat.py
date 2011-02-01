@@ -129,9 +129,7 @@ class Test(unittest.TestCase):
     
     def test_hrv2(self):
         loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
-        print 'load start'
         mda, img = loader[2786:3236,748:9746]
-        print type(img)      
         ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
