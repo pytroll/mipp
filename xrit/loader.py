@@ -452,8 +452,11 @@ class ImageLoader(object):
         #
         # With or without mask ?
         #
-        if self.do_mask:
+        if self.do_mask and not isinstance(image, numpy.ma.core.MaskedArray):
             image = numpy.ma.array(image, mask=mask, copy=False)
+        elif ((not self.do_mask) and 
+                isinstance(image, numpy.ma.core.MaskedArray)):
+            image = image.filled(mda.no_data_value)
             
         return image
 

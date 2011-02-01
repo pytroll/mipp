@@ -5,12 +5,25 @@
 'MSG Level 1.5 Image Data Format Description', EUM/MSG/ICD/105, v5A, 22 August 2007
 """
 #raise NotImplementedError
+import logging
+logger = logging.getLogger('mipp')
+
 import xrit
 import xrit.mda
 import sys
 from StringIO import StringIO
 from xrit.bin_reader import *
 import numpy as np
+
+try:
+    #Use numexpr if available
+    import numexpr
+    eval_np = numexpr.evaluate
+    logger.info('Using numexpr for fast numpy evaluation')
+except ImportError:
+    eval_np = eval
+    log = np.log
+    logger.warning('Module numexpr not found. Performance will be slower.')
 
 #Reflectance factor for visible bands
 HRV_F    = 25.15
@@ -115,18 +128,20 @@ class _Calibrator:
 
         mask = (image == self.md.no_data_value)
         
-        radiances = (image *
-                     hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope'] +
-                     hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset'])
+        cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
+        coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
         
-        radiances[radiances < 0.0] = 0.0
-
+        radiances = eval_np('image * cslope + coffset')
+        mask = mask | (radiances <= 0.0)
+        
         if calibrate == 2:
-            return radiances
+            return np.ma.MaskedArray(radiances, mask=mask)
+            
         
         if self.md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
             solar_irradiance = eval(self.md.channel + "_F")
-            return radiances / solar_irradiance * 100.
+            reflectance = eval_np('(radiances / solar_irradiance) * 100.')
+            return np.ma.MaskedArray(reflectance, mask=mask) 
 
         wavenumber = eval("VC_" + self.md.channel)
         if cal_type[chn_nb] == 2:
@@ -134,20 +149,22 @@ class _Calibrator:
             alpha = eval("ALPHA_" + self.md.channel)
             beta = eval("BETA_" + self.md.channel)
             
-            cal_data = (((C2 * 100. * wavenumber /
-                          np.log(C1 * 1.0e6 * wavenumber ** 3 /
-                                 (1.0e-5 * radiances) + 1)) -
-                         beta) / alpha)
+            cal_data = eval_np(('((C2 * 100. * wavenumber / ' 
+                                'log(C1 * 1.0e6 * wavenumber ** 3 / ' 
+                                '(1.0e-5 * radiances) + 1)) - beta) / alpha'))
             
         elif cal_type[chn_nb] == 1:
             #computation based on spectral radiance
-            cal_data = (C2 * 100. * wavenumber /
-                        np.log(C1 * 1.0e6 * wavenumber ** 3 /
-                               (1.0e-5 * radiances) + 1))
+            cal_data = eval_np(('C2 * 100. * wavenumber / '
+                                'log(C1 * 1.0e6 * wavenumber ** 3 / '
+                                '(1.0e-5 * radiances) + 1))'))
+            
             coef_a = eval("BTFIT_A_" + self.md.channel)
             coef_b = eval("BTFIT_B_" + self.md.channel)
             coef_c = eval("BTFIT_C_" + self.md.channel)
-            cal_data = cal_data ** 2 * coef_a + cal_data * coef_b + coef_c
+            
+            cal_data = eval_np(('cal_data ** 2 * coef_a + ' 
+                                'cal_data * coef_b + coef_c'))
 
         else:
             raise RuntimeError("Something is seriously wrong in the metadata.")

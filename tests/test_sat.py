@@ -92,7 +92,8 @@ class Test(unittest.TestCase):
         self.failUnlessAlmostEqual(cross_sum, met7_sum, 3, msg='MET7 image reading/slicing failed')
 
     def test_msg(self):
-        loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], calibrate=True)
+        loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], 
+                                     calibrate=True)
         mda, img = loader[1656:1956,1756:2656]
         ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
@@ -101,13 +102,21 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(str(mda) == str(mdac), msg='MSG metadata differ')
         self.assertTrue(img.shape == (300, 900), msg='MSG image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed')
+        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing reflectances failed')
 
         mda, img = loader(mda.area_extent)
         cross_sum = img.sum()
         self.assertTrue(str(mda) == str(mdac), msg='MSG metadata differ, when using area_extent')
         self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed, when using area_extent')
 
+    def test_msg2(self):
+        loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], 
+                                     calibrate=2)
+        mda, img = loader[1656:1956,1756:2656]
+        cross_sum = img.sum()
+        self.failUnlessAlmostEqual(cross_sum, 22148991.0194, 3, msg='MSG image reading/slicing radiances failed')
+        
+        
     def test_hrv(self):
         loader = xrit.sat.load_files(hrv_files[0], hrv_files[1:-1], epilogue=hrv_files[-1], calibrate=True)
         mda, img = loader[5168:5768,5068:6068]
@@ -119,15 +128,16 @@ class Test(unittest.TestCase):
         self.assertTrue(str(mda) == str(mdac), msg='MSG-HRV metadata differ')
         self.assertTrue(img.shape == (600, 1000), msg='MSG-HRV image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, hrv_sum, 3, msg='MSG-HRV image reading/slicing failed')
-
+    
     def test_hrv2(self):
         loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
         mda, img = loader[2786:3236,748:9746]
         ##mda.save(mda.product_name + '.mda')
         mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
-        cross_sum = img.sum()
+        cross_sum = img.sum()        
         make_image(mda, img)
+        
         self.assertTrue(str(mda) == str(mdac), msg='MSG-HRV metadata differ')
         self.assertTrue(img.shape == (450, 8998), msg='MSG-HRV image reading/slicing failed, wrong shape')
         self.failUnlessAlmostEqual(cross_sum, hrv2_sum, 3, msg='MSG-HRV image reading/slicing failed')
