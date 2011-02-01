@@ -1,3 +1,10 @@
+python-mipp (0.3-1) unstable; urgency=low
+
+  * Martin corrected the MSG image loading.
+  * Esben introduced numexpr.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 01 Feb 2011 12:22:30 +0000
+
 python-mipp (0.2-11) unstable; urgency=low
 
   * Pulled Esbens mods for "don't do any fancy operations on masked arrays"
