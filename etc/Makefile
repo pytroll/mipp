@@ -1,7 +1,7 @@
 #
 #
 prefix = $(DESTDIR)/opt
-config_files = ../etc/setup.sh $(wildcard ../etc/*.cfg)
+config_files = ../etc/setup.sh ../etc/areas.def $(wildcard ../etc/*.cfg)
 
 build:
 	@echo "Nothing to do for build"

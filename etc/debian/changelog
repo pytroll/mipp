@@ -1,3 +1,10 @@
+mipp-config (0.3-1) unstable; urgency=low
+
+  * Update areas.def file
+  * Added config files for NOAA
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 08 Feb 2011 12:52:52 +0000
+
 mipp-config (0.1-1) unstable; urgency=low
 
   * Initial release.
