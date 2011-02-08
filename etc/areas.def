@@ -1,0 +1,156 @@
+VERSION: 1.0
+
+REGION: MSGF {
+        NAME:          Full globe MSG image 0 degrees
+        PCS_ID:        geos0
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         3712
+        YSIZE:         3712
+        AREA_EXTENT:   (-5568742.4, -5568742.4, 5568742.4, 5568742.4)
+#        AREA_EXTENT:   (-5567242.2, -5568742.4, 5568742.4, 5567242.2)
+};
+
+REGION: MSGNH {
+        NAME:          Northern half globe MSG image 0 degrees
+        PCS_ID:        geos0
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         3712
+        YSIZE:         1856
+        AREA_EXTENT:   (-5568742.4, 0.00, 5568742.4, 5568742.4)
+};
+
+REGION: MSGNQ {
+        NAME:          Northern quarter globe MSG image 0 degrees
+        PCS_ID:        geos0
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         3712
+        YSIZE:         928
+        AREA_EXTENT:   (-5568742.4, 2919389.2, 5568742.4, 5703760.4)
+};
+
+REGION: MSGNH_S {
+        NAME:          A shunk of the northern half globe MSG image 0 degrees (covering areaS)
+        PCS_ID:        geos0
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         3712
+        YSIZE:         1128
+        AREA_EXTENT:   (-5568742.4, 2184291.2, 5568742.4, 5568742.4)
+};
+
+REGION: MSG_TEST {
+        NAME:          Close to home
+        PCS_ID:        geos0
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         1856
+        YSIZE:         1128
+        AREA_EXTENT:   (0, 2184291.2, 5568742.4, 5568742.4)
+};
+
+REGION: MSGHRVN {
+        NAME:          High resolution northern quarter globe MSG image 0 degrees
+        PCS_ID:        geos0
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         11136
+        YSIZE:         2784
+        AREA_EXTENT:   (-5568742.4, 2655354.0, 5568742.4, 5439725.2)
+};
+
+
+REGION: web_earth {
+        NAME:          Small full globe MSG image 0 degrees
+        PCS_ID:        web_earth
+        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
+        XSIZE:         640
+        YSIZE:         640
+        AREA_EXTENT:   (-5568742.4, -5568742.4, 5568742.4, 5568742.4)
+};
+
+REGION: msg_pc {
+        NAME:          Plate Caree map, 0 degrees
+        PCS_ID:        msg_pc
+        PCS_DEF:       proj=eqc, lon_0=0.0, lat_0=0.0
+        XSIZE:         6666
+        YSIZE:         6666
+        AREA_EXTENT:   (-10007255.76, -10007255.76, 10007255.76, 10007255.76 )
+};
+
+REGION: msg_pc_north {
+        NAME:          Plate Caree map, 0 degrees
+        PCS_ID:        msg_pc_dr
+        PCS_DEF:       proj=eqc, lon_0=0.0, lat_0=0.0
+        XSIZE:         4000
+        YSIZE:         2000
+        AREA_EXTENT:   (-7792364.36, 0.00, 7792364.36, 7792364.36)
+};
+
+REGION: msg_opmet {
+        NAME:          Area for opmet
+        PCS_ID:        opmet
+        PCS_DEF:       proj=stere,lon_0=10.00,lat_0=60.00,lat_ts=60.00,ellps=WGS84
+        XSIZE:         800
+        YSIZE:         600
+        AREA_EXTENT:   (-1280000.02,-1182801.45,1280000.02,737198.57)
+};
+
+REGION: msg_areaS {
+        NAME:          Europe 5km/pixel
+        PCS_ID:        msg_areaS
+        PCS_DEF:       proj=stere,lon_0=8.00,lat_0=50.00,lat_ts=50.00,ellps=WGS84
+        XSIZE:         1170
+        YSIZE:         1000
+        AREA_EXTENT:   (-3211966.34,-2783728.10,2638033.66,2216271.90)
+};
+        
+REGION: msg_areaD {
+        NAME:          Europe 3km/pixel
+        PCS_ID:        msg_areaD
+        PCS_DEF:       proj=stere,lon_0=8.00,lat_0=50.00,lat_ts=50.00,ellps=WGS84
+        XSIZE:         800
+        YSIZE:         870
+        AREA_EXTENT:   (-1370912.16,-909970.17,1029087.84,1700029.83)
+};
+        
+REGION: msg_areaC {
+        NAME:          Europe 6km/pixel
+        PCS_ID:        msg_areaC
+        PCS_DEF:       proj=stere,lon_0=8.00,lat_0=50.00,lat_ts=50.00,ellps=WGS84
+        XSIZE:         640
+        YSIZE:         480
+        AREA_EXTENT:   (-2236222.66,-1691516.29,1603777.34,1188483.71)
+};
+        
+REGION: msg_areaE {
+        NAME:          Europe 3km/pixel
+        PCS_ID:        msg_areaD
+        PCS_DEF:       proj=stere,lon_0=8.00,lat_0=50.00,lat_ts=50.00,ellps=WGS84
+        XSIZE:         640
+        YSIZE:         480
+        AREA_EXTENT:   (-928319.22,-107274.19,991680.78,1332725.81)
+};
+
+REGION: msg_faeoC {
+        NAME:          Faroe Islands 6km/pixel
+        PCS_ID:        msg_faeoC
+        PCS_DEF:       proj=stere,lon_0=-7.00,lat_0=60.00,lat_ts=60.00,ellps=WGS84
+        XSIZE:         444
+        YSIZE:         444
+        AREA_EXTENT:   (-1332000.00,-1332000.00,1332000.00,1332000.00)
+};
+
+REGION: msg_faeoE {
+        NAME:          Faroe Islands 3km/pixel
+        PCS_ID:        msg_faeoE
+        PCS_DEF:       proj=stere,lon_0=-7.00,lat_0=60.00,lat_ts=60.00,ellps=WGS84
+        XSIZE:         444
+        YSIZE:         444
+        AREA_EXTENT:   (-666000.00,-666000.00,666000.00,666000.00)
+};
+
+REGION: msg_billund {
+        NAME:          Area for billund
+        PCS_ID:        msg_billund
+        PCS_DEF:       proj=stere,lon_0=10.00,lat_ts=50.00,lat_0=40.00,ellps=WGS84
+        XSIZE:         940
+        YSIZE:         718
+        AREA_EXTENT:   (-2955250.19,-1331658.37,2684749.81,2976341.63)
+};
