@@ -6,10 +6,11 @@ ext = Extension('xrit/_convert', ['xrit/convert/wrap_convert.c',
 
 
 setup(name = 'xrit',
-      version = '0.1',
+      version = '0.3',
       package_dir = {'xrit': 'xrit'},
       packages = ['xrit'],
       ext_modules = [ext,],
+      zip_safe = False,
 #      test_suite = 'nose.collector',
 #      tests_require = ['nose>=0.11'],
       )
