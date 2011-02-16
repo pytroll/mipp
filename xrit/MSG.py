@@ -15,15 +15,21 @@ from StringIO import StringIO
 from xrit.bin_reader import *
 import numpy as np
 
-try:
-    #Use numexpr if available
-    import numexpr
-    eval_np = numexpr.evaluate
-    logger.info('Using numexpr for fast numpy evaluation')
-except ImportError:
-    eval_np = eval
-    log = np.log
-    logger.warning('Module numexpr not found. Performance will be slower.')
+eval_np = eval
+log = np.log
+
+if sys.version_info[0] >= 2 and sys.version_info[1] >= 5:
+    try:
+        #Use numexpr if available
+        import numexpr
+        eval_np = numexpr.evaluate
+        logger.info('Using numexpr for fast numpy evaluation')
+    except ImportError:
+        logger.warning('Module numexpr not found. Performance will be slower.')
+else:
+    logger.warning('Older version of python. Module numexpr not used. '
+                   'Performance will be slower.')
+        
 
 #Reflectance factor for visible bands
 HRV_F    = 25.15
