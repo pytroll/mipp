@@ -173,7 +173,8 @@ class _Calibrator:
 
         else:
             raise RuntimeError("Something is seriously wrong in the metadata.")
-        
+
+        mask = mask | np.isnan(cal_data) | np.isinf(cal_data)
         cal_data = np.ma.MaskedArray(cal_data, mask=mask)
         return cal_data
 
