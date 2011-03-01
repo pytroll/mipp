@@ -1,4 +1,4 @@
-area_extent: [-301540.5, 3878021.0, 2398822.25, 4778142.0]
+area_extent: [-301540.5, -298540.09375, 2398822.25, 601580.8125]
 calibration_unit: K
 channel: IR_108
 data_type: 64

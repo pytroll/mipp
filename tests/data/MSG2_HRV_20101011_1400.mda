@@ -1,4 +1,4 @@
-area_extent: [-502567.5, 4907159.0, 497566.84375, 5507239.5]
+area_extent: [-502567.5, -197526.53125, 497566.84375, 402554.0625]
 calibration_unit: %
 channel: HRV
 data_type: 64
