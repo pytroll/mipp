@@ -274,11 +274,9 @@ class ImageLoader(object):
         # Order segments
         #
         segments = {}
-        nlines = 0
         for f in image_files:
             s = xrit.read_imagedata(f)
             segments[s.segment.seg_no] = f
-            nlines += s.structure.nl
         start_seg_no = s.segment.planned_start_seg_no
         end_seg_no = s.segment.planned_end_seg_no
         ncols =  s.structure.nc
