@@ -670,7 +670,6 @@ def read_metadata(prologue, image_files, epilogue):
         md.image_size = np.array((hdr["ReferenceGridVIS_IR"]["NumberOfLines"],
                                   hdr["ReferenceGridVIS_IR"]["NumberOfColumns"]))
         
-
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
     md.region_name = 'full disc'
@@ -687,11 +686,17 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["UpperEastColumnActual"],
             ftr["UpperWestColumnActual"]]])
 
-        md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
-                   + im.navigation.coff - 1)
-        md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
-                   + im.navigation.loff - 1)
-        
+        #md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
+        #           + im.navigation.coff - 1)
+        #md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
+        #           + im.navigation.loff - 1)
+
+        # !!! Currenlty loff and coff are hardcoded ...
+        # maybe it could be extracted from the EPI file
+        # or md.loff, md.coff = md.image_size//2 (but a couple of pixels off for HRV)
+        # like in MTP.py and SGS.py
+        md.loff, md.coff = 5566, 5566
+
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
         ns_, ew_ = md.first_pixel.split()
@@ -701,10 +706,16 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["EasternColumnActual"],
             ftr["WesternColumnActual"]]])
 
-        md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
-                   + im.navigation.coff - 1)
-        md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
-                   + im.navigation.loff - 1)
+        #md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
+        #           + im.navigation.coff - 1)
+        #md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
+        #           + im.navigation.loff - 1)
+
+        # !!! Currenlty loff and coff are hardcoded ...
+        # maybe it could be extracted from the EPI file
+        # or md.loff, md.coff = md.image_size//2 (but a couple of pixels off for HRV)
+        # like in MTP.py and SGS.py
+        md.loff, md.coff = 1856, 1856
 
     if md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
         md.calibration_unit = "%"
