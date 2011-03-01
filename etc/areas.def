@@ -37,15 +37,6 @@ REGION: MSGNH_S {
         AREA_EXTENT:   (-5568742.4, 2184291.2, 5568742.4, 5568742.4)
 };
 
-REGION: MSG_TEST {
-        NAME:          Close to home
-        PCS_ID:        geos0
-        PCS_DEF:       proj=geos, lon_0=0.0, a=6378144.0, b=6356759.0, h=35785831.0, rf=295.49
-        XSIZE:         1856
-        YSIZE:         1128
-        AREA_EXTENT:   (0, 2184291.2, 5568742.4, 5568742.4)
-};
-
 REGION: MSGHRVN {
         NAME:          High resolution northern quarter globe MSG image 0 degrees
         PCS_ID:        geos0
