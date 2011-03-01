@@ -1,68 +1,60 @@
-#
-# Our logger, default loglevel is NULL and write to stderr.
-#
-#    * It can be controlled by environment variables DEBUG and LOGLEVEL.
-#    * If DEBUG is set it will overwrite LOGLEVEL.
-#    * If LOGLEVEL=NULL it will be very quiet.
-#
-# This should, in princip, only be loaded by a main, modules get whatever
-# is created of loggers by calling logging.getLogger(<my-name>)
-#
 import os
-import sys
 from logging import *
 
-__all__ = ['get_logger', 'set_logger']
-
-loglevels = {'CRITICAL': CRITICAL,
-             'ERROR': ERROR,
-             'WARNING': WARNING,
-             'INFO': INFO,
-             'DEBUG': DEBUG,
-             'NULL': None}
-
-format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-#-----------------------------------------------------------------------------
-
 class NullHandler(Handler):
-    def emit(self, record):
-        pass
-
-#-----------------------------------------------------------------------------
-
-loglevel = os.environ.get("LOGLEVEL", "NULL").upper()
-try:
-    loglevel = loglevels[loglevel]
-except:
-    raise KeyError, "Unknown LOGLEVEL '%s'"%loglevel
-if os.environ.get("DEBUG", ''):
-    loglevel = DEBUG
-
-if loglevel:
-    handler = StreamHandler(sys.stderr)
-else:
-    handler = NullHandler()
-handler.setFormatter(Formatter(format))
-    
-getLogger('').setLevel(loglevel)
-getLogger('').addHandler(handler)
-
-def set_logger(other_logger):
-    """Overwrite default logger
+    """Empty handler.
     """
-    global logger
-    logger = other_logger
+    def emit(self, record):
+        """Record a message.
+        """
+        pass
+    
+def debug_on():
+    """Turn debugging logging on.
+    """
+    logging_on(DEBUG)
 
+_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+_is_logging_on = False
+def logging_on(level=None):
+    """Turn logging on.
+    """
+    global _is_logging_on
+
+    if level == None:
+        if os.environ.get("DEBUG", ''):
+            level = DEBUG
+        else:
+            level = INFO
+
+    if not _is_logging_on:
+        console = StreamHandler()
+        console.setFormatter(Formatter(_format, '%Y-%m-%d %H:%M:%S'))
+        console.setLevel(level)
+        getLogger('').addHandler(console)
+        _is_logging_on = True
+
+    log = getLogger('')
+    log.setLevel(level)
+    for h in log.handlers:
+        h.setLevel(level)
+
+def logging_off():
+    """Turn logging off.
+    """
+    global _is_logging_on
+    l = getLogger('')
+    for h in l.handlers:
+        h.close()
+        l.removeHandler(h)
+    l.handlers = [NullHandler()]
+    _is_logging_on = False
+    
 def get_logger(name):
-    return getLogger(name)
-
-#-----------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    logger = get_logger('mipp')
-    logger.debug("this is a debug message")
-    logger.info("this is just an info message")
-    logger.warning("and here is warning no %d", 22)
-    logger.error("ohoh an error")
-    logger.critical("now it's getting critical")
+    """Return logger with null handle
+    """
+    
+    log = getLogger(name)
+    if not log.handlers:
+        log.addHandler(NullHandler())
+    return log
