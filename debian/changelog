@@ -1,3 +1,9 @@
+python-mipp (0.3-2) unstable; urgency=low
+
+  * Better handling of image line and column offset.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 01 Mar 2011 17:31:08 +0000
+
 python-mipp (0.3-1) unstable; urgency=low
 
   * Martin corrected the MSG image loading.
