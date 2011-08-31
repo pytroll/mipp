@@ -651,6 +651,8 @@ def read_epiheader(fp):
 def read_metadata(prologue, image_files, epilogue):
     """ Selected items from the Meteosat-9 prolog file.
     """
+    segment_size = 464 # number of lines in a segment
+
     md = xrit.mda.Metadata()
 
     fp = StringIO(prologue.data)
@@ -686,7 +688,7 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["UpperEastColumnActual"],
             ftr["UpperWestColumnActual"]]])
 
-        im_loff = im.navigation.loff + 464 * (im.segment.seg_no - 1)
+        im_loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
         md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
                    + im.navigation.coff - 1)
         md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
@@ -701,7 +703,7 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["EasternColumnActual"],
             ftr["WesternColumnActual"]]])
 
-        im_loff = im.navigation.loff + 464 * (im.segment.seg_no - 1)
+        im_loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
         md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
                    + im.navigation.coff - 1)
         md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
@@ -718,7 +720,6 @@ def read_metadata(prologue, image_files, epilogue):
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
     md.calibrate = _Calibrator(hdr, md)
-
 
     return md
 
