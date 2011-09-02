@@ -198,3 +198,12 @@ REGION: msg_opmet_scoresby {
         YSIZE:         600
         AREA_EXTENT:   (-2313215.77,-4285175.11,2486784.23,-685175.11)
 };
+
+REGION: msg_euro_north {
+        NAME:          Europe 3km/pixel
+        PCS_ID:        euro_north
+        PCS_DEF:       proj=stere,lon_0=8.00,lat_0=50.00,lat_ts=50.00,ellps=WGS84
+        XSIZE:         800
+        YSIZE:         870
+        AREA_EXTENT:   (-1370912.16,-909970.17,1029087.84,1700029.83)
+};

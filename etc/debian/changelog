@@ -1,3 +1,9 @@
+mipp-config (0.3-8) unstable; urgency=low
+
+  * Added euro_north.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Fri, 02 Sep 2011 11:23:03 +0000
+
 mipp-config (0.3-6) unstable; urgency=low
 
   * Defining log-level in mpop.cfg
