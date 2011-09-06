@@ -655,6 +655,8 @@ def read_epiheader(fp):
 def read_metadata(prologue, image_files, epilogue):
     """ Selected items from the Meteosat-9 prolog file.
     """
+    segment_size = 464 # number of lines in a segment
+
     md = xrit.mda.Metadata()
 
     fp = StringIO(prologue.data)
@@ -690,16 +692,11 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["UpperEastColumnActual"],
             ftr["UpperWestColumnActual"]]])
 
-        #md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
-        #           + im.navigation.coff - 1)
-        #md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
-        #           + im.navigation.loff - 1)
-
-        # !!! Currenlty loff and coff are hardcoded ...
-        # maybe it could be extracted from the EPI file
-        # or md.loff, md.coff = md.image_size//2 (but a couple of pixels off for HRV)
-        # like in MTP.py and SGS.py
-        md.loff, md.coff = 5566, 5566
+        im_loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
+        md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
+                   + im.navigation.coff - 1)
+        md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
+                   + im_loff - 1)
 
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
@@ -710,16 +707,11 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["EasternColumnActual"],
             ftr["WesternColumnActual"]]])
 
-        #md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
-        #           + im.navigation.coff - 1)
-        #md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
-        #           + im.navigation.loff - 1)
-
-        # !!! Currenlty loff and coff are hardcoded ...
-        # maybe it could be extracted from the EPI file
-        # or md.loff, md.coff = md.image_size//2 (but a couple of pixels off for HRV)
-        # like in MTP.py and SGS.py
-        md.loff, md.coff = 1856, 1856
+        im_loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
+        md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
+                   + im.navigation.coff - 1)
+        md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
+                   + im_loff - 1)
 
     if md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
         md.calibration_unit = "%"
@@ -732,7 +724,6 @@ def read_metadata(prologue, image_files, epilogue):
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
     md.calibrate = _Calibrator(hdr, md)
-
 
     return md
 
