@@ -114,6 +114,7 @@ class _Calibrator:
         hdr = self.hdr
 
         if calibrate == 0:
+            self.md.calibration_unit = "counts"
             return image
 
         channels = {"VIS006": 1,
@@ -140,12 +141,14 @@ class _Calibrator:
         radiances = eval_np('image * cslope + coffset')
         
         if calibrate == 2:
+            self.md.calibration_unit = "W m-2 sr-1"
             return np.ma.MaskedArray(radiances, mask=mask)
             
         
         if self.md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
             solar_irradiance = eval(self.md.channel + "_F")
             reflectance = eval_np('(radiances / solar_irradiance) * 100.')
+            self.md.calibration_unit = "%"
             return np.ma.MaskedArray(reflectance, mask=mask) 
 
         wavenumber = eval("VC_" + self.md.channel)
@@ -176,6 +179,7 @@ class _Calibrator:
 
         mask = mask | np.isnan(cal_data) | np.isinf(cal_data)
         cal_data = np.ma.MaskedArray(cal_data, mask=mask)
+        self.md.calibration_unit = "K"
         return cal_data
 
 def read_proheader(fp):
