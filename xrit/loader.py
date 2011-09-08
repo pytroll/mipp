@@ -36,6 +36,8 @@ class ImageLoader(object):
 
         # make a copy of meta-data, so ImageLoader instance can be reused.
         mda = copy.copy(self.mda)
+        if mda.calibrate:
+            mda.calibrate.md = mda
         rows, columns = self._handle_item(item)
 
         ns_, ew_ = mda.first_pixel.split()

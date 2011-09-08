@@ -713,10 +713,13 @@ def read_metadata(prologue, image_files, epilogue):
         md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
                    + im_loff - 1)
 
-    if md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
-        md.calibration_unit = "%"
-    else:
-        md.calibration_unit = "K"
+    #if md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
+    #    md.calibration_unit = "%"
+    #else:
+    #    md.calibration_unit = "K"
+
+    # Calibration units are determined in Calibrator
+    md.calibration_unit = 'counts'
     
     md.data_type = im.structure.nb
     md.no_data_value = 0
