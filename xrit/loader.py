@@ -446,6 +446,10 @@ class ImageLoader(object):
                 calibrate = int(calibrate)
             image = mda.calibrate(image, calibrate=calibrate)
             mda.is_calibrated = True
+            try:
+                mda.calibration_unit = mda.calibrate.md.calibration_unit
+            except AttributeError:
+                pass
 
         #
         # With or without mask ?
