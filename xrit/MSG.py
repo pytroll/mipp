@@ -141,7 +141,7 @@ class _Calibrator:
         radiances = eval_np('image * cslope + coffset')
         
         if calibrate == 2:
-            self.md.calibration_unit = "W m-2 sr-1"
+            self.md.calibration_unit = "mW m-2 sr-1 (cm-1)-1"
             return np.ma.MaskedArray(radiances, mask=mask)
             
         

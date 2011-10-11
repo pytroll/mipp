@@ -1,3 +1,9 @@
+python-mipp (0.3-7) unstable; urgency=low
+
+  * Corrected Radiance unit.
+
+ -- Lars Orum Rasmussen <ras@dmi.dk>  Tue, 11 Oct 2011 12:50:42 +0000
+
 python-mipp (0.3-6) unstable; urgency=low
 
   * Fixed metadata for calibration unit.
