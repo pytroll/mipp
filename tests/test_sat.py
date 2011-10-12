@@ -8,7 +8,14 @@ import buildpath_to_syspath
 import xrit
 
 datadir = os.path.dirname(__file__) + '/data'
-os.environ['PPP_CONFIG_DIR'] = os.path.abspath(os.path.dirname(__file__) + '/../etc')
+
+try:
+    # give the possibility to test other config files
+    os.environ['PPP_CONFIG_DIR'] = os.environ['LOCAL_PPP_CONFIG_DIR']
+except KeyError:
+    os.environ['PPP_CONFIG_DIR'] = os.path.abspath(os.path.dirname(__file__) + '/data')
+if not os.path.isdir(os.environ['PPP_CONFIG_DIR']):
+    raise xrit.SatConfigReaderError, "No config dir: '%s'"%os.environ['PPP_CONFIG_DIR']
 
 goes_files = [datadir + '/L-000-MSG2__-GOES11______-10_7_135W-PRO______-201002010600-__',
               datadir + '/L-000-MSG2__-GOES11______-10_7_135W-000003___-201002010600-__',

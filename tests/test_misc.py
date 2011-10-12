@@ -12,7 +12,7 @@ datadir = os.path.dirname(__file__) + '/data'
 class Test(unittest.TestCase):
 
     def test_config_parser(self):
-        cfgfile = 'meteosat09'        
+        cfgfile = 'msg2'        
         os.environ['PPP_CONFIG_DIR'] = datadir
         c = cfg.read_config(cfgfile)
         fp = cStringIO.StringIO()
