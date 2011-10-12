@@ -11,6 +11,4 @@ setup(name = 'xrit',
       packages = ['xrit'],
       ext_modules = [ext,],
       zip_safe = False,
-#      test_suite = 'nose.collector',
-#      tests_require = ['nose>=0.11'],
       )
