@@ -294,6 +294,7 @@ class _Calibrator:
 def read_metadata(prologue, image_files):
     """ Selected items from the Meteosat-7 prolog file.
     """
+    im = xrit.read_imagedata(image_files[0])
     md = xrit.mda.Metadata()
     fp = StringIO(prologue.data)
     asc_hdr = _read_ascii_header(fp)
@@ -320,9 +321,10 @@ def read_metadata(prologue, image_files):
     md.calibration_unit = ''
     md.calibration_table = None
     md.calibrate = _Calibrator(bin_hdr, md)
+    segment_size = im.structure.nl
+    md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
+    md.coff = im.navigation.coff
 
-    md.loff = md.image_size[0]//2  # !!!
-    md.coff = md.image_size[0]//2  # !!!
     return md
 
 if __name__ == '__main__':
