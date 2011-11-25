@@ -150,12 +150,12 @@ class ImageLoader(object):
         ns_, ew_ = self.mda.first_pixel.split()
 
         if ns_ == "south":
-            loff = self.mda.image_size[0] - self.mda.loff
+            loff = self.mda.image_size[0] - self.mda.loff - 1
         else:
             loff = self.mda.loff
 
         if ew_ == "east":
-            coff = self.mda.image_size[1] - self.mda.coff
+            coff = self.mda.image_size[1] - self.mda.coff - 1
         else:
             coff = self.mda.coff
             
@@ -225,7 +225,7 @@ class ImageLoader(object):
         ns_, ew_ = self.mda.first_pixel.split()
 
         if ns_ == "south":
-            loff = self.mda.image_size[0] - self.mda.loff
+            loff = self.mda.image_size[0] - self.mda.loff - 1
             if rotated:
                 rows = slice(self.mda.image_size[1] - rows.stop,
                              self.mda.image_size[1] - rows.start)
@@ -233,7 +233,7 @@ class ImageLoader(object):
             loff = self.mda.loff
 
         if ew_ == "east":
-            coff = self.mda.image_size[1] - self.mda.coff
+            coff = self.mda.image_size[1] - self.mda.coff - 1
             if rotated:
                 columns = slice(self.mda.image_size[0] - columns.stop,
                                 self.mda.image_size[0] - columns.start)
