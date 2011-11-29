@@ -34,5 +34,6 @@ class Test(unittest.TestCase):
         self.assertTrue(text1 == text2, msg='Reading %s.cfg failed'%cfgfile)
 
 if __name__ == '__main__':
-    import nose
-    nose.main()
+    unittest.main()
+
+    

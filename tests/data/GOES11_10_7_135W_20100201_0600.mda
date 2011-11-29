@@ -8,7 +8,7 @@ image_size: [200, 200]
 instruments: ('mviri',)
 is_calibrated: True
 no_data_value: 0
-pixel_size: [4006.57568359375, 4006.57568359375]
+pixel_size: [4006.5756000000001222, 4006.5756000000001222]
 product_name: GOES11_10_7_135W_20100201_0600
 product_type: full disc
 production_time: 2010-02-01 06:47:17.432000
