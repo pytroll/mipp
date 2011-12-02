@@ -1,4 +1,4 @@
-area_extent: [-301540.5, -298540.09375, 2398822.25, 601580.8125]
+area_extent: [-298540.125, -4478101.5, 2401822.75, -3577980.75]
 calibration_unit: K
 channel: IR_108
 data_type: 64
@@ -6,7 +6,7 @@ image_size: [900, 300]
 instruments: ('seviri',)
 is_calibrated: True
 no_data_value: 0
-pixel_size: [3000.403076171875, 3000.403076171875]
+pixel_size: [3000.403165817000172, 3000.403165817000172]
 product_name: MSG2_IR_108_20101011_1400
 product_type: full disc
 production_time: 2010-10-11 14:15:10.623000

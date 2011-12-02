@@ -1,4 +1,4 @@
-area_extent: [-502567.5, -197526.53125, 497566.84375, 402554.0625]
+area_extent: [-497566.84375, -5307213.0, 502567.5, -4707132.5]
 calibration_unit: %
 channel: HRV
 data_type: 64
@@ -6,7 +6,7 @@ image_size: [1000, 600]
 instruments: ('seviri',)
 is_calibrated: True
 no_data_value: 0
-pixel_size: [1000.1343383789062, 1000.1343383789062]
+pixel_size: [1000.1343488689999504, 1000.1343488689999504]
 product_name: MSG2_HRV_20101011_1400
 product_type: full disc
 production_time: 2010-10-11 14:15:10.623000
