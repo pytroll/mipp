@@ -13,6 +13,7 @@ import numpy as np
 import xrit
 import xrit.mda
 from xrit.bin_reader import *
+from xrit._xrit import strptime
 
 __all__ = ['read_metadata',]
 
@@ -314,9 +315,9 @@ def read_metadata(prologue, image_files):
     md.image_size = (int(asc_hdr['NumberOfPixels']), int(asc_hdr['NumberOfLines']))
     md.line_offset = int(asc_hdr['LineOffset'])
     # handle 24 hour clock
-    d, t = datetime.strptime(asc_hdr['Date'], "%y%m%d"), int(asc_hdr['Time'])
+    d, t = strptime(asc_hdr['Date'], "%y%m%d"), int(asc_hdr['Time'])
     md.time_stamp = d + timedelta(hours=t//100, minutes=t%100)
-    md.production_time = datetime.strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
+    md.production_time = strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
     md.calibration_name = ''
     md.calibration_unit = ''
     md.calibration_table = None
