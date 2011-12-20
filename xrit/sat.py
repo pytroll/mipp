@@ -133,7 +133,7 @@ class SatelliteLoader(object):
         if mda.image_size[0] != chn.size[0]:
             raise xrit.SatReaderError("unknown image width for %s, %s: %d"%(self.satname, mda.channel, mda.image_size[0]))
                                 
-        mda.pixel_size = numpy.array([chn.resolution, chn.resolution], dtype=numpy.float128)
+        mda.pixel_size = numpy.array([chn.resolution, chn.resolution], dtype=numpy.float64)
         for k, v in self.__dict__.items():
             if k[0] != '_' and type(v) != types.FunctionType:
                 setattr(mda, k, v)
