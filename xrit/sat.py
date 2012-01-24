@@ -5,6 +5,7 @@ import numpy
 import glob
 import imp
 import types
+import re
 
 import logging
 logger = logging.getLogger('mipp')
@@ -23,6 +24,8 @@ __all__ = ['load_meteosat07',
            'load',
            'load_files']
 
+CHECK_CONFIG_SUBLON = False
+
 class SatelliteLoader(object):
     # Currently this one only works for geos satellites
     #
@@ -38,8 +41,7 @@ class SatelliteLoader(object):
         sat = config_reader('satellite')
         projname = sat['projection'].lower()
         if not projname.startswith('geos'):
-            raise xrit.SatReaderError("currently we only support projections of type: 'GEOS'")        
-        sublon = float(projname.split('(')[1].split(')')[0])
+            raise xrit.SatReaderError("currently we only support projections of type: 'GEOS'")
 
         #
         # Load format decoder based on level1 format
@@ -54,14 +56,21 @@ class SatelliteLoader(object):
         #
         # Attributing
         #
-        self.__dict__.update(sat)    
-        self.sublon = sublon
-        if not hasattr(self, 'proj4_params'):
-            self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon
+        self.__dict__.update(sat)
+
         self._config_reader = config_reader
         self.satname = self.satname + self.number
         self.satnumber = self.number
         delattr(self, 'number')
+
+        # backwards compatible
+        if not hasattr(self, 'proj4_params'):
+            try:
+                sublon = float(projname.split('(')[1].split(')')[0])
+            except (IndexError, ValueError):
+                raise xrit.SatReaderError("Could not determine sub satellite point from projection name '%s'"%
+                                          projname)
+            self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon            
 
     def load(self, time_stamp, channel, **kwarg):
         if channel not in self._config_reader.channel_names:
@@ -126,12 +135,19 @@ class SatelliteLoader(object):
         else:
             mda = self._metadata_reader(prologue, image_files)
         if "%.2f"%mda.sublon != "%.2f"%self.sublon:
-            raise xrit.SatReaderError("sub satellite point is %.2f, for %s is should be %.2f"%
-                                      (mda.sublon, self.satname, self.sublon))
+            if CHECK_CONFIG_SUBLON:
+                raise xrit.SatReaderError("Sub satellite point in config file (%.2f) don't match data (%.2f)"%
+                                          (self.sublon, mda.sublon))
+            else:
+                self.sublon = mda.sublon
+                logger.warning("Modifying sub satellite point from %.2f to %.2f"%
+                               (self.sublon, mda.sublon))
+                
         
         chn = self._config_reader.get_channel(mda.channel)
         if mda.image_size[0] != chn.size[0]:
-            raise xrit.SatReaderError("unknown image width for %s, %s: %d"%(self.satname, mda.channel, mda.image_size[0]))
+            raise xrit.SatReaderError("unknown image width for %s, %s: %d"%
+                                      (self.satname, mda.channel, mda.image_size[0]))
                                 
         mda.pixel_size = numpy.array([chn.resolution, chn.resolution], dtype=numpy.float64)
         for k, v in self.__dict__.items():
@@ -156,6 +172,25 @@ class SatelliteLoader(object):
         #
         return ImageLoader(mda, image_files, **kwargs)
             
+    #
+    # Manipulate proj4's lon_0 parameter
+    #
+    _sublon_re = re.compile('(lon_0)=(\S+)')
+    def _get_sublon(self):
+        m = self._sublon_re.search(self.proj4_params)
+        if m:
+            return float(m.group(2))
+        raise TypeError, "'SatelliteLoader' object (attribute proj4_params) has no attribute 'sublon'"
+    def _set_sublon(self, slon):
+        slon = "lon_0=%.2f"%float(slon)
+        p = self.proj4_params
+        m = self._sublon_re.search(p)
+        if m:
+            self.proj4_params = p.replace(m.group(0), slon)
+        else:
+            self.proj4_params += " %s"%slon
+    sublon = property(_get_sublon, _set_sublon)
+
 #-----------------------------------------------------------------------------
 #
 # Interface
