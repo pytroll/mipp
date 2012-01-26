@@ -17,6 +17,7 @@ import numpy as np
 
 eval_np = eval
 log = np.log
+no_data_value = 0
 
 if sys.version_info[0] >= 2 and sys.version_info[1] >= 5:
     try:
@@ -99,11 +100,10 @@ BTFIT_C_IR_134 =  -2.645950
 C1 = 1.19104273e-16
 C2 = 0.0143877523
 
-
-class _Calibrator:
-    def __init__(self, hdr, md):
+class _Calibrator(object):
+    def __init__(self, hdr, channel_name):
         self.hdr = hdr
-        self.md = md
+        self.channel_name = channel_name
         
     def __call__(self, image, calibrate=1):
         """Computes the radiances and reflectances/bt of a given channel.  The
@@ -112,10 +112,11 @@ class _Calibrator:
         default value is 1.
         """
         hdr = self.hdr
+        channel_name = self.channel_name
 
         if calibrate == 0:
-            self.md.calibration_unit = "counts"
-            return image
+            return (image, 
+                    "counts")
 
         channels = {"VIS006": 1,
                     "VIS008": 2,
@@ -131,9 +132,9 @@ class _Calibrator:
                     "HRV": 12}
 
         cal_type = (hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
-        chn_nb = channels[self.md.channel] - 1
+        chn_nb = channels[channel_name] - 1
 
-        mask = (image == self.md.no_data_value)
+        mask = (image == no_data_value)
         
         cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
         coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
@@ -141,21 +142,21 @@ class _Calibrator:
         radiances = eval_np('image * cslope + coffset')
         
         if calibrate == 2:
-            self.md.calibration_unit = "mW m-2 sr-1 (cm-1)-1"
-            return np.ma.MaskedArray(radiances, mask=mask)
+            return (np.ma.MaskedArray(radiances, mask=mask),
+                    "mW m-2 sr-1 (cm-1)-1")
             
         
-        if self.md.channel in ["HRV", "VIS006", "VIS008", "IR_016"]:
-            solar_irradiance = eval(self.md.channel + "_F")
+        if channel_name in ["HRV", "VIS006", "VIS008", "IR_016"]:
+            solar_irradiance = eval(channel_name + "_F")
             reflectance = eval_np('(radiances / solar_irradiance) * 100.')
-            self.md.calibration_unit = "%"
-            return np.ma.MaskedArray(reflectance, mask=mask) 
+            return (np.ma.MaskedArray(reflectance, mask=mask), 
+                    "%")
 
-        wavenumber = eval("VC_" + self.md.channel)
+        wavenumber = eval("VC_" + channel_name)
         if cal_type[chn_nb] == 2:
             #computation based on effective radiance
-            alpha = eval("ALPHA_" + self.md.channel)
-            beta = eval("BETA_" + self.md.channel)
+            alpha = eval("ALPHA_" + channel_name)
+            beta = eval("BETA_" + channel_name)
             
             cal_data = eval_np(('((C2 * 100. * wavenumber / ' 
                                 'log(C1 * 1.0e6 * wavenumber ** 3 / ' 
@@ -167,9 +168,9 @@ class _Calibrator:
                                 'log(C1 * 1.0e6 * wavenumber ** 3 / '
                                 '(1.0e-5 * radiances) + 1))'))
             
-            coef_a = eval("BTFIT_A_" + self.md.channel)
-            coef_b = eval("BTFIT_B_" + self.md.channel)
-            coef_c = eval("BTFIT_C_" + self.md.channel)
+            coef_a = eval("BTFIT_A_" + channel_name)
+            coef_b = eval("BTFIT_B_" + channel_name)
+            coef_c = eval("BTFIT_C_" + channel_name)
             
             cal_data = eval_np(('cal_data ** 2 * coef_a + ' 
                                 'cal_data * coef_b + coef_c'))
@@ -179,8 +180,8 @@ class _Calibrator:
 
         mask = mask | np.isnan(cal_data) | np.isinf(cal_data)
         cal_data = np.ma.MaskedArray(cal_data, mask=mask)
-        self.md.calibration_unit = "K"
-        return cal_data
+        return (cal_data, 
+                "K")
 
 def read_proheader(fp):
     """Read the msg header.
@@ -657,16 +658,18 @@ def read_metadata(prologue, image_files, epilogue):
     """
     segment_size = 464 # number of lines in a segment
 
-    md = xrit.mda.Metadata()
-
     fp = StringIO(prologue.data)
     hdr = read_proheader(fp)
 
     fp = StringIO(epilogue.data)
     ftr = read_epiheader(fp)
     
-    md.sublon = hdr["SatelliteDefinition"]["NominalLongitude"]
     im = xrit.read_imagedata(image_files[0])
+
+    md = xrit.mda.Metadata()
+    md.calibrate = _Calibrator(hdr, im.product_name)
+
+    md.sublon = hdr["SatelliteDefinition"]["NominalLongitude"]
     md.product_name = im.product_id
     md.channel = im.product_name
     if md.channel == "HRV":
@@ -714,12 +717,11 @@ def read_metadata(prologue, image_files, epilogue):
                    + im_loff - 1)
 
     md.data_type = im.structure.nb
-    md.no_data_value = 0
+    md.no_data_value = no_data_value
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
     md.calibration_unit = 'counts'
-    md.calibrate = _Calibrator(hdr, md)
 
     return md
 

@@ -259,47 +259,44 @@ temp2rad[7] = np.array([ [170.0, 0.020], [171.0, 0.022], [172.0, 0.024],
 [363.0, 22.113], [364.0, 22.495], [365.0, 22.883], [366.0, 23.274], [367.0,
 23.671], [368.0, 24.072], [369.0, 24.477]])
 
-class _Calibrator:
-    def __init__(self, bin_hdr, md_):
-        self.hdr = bin_hdr
-        self.md_ = md_
+class _Calibrator(object):
+    def __init__(self, hdr):
+        self.hdr = hdr
         
     def __call__(self, image, calibrate=1):
         """From http://www.eumetsat.int/Home/Main/DataProducts/Calibration/MFGCalibration/index.htm?l=en
         """
         # don't know how to calibrate
         if calibrate == 0:
-            self.md_.calibration_unit = "counts"
-            return image
+            return (image, 
+                    "counts")
         
         if(self.hdr["space"] is None or
            self.hdr["calco"] is None):
             raise xrit.CalibrationError("Not implemented")
         radiances = (image - self.hdr["space"]) * self.hdr["calco"]
         if calibrate == 2:
-            self.md_.calibration_unit = "W m-2 sr-1"
-            return radiances
-
-        self.md_.calibration_unit = "K"
+            return (radiances,
+                    "W m-2 sr-1")
 
         # using piecewise linear interpolation between lookup table values.
 
-        return np.interp(radiances.ravel(),
-                  # known radiances
-                  temp2rad[self.hdr["chan"]][:, 1],
-                  # known bt's
-                  temp2rad[self.hdr["chan"]][:, 0]).reshape(radiances.shape)
-        
-        
+        return (np.interp(radiances.ravel(),
+                         # known radiances
+                         temp2rad[self.hdr["chan"]][:, 1],
+                         # known bt's
+                         temp2rad[self.hdr["chan"]][:, 0]).reshape(radiances.shape),
+                "K")
 
 def read_metadata(prologue, image_files):
     """ Selected items from the Meteosat-7 prolog file.
     """
     im = xrit.read_imagedata(image_files[0])
-    md = xrit.mda.Metadata()
     fp = StringIO(prologue.data)
     asc_hdr = _read_ascii_header(fp)
     bin_hdr = _read_binary_header(fp, asc_hdr['ProductType'])
+    md = xrit.mda.Metadata()
+    md.calibrate = _Calibrator(bin_hdr)
     md.product_name = prologue.product_id
     pf = asc_hdr['Platform']
     if pf == 'M7':
@@ -318,10 +315,7 @@ def read_metadata(prologue, image_files):
     d, t = strptime(asc_hdr['Date'], "%y%m%d"), int(asc_hdr['Time'])
     md.time_stamp = d + timedelta(hours=t//100, minutes=t%100)
     md.production_time = strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
-    md.calibration_name = ''
-    md.calibration_unit = ''
-    md.calibration_table = None
-    md.calibrate = _Calibrator(bin_hdr, md)
+    md.calibration_unit = 'counts'
     segment_size = im.structure.nl
     md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
     md.coff = im.navigation.coff

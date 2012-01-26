@@ -34,10 +34,8 @@ class ImageLoader(object):
         """
         # All data reading should end up here.
 
-        # make a copy of meta-data, so ImageLoader instance can be reused.
+        # Don't mess with callers metadata.
         mda = copy.copy(self.mda)
-        if mda.calibrate:
-            mda.calibrate.md = mda
         rows, columns = self._handle_item(item)
 
         ns_, ew_ = mda.first_pixel.split()
@@ -110,17 +108,7 @@ class ImageLoader(object):
         mda.data_type = 8*image.itemsize
         mda.image_size = numpy.array([image.shape[1], image.shape[0]])
 
-        # cleanup 
-        delattr(mda, 'line_offset')
-        delattr(mda, 'first_pixel')
-        delattr(mda, 'coff')
-        delattr(mda, 'loff')
-        try:
-            delattr(mda, 'boundaries')
-        except AttributeError:
-            pass
-
-        return mda, image
+        return xrit.mda.slice(mda), image
     
     def __getitem__(self, item):
         """Deafult slicing, handles rotated images.
@@ -431,10 +419,10 @@ class ImageLoader(object):
         if self.do_calibrate:
             # do this before masking.
             calibrate = self.do_calibrate
-            if type(calibrate) == types.BooleanType:
+            if isinstance(calibrate, bool):
                 # allow boolean True/False for 1/0
                 calibrate = int(calibrate)
-            image = mda.calibrate(image, calibrate=calibrate)
+            image, mda.calibration_unit = mda.calibrate(image, calibrate=calibrate)
             mda.is_calibrated = True
 
         #

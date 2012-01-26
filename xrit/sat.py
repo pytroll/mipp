@@ -180,7 +180,7 @@ class SatelliteLoader(object):
         m = self._sublon_re.search(self.proj4_params)
         if m:
             return float(m.group(2))
-        raise TypeError, "'SatelliteLoader' object (attribute proj4_params) has no attribute 'sublon'"
+        raise TypeError, "'SatelliteLoader' object (attribute proj4_params) has no 'sublon' attribute"
     def _set_sublon(self, slon):
         slon = "lon_0=%.2f"%float(slon)
         p = self.proj4_params

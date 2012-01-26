@@ -7,14 +7,14 @@ import unittest
 import buildpath_to_syspath
 import xrit
 
-datadir = os.path.dirname(__file__) + '/data'
+datadir = (os.path.dirname(__file__) or '.') + '/data'
 save_mda = False
 
 try:
     # give the possibility to test other config files
     os.environ['PPP_CONFIG_DIR'] = os.environ['LOCAL_PPP_CONFIG_DIR']
 except KeyError:
-    os.environ['PPP_CONFIG_DIR'] = os.path.abspath(os.path.dirname(__file__) + '/data')
+    os.environ['PPP_CONFIG_DIR'] = datadir
 if not os.path.isdir(os.environ['PPP_CONFIG_DIR']):
     raise xrit.SatConfigReaderError, "No config dir: '%s'"%os.environ['PPP_CONFIG_DIR']
 
@@ -64,7 +64,6 @@ def make_image(mda, img, outdir='.'):
 
 def compare_mda(m1, m2):
     import xrit.mda
-    notatrr = xrit.mda.Metadata._ignore_attributes
 
     def _convert(v):
         if isinstance(v, numpy.ndarray):
@@ -73,10 +72,8 @@ def compare_mda(m1, m2):
             return str(v)
         return v
     
-    k1 = [k for k in sorted(m1.__dict__.keys()) \
-              if k not in notatrr and not k.startswith('_')]
-    k2 = [k for k in sorted(m2.__dict__.keys()) \
-              if k not in notatrr and not k.startswith('_')]
+    k1 = sorted(m1.__dict__.keys())
+    k2 = sorted(m2.__dict__.keys())
     if not k1 == k2:
         return False
     for k in k1:

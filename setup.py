@@ -6,7 +6,7 @@ ext = Extension('xrit/_convert', ['xrit/convert/wrap_convert.c',
 
 
 setup(name = 'xrit',
-      version = '0.3',
+      version = '0.4',
       package_dir = {'xrit': 'xrit'},
       packages = ['xrit'],
       ext_modules = [ext,],

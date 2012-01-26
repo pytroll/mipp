@@ -14,7 +14,7 @@ import xrit
 import xrit.mda
 from xrit.bin_reader import *
 
-_min_val_as_no_data_val = False
+no_data_value = 0
 
 __all__ = ['read_metadata',]
 
@@ -40,33 +40,44 @@ def _read_sgs_product_header(fp):
     #hdr['ImageProductHeaderData'] = fp.read()
     return hdr
 
-class _Calibrator:
-    def __init__(self, calibration_table, no_data_value):
-        self.calibration_table = calibration_table
-        self.no_data_value = no_data_value
+class _Calibrator(object):
+    def __init__(self, hdr):
+        self.hdr = hdr
+
+        dd = []
+        for k in sorted(hdr.keys()):
+            if isinstance(k, int):
+                v = hdr[k]
+                dd.append([float(k), v])
+        self.calibration_table = numpy.array(dd, dtype=numpy.float32)
+
     def __call__(self, image, calibrate=1):
         cal = self.calibration_table
-    
+
         if type(cal) != numpy.ndarray:
             cal = numpy.array(cal)
 
         if cal.shape == (256, 2):
             cal = cal[:,1] # nasty !!!
-            cal[int(self.no_data_value)] = self.no_data_value
+            cal[int(no_data_value)] = no_data_value
             image = cal[image] # this does not work on masked arrays !!!
         elif cal.shape ==(2, 2):
             scale = (cal[1][1] - cal[0][1])/(cal[1][0] - cal[0][0])
             offset = cal[0][1] - cal[0][0]*scale
-            image = numpy.select([image == self.no_data_value*scale], [self.no_data_value], default=offset + image*scale)
+            image = numpy.select([image == no_data_value*scale], [no_data_value], default=offset + image*scale)
         else:
-            raise xrit.SatDecodeError("could not recognize the shape %s of the calibration table"%str(cal.shape))
-        return image
+            raise xrit.SatDecodeError("Could not recognize the shape %s of the calibration table"%str(cal.shape))
+
+        return (image,
+                self.hdr['_UNIT'])
 
 def read_metadata(prologue, image_files):
     """ Selected items from the GOES image data files (not much information in prologue).
     """
     im = xrit.read_imagedata(image_files[0])
+    hdr = im.data_function.data_definition
     md = xrit.mda.Metadata()
+    md.calibrate = _Calibrator(hdr)
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
     md.region_name = 'full disc'
@@ -83,28 +94,9 @@ def read_metadata(prologue, image_files):
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
-    md.calibration_name = im.data_function.data_definition['_NAME']
-    md.calibration_unit = im.data_function.data_definition['_UNIT']
-    md.calibration_table = dict()
-    dd = []
-    keys = sorted(im.data_function.data_definition.keys())
-    min_key = 0
-    min_val = numpy.inf
-    for k in keys:
-        if type(k) == type(1):
-            if min_val > im.data_function.data_definition[k]:
-                min_val = im.data_function.data_definition[k]
-                min_key = k
-            v = im.data_function.data_definition[k]
-            dd.append([float(k), v])
+    md.calibration_unit = 'counts'
+    md.no_data_value = no_data_value
 
-    if _min_val_as_no_data_val:
-        md.no_data_value = min_key
-    else:
-        md.no_data_value = 0
-    
-    md.calibration_table = numpy.array(dd, dtype=numpy.float32)
-    md.calibrate = _Calibrator(md.calibration_table, md.no_data_value)
     segment_size = im.structure.nl
     md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
     md.coff = im.navigation.coff

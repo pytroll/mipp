@@ -1,6 +1,4 @@
 area_extent: [-398654.28125, -402660.84375, 402660.84375, 398654.28125]
-calibration_name: calibrated infrared
-calibration_table: [[0.0, 170.0], [1023.0, 340.0]]
 calibration_unit: degree Kelvin
 channel: 10_7
 data_type: 32

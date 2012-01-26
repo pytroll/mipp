@@ -1,7 +1,5 @@
 area_extent: [-1123120.75, -450822.25, 1125369.25, 898271.75]
-calibration_name: 
-calibration_table: None
-calibration_unit: 
+calibration_unit: counts
 channel: 00_7
 data_type: 8
 image_size: [1000, 600]
