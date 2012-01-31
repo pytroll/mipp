@@ -6,6 +6,9 @@ import unittest
 
 import buildpath_to_syspath
 import xrit
+import xrit.mda
+
+nice2cmp = xrit.mda._nice2cmp
 
 datadir = (os.path.dirname(__file__) or '.') + '/data'
 save_mda = False
@@ -65,20 +68,14 @@ def make_image(mda, img, outdir='.'):
 def compare_mda(m1, m2):
     import xrit.mda
 
-    def _convert(v):
-        if isinstance(v, numpy.ndarray):
-            return v.tolist()
-        if isinstance(v, datetime):
-            return str(v)
-        return v
-    
     k1 = sorted(m1.__dict__.keys())
     k2 = sorted(m2.__dict__.keys())
     if not k1 == k2:
         return False
     for k in k1:
-        if not _convert(getattr(m1, k)) == _convert(getattr(m2, k)):
+        if not nice2cmp(getattr(m1, k)) == nice2cmp(getattr(m2, k)):
             return False
+            
     return True
 
 class Test(unittest.TestCase):

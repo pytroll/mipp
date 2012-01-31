@@ -51,7 +51,13 @@ class SatelliteLoader(object):
             args = imp.find_module(format)
         except ImportError:
             raise xrit.SatReaderError("unknown level-1 format: '%s'"%format)
-        self._metadata_reader = imp.load_module(format, *args).read_metadata
+        try:
+            m = imp.load_module(format, *args)
+        finally:
+            if args[0]:
+                args[0].close()
+
+        self._metadata_reader = m.read_metadata
 
         #
         # Attributing
@@ -131,7 +137,7 @@ class SatelliteLoader(object):
 
     def _read_metadata(self, prologue, image_files, epilogue=None):
         if epilogue:
-            mda = self._metadata_reader(prologue, image_files, epilogue)
+            mda = self._metadata_reader(prologue, image_files, epilogue=epilogue)
         else:
             mda = self._metadata_reader(prologue, image_files)
         if "%.2f"%mda.sublon != "%.2f"%self.sublon:
@@ -160,7 +166,7 @@ class SatelliteLoader(object):
 
     def _read(self, prologue, image_files, epilogue=None, **kwargs):
         if epilogue:
-            mda = self._read_metadata(prologue, image_files, epilogue)
+            mda = self._read_metadata(prologue, image_files, epilogue=epilogue)
         else:
             mda = self._read_metadata(prologue, image_files)
 	len_img = (((mda.image_size[0] + mda.line_offset)*mda.image_size[1])*mda.data_type)//8

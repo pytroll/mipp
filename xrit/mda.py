@@ -1,6 +1,7 @@
 #
 # $Id$
 #
+from datetime import datetime
 import numpy
 
 _cleanup_attributes = ('line_offset', 'first_pixel',
@@ -8,7 +9,7 @@ _cleanup_attributes = ('line_offset', 'first_pixel',
                        'image_data', 'boundaries')
 _dont_eval = ('satnumber',)
 
-def slice(mda):
+def mslice(mda):
     m = Metadata()
     for k, v in mda.__dict__.items():
         if (not k.startswith('_') and 
@@ -59,10 +60,24 @@ class Metadata(object):
             if (not k.startswith('_') and 
                 not callable(v) and
                 k not in _cleanup_attributes):
-                if type(v) == numpy.ndarray:
-                    v = v.tolist()
+                v = _nice2cmp(v)
                 s += k + self.token + ' ' + str(v) + '\n'
         return s[:-1]
+
+def _nice2cmp(val):
+    # ... and nice to print
+    if isinstance(val, numpy.ndarray):
+        val = val.tolist()
+    elif isinstance(val, datetime):
+        val = str(val)
+    elif isinstance(val, dict):
+        d = {}
+        for k, v in val.items():
+            if isinstance(v, numpy.ndarray):
+                v = v.tolist()
+            d[k] = v
+        val = d
+    return val
 
 if __name__ == '__main__':
     import sys

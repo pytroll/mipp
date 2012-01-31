@@ -316,6 +316,12 @@ def read_metadata(prologue, image_files):
     md.time_stamp = d + timedelta(hours=t//100, minutes=t%100)
     md.production_time = strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
     md.calibration_unit = 'counts'
+
+    # Calibration table
+    md.calibration_table = dict((('name', ''),
+                                 ('unit', ''),
+                                 ('table', None)))
+
     segment_size = im.structure.nl
     md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
     md.coff = im.navigation.coff

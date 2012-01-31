@@ -108,7 +108,7 @@ class ImageLoader(object):
         mda.data_type = 8*image.itemsize
         mda.image_size = numpy.array([image.shape[1], image.shape[0]])
 
-        return xrit.mda.slice(mda), image
+        return xrit.mda.mslice(mda), image
     
     def __getitem__(self, item):
         """Deafult slicing, handles rotated images.

@@ -95,6 +95,18 @@ def read_metadata(prologue, image_files):
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
     md.calibration_unit = 'counts'
+
+    # Calibration table
+    dd = []
+    for k in sorted(hdr.keys()):
+        if isinstance(k, int):
+            v = hdr[k]
+            dd.append([float(k), v])
+
+    md.calibration_table = dict((('name', im.data_function.data_definition['_NAME']),
+                                 ('unit', im.data_function.data_definition['_UNIT']),
+                                 ('table', numpy.array(dd, dtype=numpy.float32))))
+
     md.no_data_value = no_data_value
 
     segment_size = im.structure.nl

@@ -1,4 +1,5 @@
 area_extent: [-1123120.75, -450822.25, 1125369.25, 898271.75]
+calibration_table: {'table': None, 'name': '', 'unit': ''}
 calibration_unit: counts
 channel: 00_7
 data_type: 8
