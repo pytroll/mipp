@@ -137,8 +137,16 @@ class ImageLoader(object):
 
         ns_, ew_ = self.mda.first_pixel.split()
 
-        loff = self.mda.loff - 1
-        coff = self.mda.coff - 1
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - self.mda.loff - 1
+        else:
+            loff = self.mda.loff - 1
+
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - self.mda.coff - 1
+        else:
+            coff = self.mda.coff - 1
+
             
         row_size = self.mda.pixel_size[0]
         col_size = self.mda.pixel_size[1]
@@ -205,16 +213,22 @@ class ImageLoader(object):
         """
         ns_, ew_ = self.mda.first_pixel.split()
 
-        loff = self.mda.loff - 1
-        coff = self.mda.coff - 1
+        loff = self.mda.loff
+        coff = self.mda.coff
         if ns_ == "south":
+            loff = self.mda.image_size[0] - loff - 1
             if rotated:
                 rows = slice(self.mda.image_size[1] - rows.stop,
                              self.mda.image_size[1] - rows.start)
+        else:
+            loff -= 1
         if ew_ == "east":
+            coff = self.mda.image_size[1] - coff - 1
             if rotated:
                 columns = slice(self.mda.image_size[0] - columns.stop,
                                 self.mda.image_size[0] - columns.start)
+        else:
+            coff -= 1
 
         logger.debug('slice2extent: size %d, %d'% \
                          (columns.stop - columns.start, rows.stop - rows.start))
