@@ -5,7 +5,7 @@ import os
 import re
 from ConfigParser import ConfigParser
 
-import xrit
+import mipp
 
 __all__ = ['read_config',]
 
@@ -18,11 +18,11 @@ class _ConfigReader(object):
         try:
             home = os.environ['PPP_CONFIG_DIR']
         except KeyError:
-            raise xrit.SatConfigReaderError("PPP_CONFIG_DIR environment variable is not set")
+            raise mipp.ConfigReaderError("PPP_CONFIG_DIR environment variable is not set")
 
         self.config_file = home + '/' + satname + '.cfg'
         if not os.path.isfile(self.config_file):
-            raise xrit.SatConfigReaderError("unknown satellite: '%s' (no such file: '%s')"%(satname, self.config_file))
+            raise mipp.ConfigReaderError("unknown satellite: '%s' (no such file: '%s')"%(satname, self.config_file))
         self._config = ConfigParser()
         self._config.read(self.config_file)
         
@@ -31,10 +31,10 @@ class _ConfigReader(object):
             if len(instruments) == 1:
                 instrument = instruments[0]
             else:
-                raise xrit.SatConfigReaderError("please specify instrument")
+                raise mipp.ConfigReaderError("please specify instrument")
         else:
             if instrument not in instruments: 
-                raise xrit.SatConfigReaderError("unknown instrument: '%s'"%instrument)
+                raise mipp.ConfigReaderError("unknown instrument: '%s'"%instrument)
         self.instrument = instrument
         
         self._channels = self._channels2dict(instrument)
@@ -55,7 +55,7 @@ class _ConfigReader(object):
         try:
             return self._channels[name]
         except KeyError:
-            raise xrit.SatConfigReaderError("unknown channel: '%s'"%name)
+            raise mipp.ConfigReaderError("unknown channel: '%s'"%name)
 
     @property
     def channels(self):

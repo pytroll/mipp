@@ -10,9 +10,10 @@ import re
 import logging
 logger = logging.getLogger('mipp')
 
-import xrit
-import xrit.cfg
-from loader import ImageLoader
+import mipp
+from mipp.xrit import _xrit 
+import mipp.cfg
+from mipp.xrit.loader import ImageLoader
 
 __all__ = ['load_meteosat07',
            'load_meteosat09',
@@ -41,7 +42,7 @@ class SatelliteLoader(object):
         sat = config_reader('satellite')
         projname = sat['projection'].lower()
         if not projname.startswith('geos'):
-            raise xrit.SatReaderError("currently we only support projections of type: 'GEOS'")
+            raise mipp.ReaderError("currently we only support projections of type: 'GEOS'")
 
         #
         # Load format decoder based on level1 format
@@ -50,7 +51,7 @@ class SatelliteLoader(object):
         try:
             args = imp.find_module(format)
         except ImportError:
-            raise xrit.SatReaderError("unknown level-1 format: '%s'"%format)
+            raise mipp.ReaderError("unknown level-1 format: '%s'"%format)
         try:
             m = imp.load_module(format, *args)
         finally:
@@ -74,13 +75,13 @@ class SatelliteLoader(object):
             try:
                 sublon = float(projname.split('(')[1].split(')')[0])
             except (IndexError, ValueError):
-                raise xrit.SatReaderError("Could not determine sub satellite point from projection name '%s'"%
+                raise mipp.ReaderError("Could not determine sub satellite point from projection name '%s'"%
                                           projname)
             self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon            
 
     def load(self, time_stamp, channel, **kwarg):
         if channel not in self._config_reader.channel_names:
-            raise xrit.SatReaderError("unknown channel name '%s'"%channel)
+            raise mipp.ReaderError("unknown channel name '%s'"%channel)
         opt = self._config_reader('level1')
         val = {}
         val["channel"] = channel + '*'
@@ -93,7 +94,7 @@ class SatelliteLoader(object):
         prologue = glob.glob(opt['dir'] + '/' + \
                              (time_stamp.strftime(filename_pro)%val))
         if not prologue:
-            raise xrit.SatNoFiles("missing prologue file: '%s'"%(time_stamp.strftime(filename_pro)%val))
+            raise mipp.NoFiles("missing prologue file: '%s'"%(time_stamp.strftime(filename_pro)%val))
         prologue = prologue[0]
 
         # Regular channels
@@ -102,11 +103,11 @@ class SatelliteLoader(object):
         image_files = glob.glob(opt['dir'] + '/' + \
                                 time_stamp.strftime(opt['filename'])%val)
         if not image_files:
-            raise xrit.SatNoFiles("no data files: '%s'"%(time_stamp.strftime(opt['filename'])%val))
+            raise mipp.NoFiles("no data files: '%s'"%(time_stamp.strftime(opt['filename'])%val))
         image_files.sort()
 
         logger.info("Read %s"%prologue)
-        prologue = xrit.read_prologue(prologue)
+        prologue = _xrit.read_prologue(prologue)
 
         # Epilogue
 
@@ -121,7 +122,7 @@ class SatelliteLoader(object):
         else:
             epilogue = epilogue[0]
             logger.info("Read %s"%epilogue)
-            epilogue = xrit.read_epilogue(epilogue)
+            epilogue = _xrit.read_epilogue(epilogue)
             return self.load_files(prologue, image_files,
                                    epilogue=epilogue, **kwarg)
         
@@ -142,7 +143,7 @@ class SatelliteLoader(object):
             mda = self._metadata_reader(prologue, image_files)
         if "%.2f"%mda.sublon != "%.2f"%self.sublon:
             if CHECK_CONFIG_SUBLON:
-                raise xrit.SatReaderError("Sub satellite point in config file (%.2f) don't match data (%.2f)"%
+                raise mipp.ReaderError("Sub satellite point in config file (%.2f) don't match data (%.2f)"%
                                           (self.sublon, mda.sublon))
             else:
                 self.sublon = mda.sublon
@@ -152,7 +153,7 @@ class SatelliteLoader(object):
         
         chn = self._config_reader.get_channel(mda.channel)
         if mda.image_size[0] != chn.size[0]:
-            raise xrit.SatReaderError("unknown image width for %s, %s: %d"%
+            raise mipp.ReaderError("unknown image width for %s, %s: %d"%
                                       (self.satname, mda.channel, mda.image_size[0]))
                                 
         mda.pixel_size = numpy.array([chn.resolution, chn.resolution], dtype=numpy.float64)
@@ -160,7 +161,7 @@ class SatelliteLoader(object):
             if k[0] != '_' and type(v) != types.FunctionType:
                 setattr(mda, k, v)
                 
-        img = xrit.read_imagedata(image_files[0])
+        img = _xrit.read_imagedata(image_files[0])
         
         return mda
 
@@ -205,18 +206,18 @@ class SatelliteLoader(object):
 def load_files(prologue, image_files, epilogue=None, **kwarg):
     if type(prologue) == type('string'):
         logger.info("Read %s"%prologue)
-        prologue = xrit.read_prologue(prologue)
+        prologue = _xrit.read_prologue(prologue)
     if epilogue and type(epilogue) == type('string'):
         logger.info("Read %s"%epilogue)
-        epilogue = xrit.read_epilogue(epilogue)
+        epilogue = _xrit.read_epilogue(epilogue)
     satname = prologue.platform.lower()
-    return SatelliteLoader(xrit.cfg.read_config(satname)).load_files(prologue, 
+    return SatelliteLoader(mipp.cfg.read_config(satname)).load_files(prologue, 
                                                                      image_files, 
                                                                      epilogue=epilogue, 
                                                                      **kwarg)
- 
+
 def load(satname, time_stamp, channel, **kwarg):
-    return SatelliteLoader(xrit.cfg.read_config(satname)).load(time_stamp, channel, **kwarg)
+    return SatelliteLoader(mipp.cfg.read_config(satname)).load(time_stamp, channel, **kwarg)
  
 def load_meteosat07(time_stamp, channel, **kwarg):
     return load('meteosat07', time_stamp, channel, **kwarg)

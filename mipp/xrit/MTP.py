@@ -10,10 +10,11 @@ import sys
 from datetime import datetime, timedelta
 from StringIO import StringIO
 import numpy as np
-import xrit
-import xrit.mda
-from xrit.bin_reader import *
-from xrit._xrit import strptime
+
+from mipp.xrit import _xrit
+from mipp.xrit.mda import Metadata
+from mipp.xrit.bin_reader import *
+from mipp import strptime
 
 __all__ = ['read_metadata',]
 
@@ -273,7 +274,7 @@ class _Calibrator(object):
         
         if(self.hdr["space"] is None or
            self.hdr["calco"] is None):
-            raise xrit.CalibrationError("Not implemented")
+            raise mipp.CalibrationError("Not implemented")
         radiances = (image - self.hdr["space"]) * self.hdr["calco"]
         if calibrate == 2:
             return (radiances,
@@ -291,11 +292,11 @@ class _Calibrator(object):
 def read_metadata(prologue, image_files):
     """ Selected items from the Meteosat-7 prolog file.
     """
-    im = xrit.read_imagedata(image_files[0])
+    im = _xrit.read_imagedata(image_files[0])
     fp = StringIO(prologue.data)
     asc_hdr = _read_ascii_header(fp)
     bin_hdr = _read_binary_header(fp, asc_hdr['ProductType'])
-    md = xrit.mda.Metadata()
+    md = Metadata()
     md.calibrate = _Calibrator(bin_hdr)
     md.product_name = prologue.product_id
     pf = asc_hdr['Platform']
@@ -329,6 +330,5 @@ def read_metadata(prologue, image_files):
     return md
 
 if __name__ == '__main__':
-    import xrit
-    p = xrit.read_prologue(sys.argv[1])
+    p = _xrit.read_prologue(sys.argv[1])
     print read_metadata(p, sys.argv[2:])

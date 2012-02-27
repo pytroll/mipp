@@ -8,12 +8,13 @@
 import logging
 logger = logging.getLogger('mipp')
 
-import xrit
-import xrit.mda
 import sys
-from StringIO import StringIO
-from xrit.bin_reader import *
 import numpy as np
+from StringIO import StringIO
+
+from mipp.xrit import _xrit
+from mipp.xrit.mda import Metadata
+from mipp.xrit.bin_reader import *
 
 eval_np = eval
 log = np.log
@@ -664,9 +665,9 @@ def read_metadata(prologue, image_files, epilogue):
     fp = StringIO(epilogue.data)
     ftr = read_epiheader(fp)
     
-    im = xrit.read_imagedata(image_files[0])
+    im = _xrit.read_imagedata(image_files[0])
 
-    md = xrit.mda.Metadata()
+    md = Metadata()
     md.calibrate = _Calibrator(hdr, im.product_name)
 
     md.sublon = hdr["SatelliteDefinition"]["NominalLongitude"]
@@ -726,7 +727,6 @@ def read_metadata(prologue, image_files, epilogue):
     return md
 
 if __name__ == '__main__':
-    import xrit
-    p = xrit.read_prologue(sys.argv[1])
-    e = xrit.read_epilogue(sys.argv[-1])
+    p = _xrit.read_prologue(sys.argv[1])
+    e = _xrit.read_epilogue(sys.argv[-1])
     print read_metadata(p, sys.argv[2:-1], e)

@@ -1,4 +1,4 @@
 #
-from xrit._xrit import *
-from xrit._exceptions import *
-import xrit.sat
+from mipp.xrit._xrit import *
+from mipp.xrit import sat
+from mipp.xrit.mda import Metadata

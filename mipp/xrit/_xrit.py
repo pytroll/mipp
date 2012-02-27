@@ -10,10 +10,9 @@
 import sys
 import os
 from StringIO import StringIO 
-from datetime import datetime
 
-from xrit._exceptions import XRITDecodeError
-from xrit.bin_reader import *
+import mipp
+from mipp.xrit.bin_reader import *
 
 __all__ = ['read_prologue',
            'read_epilogue',
@@ -23,18 +22,6 @@ __all__ = ['read_prologue',
            'decompress',
            'list']
 
-if sys.version_info < (2, 5):
-    import time
-    def strptime(string, fmt=None):
-        """This function is available in the datetime module only
-        from Python >= 2.5.
-        """
-
-        return datetime(*time.strptime(string, fmt)[:6])
-else:
-    strptime = datetime.strptime
-
-
 def decompress(infile, outdir='.'):
     """Will decompress a XRIT data file and return the path to the decompressed file.
     It expect to find Eumetsat's xRITDecompress through the environment variable XRIT_DECOMPRESS_PATH 
@@ -42,7 +29,7 @@ def decompress(infile, outdir='.'):
     from subprocess import Popen, PIPE
     cmd = os.environ.get('XRIT_DECOMPRESS_PATH', None)
     if not cmd:
-        raise XRITDecodeError("XRIT_DECOMPRESS_PATH is not defined (path to xRITDecompress")
+        raise mipp.DecodeError("XRIT_DECOMPRESS_PATH is not defined (path to xRITDecompress")
         
     cwd = os.getcwd()
     os.chdir(outdir)
@@ -62,9 +49,9 @@ def decompress(infile, outdir='.'):
             break
     
     if status != 0:
-        raise XRITDecodeError("xrit_decompress '%s', failed, status=%d"%(infile, status))
+        raise mipp.DecodeError("xrit_decompress '%s', failed, status=%d"%(infile, status))
     if not outfile:
-        raise XRITDecodeError("xrit_decompress '%s', failed, no output file is generated"%infile)
+        raise mipp.DecodeError("xrit_decompress '%s', failed, no output file is generated"%infile)
     return outdir + '/' + outfile    
     
 #-----------------------------------------------------------------------------
@@ -144,7 +131,7 @@ class AnnotationHeader(object):
         self.platform = a[3]
         self.product_name = a[4]
         self.segment_name = a[5]
-        self.time_stamp = strptime(a[6], "%Y%m%d%H%M")
+        self.time_stamp = mipp.strptime(a[6], "%Y%m%d%H%M")
         self.flags = a[7]
         self.segment_id = a[3] + '_' + a[4] + '_' + a[5] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
         self.product_id = a[3] + '_' + a[4] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
@@ -227,7 +214,7 @@ def _decode_data_definition(buf):
         elif k.isdigit():
             dd[int(k)] = float(v)
         else:
-            raise XRITDecodeError("could not decode data definition: '%s'"%a)
+            raise mipp.DecodeError("could not decode data definition: '%s'"%a)
     return dd
     
 header_map = {0: PrimaryHeader,
@@ -243,7 +230,7 @@ header_types = tuple(sorted(header_map.keys()))
 def read_header(fp):
     hdr_type = read_uint1(fp.read(1))
     if hdr_type != 0:
-        raise XRITDecodeError("first header has to be a Primary Header, this one is of type %d"%hdr_type)
+        raise mipp.DecodeError("first header has to be a Primary Header, this one is of type %d"%hdr_type)
     phdr = PrimaryHeader(fp)
     yield phdr
     current_size = phdr.rec_len
@@ -323,7 +310,7 @@ class ImageSegment(Segment):
             read_headers(self.fp)
         data = self.fp.read(self.bytes_per_line*nlines)
         if not data:
-            raise XRITDecodeError("could not read", self.bytes_per_line*nlines, "bytes")
+            raise mipp.DecodeError("could not read", self.bytes_per_line*nlines, "bytes")
         return data
     
     def close(self):
@@ -336,21 +323,21 @@ def read_prologue(file_name):
     if s.file_type == 128:
         return s
     else:
-        raise XRITDecodeError("this is no 'prologue' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'prologue' file: '%s'"%file_name)
 
 def read_epilogue(file_name):
     s = Segment(file_name)
     if s.file_type == 129:
         return s
     else:
-        raise XRITDecodeError("this is no 'epilogue' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'epilogue' file: '%s'"%file_name)
 
 def read_imagedata(file_name):
     s = Segment(file_name)
     if s.file_type == 0:
         return ImageSegment(file_name)
     else:
-        raise XRITDecodeError("this is no 'image data' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'image data' file: '%s'"%file_name)
     
     
 def read_gts_message(file_name):
@@ -358,14 +345,14 @@ def read_gts_message(file_name):
     if s.file_type == 1:
         return s
     else:
-        raise XRITDecodeError("this is no 'GTS Message' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'GTS Message' file: '%s'"%file_name)
     
 def read_mpef_clm(file_name):
     s = Segment(file_name)
     if s.file_type == 144:
         return s
     else:
-        raise XRITDecodeError("this is no 'MPEF cloud mask' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'MPEF cloud mask' file: '%s'"%file_name)
     
 def list(file_name, dump_data=False):
     fname = 'xrit.dat'

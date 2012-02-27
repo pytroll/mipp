@@ -1,7 +1,6 @@
 from StringIO import StringIO
 
-import xrit
-import xrit._convert
+from mipp.xrit import _convert
 
 BLOB_SIZE = 5120 # has to be a multiplum of 5
 HRPT_RECLEN = 11090
@@ -11,7 +10,7 @@ def dec10216(in_buffer):
     data = ''
     blob = fp.read(BLOB_SIZE)
     while blob:
-        blob = xrit._convert.dec10216(blob)
+        blob = _convert.dec10216(blob)
         if blob:
             data += blob
         blob = fp.read(BLOB_SIZE)

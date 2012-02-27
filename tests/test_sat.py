@@ -5,10 +5,9 @@ import numpy
 import unittest
 
 import buildpath_to_syspath
-import xrit
-import xrit.mda
-
-nice2cmp = xrit.mda._nice2cmp
+import mipp
+from mipp import xrit
+from mipp.mda import _nice2cmp
 
 datadir = (os.path.dirname(__file__) or '.') + '/data'
 save_mda = False
@@ -19,7 +18,7 @@ try:
 except KeyError:
     os.environ['PPP_CONFIG_DIR'] = datadir
 if not os.path.isdir(os.environ['PPP_CONFIG_DIR']):
-    raise xrit.SatConfigReaderError, "No config dir: '%s'"%os.environ['PPP_CONFIG_DIR']
+    raise mipp.ConfigReaderError, "No config dir: '%s'"%os.environ['PPP_CONFIG_DIR']
 
 goes_files = [datadir + '/L-000-MSG2__-GOES11______-10_7_135W-PRO______-201002010600-__',
               datadir + '/L-000-MSG2__-GOES11______-10_7_135W-000003___-201002010600-__',
@@ -66,14 +65,12 @@ def make_image(mda, img, outdir='.'):
     img.save(fname)
 
 def compare_mda(m1, m2):
-    import xrit.mda
-
     k1 = sorted(m1.__dict__.keys())
     k2 = sorted(m2.__dict__.keys())
     if not k1 == k2:
         return False
     for k in k1:
-        if not nice2cmp(getattr(m1, k)) == nice2cmp(getattr(m2, k)):
+        if not _nice2cmp(getattr(m1, k)) == _nice2cmp(getattr(m2, k)):
             return False
             
     return True
@@ -85,7 +82,7 @@ class Test(unittest.TestCase):
         mda, img = loader[1308:1508,1308:1508]
         if save_mda:
             mda.save(mda.product_name + '.mda')
-        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac = xrit.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
@@ -98,7 +95,7 @@ class Test(unittest.TestCase):
         mda, img = loader[1276:1476,1276:1476]
         if save_mda:
             mda.save(mda.product_name + '.mda')
-        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac = xrit.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
@@ -111,7 +108,7 @@ class Test(unittest.TestCase):
         mda, img = loader.raw_slicing((slice(2300,2900), slice(2000,3000)))
         if save_mda:
             mda.save(mda.product_name + '.mda')
-        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac = xrit.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         cross_sum = img.sum()
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='MET7 metadata differ')
@@ -124,7 +121,7 @@ class Test(unittest.TestCase):
         mda, img = loader[1656:1956,1756:2656]
         if save_mda:
             mda.save(mda.product_name + '.mda')
-        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac = xrit.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
@@ -152,7 +149,7 @@ class Test(unittest.TestCase):
         mda, img = loader[5168:5768,5068:6068]
         if save_mda:
             mda.save(mda.product_name + '.mda')
-        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac = xrit.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()
         make_image(mda, img)
@@ -165,7 +162,7 @@ class Test(unittest.TestCase):
         mda, img = loader[2786:3236,748:9746]
         if save_mda:
             mda.save(mda.product_name + '.mda')
-        mdac = xrit.mda.Metadata().read(datadir + '/' + mda.product_name + '.mda')
+        mdac = xrit.Metadata().read(datadir + '/' + mda.product_name + '.mda')
         mdac.data_type = 8*img.itemsize
         cross_sum = img.sum()        
         make_image(mda, img)
