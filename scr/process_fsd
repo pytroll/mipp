@@ -7,9 +7,10 @@ import glob
 from datetime import datetime, timedelta
 import numpy
 
-import xrit
-from xrit import logger
+from mipp import xrit, log
 
+log.logging_on()
+logger = log.get_logger('fsd')
 
 max_age = {'MET7': timedelta(seconds=25*60),
            'GOES11' : timedelta(seconds=5*60),
