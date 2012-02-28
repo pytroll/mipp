@@ -68,6 +68,8 @@ def _nice2cmp(val):
         val = val.tolist()
     elif isinstance(val, datetime):
         val = str(val)
+    elif isinstance(val, float):
+        val = str(val)
     elif isinstance(val, dict):
         d = {}
         for k, v in val.items():

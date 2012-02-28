@@ -76,7 +76,7 @@ class SatelliteLoader(object):
                 sublon = float(projname.split('(')[1].split(')')[0])
             except (IndexError, ValueError):
                 raise mipp.ReaderError("Could not determine sub satellite point from projection name '%s'"%
-                                          projname)
+                                       projname)
             self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon            
 
     def load(self, time_stamp, channel, **kwarg):
@@ -154,7 +154,7 @@ class SatelliteLoader(object):
         chn = self._config_reader.get_channel(mda.channel)
         if mda.image_size[0] != chn.size[0]:
             raise mipp.ReaderError("unknown image width for %s, %s: %d"%
-                                      (self.satname, mda.channel, mda.image_size[0]))
+                                   (self.satname, mda.channel, mda.image_size[0]))
                                 
         mda.pixel_size = numpy.array([chn.resolution, chn.resolution], dtype=numpy.float64)
         for k, v in self.__dict__.items():

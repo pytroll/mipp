@@ -17,7 +17,8 @@ class MippError(Exception):
 #-----------------------------------------------------------------------------
 class DecondingError(MippError):
     pass
-
+class UnknownSatellite(MippError):
+    pass
 #-----------------------------------------------------------------------------
 #
 # Image readings error

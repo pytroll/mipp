@@ -1,0 +1,20 @@
+area_extent: (492493.75, 8257780.25, 496717.75, 8262004.25)
+beam_mode: SC
+beamid: scan_009
+calibration_beamid: scan_009
+calibration_factor: 1.12882900334e-05
+calibration_unit: radar-brightness
+center_coor_lat: 74.4390827236
+center_coor_lon: -57.3073330118
+image_filename: IMAGEDATA/IMAGE_HH_SRA_scan_009.tif
+is_calibrated: True
+no_data_value: 0
+orbit_number: 23264
+polarisation: HH
+product_level: Level 1B Product
+product_name: 20110825_104705_TSX1_SAR_SC_HH
+proj4_params: units=m ellps=WGS84 datum=WGS84 proj=utm zone=21
+satellite_name: TSX1
+sensor_type: SAR
+tiff_params: {'projection': 'PROJCS["WGS 84 / UTM zone 21N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235630016,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-57],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","32621"]]', 'geotransform': (492493.75, 8.25, 0.0, 8262004.25, 0.0, -8.25), 'metadata': {'AREA_OR_POINT': 'Point'}}
+time_start: 2011-08-25 10:47:05.298000
