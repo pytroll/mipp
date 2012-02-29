@@ -6,7 +6,7 @@ ext = Extension('mipp/xrit/_convert', ['mipp/xrit/convert/wrap_convert.c',
 
 
 setup(name = 'mipp',
-      version = '0.5',
+      version = '0.6',
       package_dir = {'mipp':'mipp', 
                      'mipp/xrit': 'mipp/xrit',
                      'mipp/xsar': 'mipp/xsar'},
