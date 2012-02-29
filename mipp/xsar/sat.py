@@ -86,15 +86,16 @@ class SatelliteLoader(object):
         try:
             for name in tar.getnames():
                 if fnmatch.fnmatch(os.path.basename(name), mda_file):
-                    logger.info("Extracting '%s'"%name)
                     names.append(name)
             if len(names) == 0:
                 raise mipp.NoFiles("found no metadata file: '%s'"%mda_file)
             elif len(names) > 1:
                 raise mipp.NoFiles("found multiple metadata files: '%s'"%str(names))
-            return self._metadata_reader(tar.extractfile(name).read())
+            logger.info("Extracting '%s'"%names[0])
+            xmldata = tar.extractfile(names[0]).read()
         finally:
             tar.close()
+        return self._metadata_reader(xmldata)
 
     def _load_image(self, mda, mask=True, calibrate=1):
         import tempfile

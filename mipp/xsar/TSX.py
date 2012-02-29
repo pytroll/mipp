@@ -9,8 +9,7 @@ from datetime import datetime
 from lxml import etree
 from osgeo import gdal, osr
 
-from mipp.xsar import Metadata
-
+import mipp
 import logging
 logger = logging.getLogger('mipp')
 
@@ -116,9 +115,9 @@ def read_metadata(xmlbuffer):
                                        "Level 1B Product, %s is '%s' expected '%s'"%(k, a, v))
         except IndexError:
             raise mipp.ReaderError("This does not look like a TSX SAR " +
-                                   "Level 1B Product, could not find attribute '%s'"%k)
+                                   "Level 1B Product, could not find attribute '%s' (%s)"%(k, p))
 
-    mda = Metadata()
+    mda = mipp.xsar.Metadata()
     for k, v in attributes.items():
         setattr(mda, k, v[1](tree.xpath(v[0])[0].text))
     mda.image_filename = (mda.image_data_path + '/' + mda.image_data_filename)
