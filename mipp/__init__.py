@@ -1,7 +1,7 @@
 #
 #
 import sys
-
+from datetime import datetime
 from mipp._exceptions import *
 
 if sys.version_info < (2, 5):
@@ -12,5 +12,4 @@ if sys.version_info < (2, 5):
         """
         return datetime(*time.strptime(string, fmt)[:6])
 else:
-    import datetime
-    strptime = datetime.datetime.strptime
+    strptime = datetime.strptime

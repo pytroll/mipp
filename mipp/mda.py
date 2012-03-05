@@ -4,14 +4,14 @@
 from datetime import datetime
 import numpy
 
-def mslice(md):
-    m = Metadata()
-    for k, v in md.__dict__.items():
-        if (not k.startswith('_') and 
-            not callable(v) and
-            k not in md.ignore_attributes):
-            setattr(m, k, v)
-    return m
+def mslice(mda):
+    _mda = Metadata()
+    for key, val in mda.__dict__.items():
+        if (not key.startswith('_') and 
+            not callable(val) and
+            key not in mda.ignore_attributes):
+            setattr(_mda, key, val)
+    return _mda
 
 class Metadata(object):
     token = ':'
@@ -22,9 +22,9 @@ class Metadata(object):
     def read(self, file_name):
         """Read until empty line, 'EOH' or 'EOF'.
         """
-        fp = open(file_name)
+        fpi = open(file_name)
         try:
-            for line in fp:
+            for line in fpi:
                 line = line.strip()
                 if not line or line == 'EOH':
                     # end of meta-data
@@ -33,34 +33,34 @@ class Metadata(object):
                 if not line:
                     # just a comment
                     continue
-                k, v = [s.strip() for s in line.split(self.token, 1)]
-                if k not in self.dont_eval:
+                key, val = [s.strip() for s in line.split(self.token, 1)]
+                if key not in self.dont_eval:
                     try:
-                        v = eval(v)
+                        val = eval(val)
                     except:
                         pass
-                if k:
-                    setattr(self, k, v)
+                if key:
+                    setattr(self, key, val)
         finally:
-            fp.close()
+            fpi.close()
         return self
 
     def save(self, file_name):
-        fp = open(file_name, 'w')
-        fp.write(str(self) + '\n')
-        fp.close()
+        fpo = open(file_name, 'w')
+        fpo.write(str(self) + '\n')
+        fpo.close()
 
     def __str__(self):
         keys = sorted(self.__dict__.keys())
-        s = ''
-        for k in keys:
-            v = getattr(self, k)
-            if (not k.startswith('_') and 
-                not callable(v) and
-                k not in self.ignore_attributes):
-                v = _nice2cmp(v)
-                s += k + self.token + ' ' + str(v) + '\n'
-        return s[:-1]
+        strn = ''
+        for key in keys:
+            val = getattr(self, key)
+            if (not key.startswith('_') and 
+                not callable(val) and
+                key not in self.ignore_attributes):
+                val = _nice2cmp(val)
+                strn += key + self.token + ' ' + str(val) + '\n'
+        return strn[:-1]
 
 def _nice2cmp(val):
     # ... and nice to print
@@ -71,12 +71,12 @@ def _nice2cmp(val):
     elif isinstance(val, float):
         val = str(val)
     elif isinstance(val, dict):
-        d = {}
-        for k, v in val.items():
-            if isinstance(v, numpy.ndarray):
-                v = v.tolist()
-            d[k] = v
-        val = d
+        sdc = {}
+        for _key, _val in val.items():
+            if isinstance(_val, numpy.ndarray):
+                _val = _val.tolist()
+            sdc[_key] = _val
+        val = sdc
     return val
 
 if __name__ == '__main__':

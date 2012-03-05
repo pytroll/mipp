@@ -1,15 +1,14 @@
 #
 #
 #
-import sys
-import os
 import copy
 import numpy as np
 from datetime import datetime
 from lxml import etree
-from osgeo import gdal, osr
+from osgeo import osr
 
 import mipp
+import mipp.geotiff
 import logging
 logger = logging.getLogger('mipp')
 
@@ -25,11 +24,11 @@ def _tiff2areadef(projection, geotransform, shape):
     proj4_dict = {}
     for i in proj4.replace('+', '').split():
         try:
-            k, v = [v.strip() for v in i.split('=')]
+            key, val = [val.strip() for val in i.split('=')]
         except ValueError:
             continue
         
-        proj4_dict[k] = v        
+        proj4_dict[key] = val
     area_extent = [geotransform[0],
                    geotransform[3] + geotransform[5]*shape[0],
                    geotransform[0] + geotransform[1]*shape[1],
@@ -53,9 +52,11 @@ class _Calibrator(object):
         if mda.calibrated != 'CALIBRATED':
             self.error = "Data is not calibrated"
         if mda.beamid != mda.calibration_beamid:
-            self.error = "BeamID for image data and calibration factor don't match"
+            self.error = \
+                "BeamID for image data and calibration factor don't match"
         if mda.calibration_unit.lower() != 'radar-brightness':
-            self.error = "Unknown calibration unit '%s'"%self.calibration_unit.lower()
+            self.error = "Unknown calibration unit '%s'" % (
+                self.calibration_unit.lower())
 
     def __call__(self, image, calibrate=1):
         if calibrate == 0:
@@ -69,16 +70,16 @@ class _Calibrator(object):
 def read_metadata(xmlbuffer):
 
     # Speciel decoders
-    def dec_isoformat(s):
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")
-    def dec_orbit_number(s):
-        return int(s[:5])    
-    def dec_satellite_name(s):
-        return s.replace('-', '')
-    def dec_calibration_unit(s):
+    def dec_isoformat(rts):
+        return datetime.strptime(rts, "%Y-%m-%dT%H:%M:%S.%fZ")
+    def dec_orbit_number(rts):
+        return int(rts[:5])    
+    def dec_satellite_name(rts):
+        return rts.replace('-', '')
+    def dec_calibration_unit(rts):
         _trans = {'radar brightness': 'nrcs'}
-        s = s.replace(' ', '-').lower()
-        return s
+        rts = rts.replace(' ', '-').lower()
+        return rts
 
     attributes = {
         'product_level':  ('generalHeader/itemName', str),
@@ -106,20 +107,22 @@ def read_metadata(xmlbuffer):
     tree = etree.fromstring(xmlbuffer)
     
     # Check satellite, sensor and product level
-    for k, v in check_attributes.items():
+    for key, val in check_attributes.items():
         try:
-            p = attributes[k][0]
-            a = tree.xpath(p)[0].text.lower()
-            if not a.startswith(v):
+            path = attributes[key][0]
+            attr = tree.xpath(path)[0].text.lower()
+            if not attr.startswith(val):
                 raise mipp.ReaderError("This does not look like a TSX SAR " +
-                                       "Level 1B Product, %s is '%s' expected '%s'"%(k, a, v))
+                                       "Level 1B Product, %s is '%s' expected '%s'" %
+                                       (key, attr, val))
         except IndexError:
             raise mipp.ReaderError("This does not look like a TSX SAR " +
-                                   "Level 1B Product, could not find attribute '%s' (%s)"%(k, p))
+                                   "Level 1B Product, could not find attribute '%s' (%s)" %
+                                   (key, path))
 
     mda = mipp.xsar.Metadata()
-    for k, v in attributes.items():
-        setattr(mda, k, v[1](tree.xpath(v[0])[0].text))
+    for key, val in attributes.items():
+        setattr(mda, key, val[1](tree.xpath(val[0])[0].text))
     mda.image_filename = (mda.image_data_path + '/' + mda.image_data_filename)
     delattr(mda, 'image_data_path')
     delattr(mda, 'image_data_filename')
@@ -139,53 +142,16 @@ def read_image(mda, filename=None, mask=True, calibrate=1):
     if not filename:
         filename = mda.image_filename
 
-    ds = gdal.Open(filename)
+    params, data = mipp.geotiff.read_geotiff(filename)
+    area_def = mipp.geotiff.tiff2areadef(params['projection'],
+                                         params['geotransform'],
+                                         data.shape)
 
-    #
-    # Dataset information
-    #
-    geotransform = ds.GetGeoTransform()
-    projection = ds.GetProjection()
-    metadata = ds.GetMetadata()
-
-    logger.debug('description: %s'%ds.GetDescription())
-    logger.debug('driver: %s / %s'%(ds.GetDriver().ShortName, ds.GetDriver().LongName))
-    logger.debug('size: %d x %d x %d'%(ds.RasterXSize, ds.RasterYSize, ds.RasterCount))
-    logger.debug('geo transform: %s'%str(geotransform))
-    logger.debug('origin: %.3f, %.3f'%(geotransform[0], geotransform[3]))
-    logger.debug('pixel size: %.3f, %.3f'%(geotransform[1], geotransform[5]))
-    logger.debug('projection: %s'%projection)
-    logger.debug('metadata: %s', metadata)
-
-    #
-    # Fetching raster data
-    #
-    band = ds.GetRasterBand(1)
-    logger.info('Band(1) type: %s, size %d x %d'%(gdal.GetDataTypeName(band.DataType),
-                                                  ds.RasterXSize, ds.RasterYSize))
-    shape = (ds.RasterYSize, ds.RasterXSize)
-    if band.GetOverviewCount() > 0:
-        logger.debug('overview count: %d'%band.GetOverviewCount())
-    if not band.GetRasterColorTable() is None:
-        logger.debug('colortable size: %d'%
-                     band.GetRasterColorTable().GetCount())
-
-    ##shape = (shape[0] - shape[0]%scaling_factor,
-    ##         shape[1] - shape[1]%scaling_factor)
-    data = band.ReadAsArray(0, 0, shape[1], shape[0])
-    logger.info('fetched array: %s %s %s [%d -> %.2f -> %d]'%
-                (type(data), str(data.shape), data.dtype,
-                 data.min(), data.mean(), data.max()))
-
-    area_def = _tiff2areadef(projection, geotransform, shape)
     mda.proj4_params = area_def.proj4_string.replace('+', '')
     mda.area_extent = area_def.area_extent
-    mda.tiff_params = dict((('geotransform', geotransform),
-                            ('projection', projection),
-                            ('metadata', metadata)))
-    mda.no_data_value = no_data_value
+    mda.tiff_params = params
 
-    logger.info("area def:\n%s"%area_def)
+    mda.no_data_value = no_data_value
 
     if calibrate:
         data, mda.calibration_unit = mda.calibrate(data, calibrate)

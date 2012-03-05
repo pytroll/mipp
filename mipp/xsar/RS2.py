@@ -1,5 +1,5 @@
 #
-# WORK IN PROGRESS
+# WORK IN PROGRESS for Radarsat-2
 #
 import numpy
 from datetime import datetime
@@ -19,10 +19,10 @@ def read_metadata(xml_file):
     ns_rs2 = {'xsi': 'http://www.rsi.ca/rs2/prod/xml/schemas'}
 
     # Speciel decoders
-    def dec_isoformat(s):
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")
-    def dec_orbit_number(s):
-        return int(s[:5])
+    def dec_isoformat(rts):
+        return datetime.strptime(rts, "%Y-%m-%dT%H:%M:%S.%fZ")
+    def dec_orbit_number(rts):
+        return int(rts[:5])
 
     attributes = {
         'product_id': ('xsi:productId', str),
@@ -48,14 +48,14 @@ def read_metadata(xml_file):
 
     tree = etree.parse(xml_file)
 
-    # Get some atributes
+    # Get some attributes
     for key, (att, dec) in attributes.items():
         if att.startswith('xsi'):
-            r = tree.xpath(att, namespaces=ns_rs2)
-            if len(r) > 1:
-                val = tuple([dec(i.text) for i in r])
+            rec = tree.xpath(att, namespaces=ns_rs2)
+            if len(rec) > 1:
+                val = tuple([dec(i.text) for i in rec])
             else:
-                val = dec(r[0].text)
+                val = dec(rec[0].text)
             setattr(metadata, key, val)
 
     #
@@ -68,20 +68,20 @@ def read_metadata(xml_file):
     pix_coordinates = numpy.zeros((tiepoints_count, 2))
     geo_coordinates = numpy.zeros((tiepoints_count, 2))
     counter = 0
-    for e in tiepoints_tree:
-        if e.tag.endswith('imageTiePoint'):
+    for elm in tiepoints_tree:
+        if elm.tag.endswith('imageTiePoint'):
             pixel, line, lat, lon = None, None, None, None
-            for c in e.iter():
-                if c.getparent().tag.endswith('imageCoordinate'):
-                    if c.tag.endswith('pixel'):
-                        pixel = float(c.text)
-                    elif c.tag.endswith('line'):
-                        line = float(c.text)
-                elif c.getparent().tag.endswith('geodeticCoordinate'):
-                    if c.tag.endswith('latitude'):
-                        lat = float(c.text)
-                    elif c.tag.endswith('longitude'):
-                        lon = float(c.text)
+            for i in elm.iter():
+                if i.getparent().tag.endswith('imageCoordinate'):
+                    if i.tag.endswith('pixel'):
+                        pixel = float(i.text)
+                    elif i.tag.endswith('line'):
+                        line = float(i.text)
+                elif i.getparent().tag.endswith('geodeticCoordinate'):
+                    if i.tag.endswith('latitude'):
+                        lat = float(i.text)
+                    elif i.tag.endswith('longitude'):
+                        lon = float(i.text)
             if None not in (pixel, line, lat, lon):
                 pix_coordinates[counter] = [line, pixel]
                 geo_coordinates[counter] = [lat, lon]
@@ -94,7 +94,7 @@ def read_metadata(xml_file):
 
 if __name__ == '__main__':
     import sys
-    md = read_metadata(sys.argv[1])
-    print md
-    print md.tiepoints.image
-    print md.tiepoints.geodedic
+    mda = read_metadata(sys.argv[1])
+    print mda
+    print mda.tiepoints.image
+    print mda.tiepoints.geodedic

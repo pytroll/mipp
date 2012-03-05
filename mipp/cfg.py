@@ -18,11 +18,14 @@ class _ConfigReader(object):
         try:
             home = os.environ['PPP_CONFIG_DIR']
         except KeyError:
-            raise mipp.ConfigReaderError("PPP_CONFIG_DIR environment variable is not set")
+            raise mipp.ConfigReaderError(
+                "PPP_CONFIG_DIR environment variable is not set")
 
         self.config_file = home + '/' + satname + '.cfg'
         if not os.path.isfile(self.config_file):
-            raise mipp.ConfigReaderError("unknown satellite: '%s' (no such file: '%s')"%(satname, self.config_file))
+            raise mipp.ConfigReaderError(
+                "unknown satellite: '%s' (no such file: '%s')"%
+                (satname, self.config_file))
         self._config = ConfigParser()
         self._config.read(self.config_file)
         
@@ -34,7 +37,8 @@ class _ConfigReader(object):
                 raise mipp.ConfigReaderError("please specify instrument")
         else:
             if instrument not in instruments: 
-                raise mipp.ConfigReaderError("unknown instrument: '%s'"%instrument)
+                raise mipp.ConfigReaderError("unknown instrument: '%s'"%
+                                             instrument)
         self.instrument = instrument
         
         self._channels = self._channels2dict(instrument)
@@ -47,8 +51,8 @@ class _ConfigReader(object):
         section = str(section) # allow get(1)
         if section != 'satellite' and not section.startswith(self.instrument):
             section = self.instrument + '-' + section
-        for k, v in self._config.items(section, raw=True):
-            options[k] = _eval(v)
+        for key, val in self._config.items(section, raw=True):
+            options[key] = _eval(val)
         return options
 
     def get_channel(self, name):
@@ -70,45 +74,46 @@ class _ConfigReader(object):
         channels = {}
         for sec in self._config.sections():
             if rec.findall(sec):
-                c = _Channel(self._config.items(sec, raw=True), raw=True)
-                channels[c.name] = c
+                chn = _Channel(self._config.items(sec, raw=True), raw=True)
+                channels[chn.name] = chn
         return channels
     
 class _Channel:
-    def __init__(self, kv, raw=False):
-        for k, v in kv:
+    def __init__(self, kvs, raw=False):
+        self.name = None
+        for key, val in kvs:
             if raw:
-                v = _eval(v)
-            setattr(self, k, v)
+                val = _eval(val)
+            setattr(self, key, val)
     def __str__(self):
         keys = sorted(self.__dict__.keys())
-        s = ''
-        for k in keys:
-            if k[0] == '_':
+        text = ''
+        for key in keys:
+            if key[0] == '_':
                 continue
-            v = getattr(self, k)
-            if k == 'resolution':
-                v = "%.2f"%v
-            elif k == 'frequency':
-                v = "(%.2f, %.2f, %.2f)"%v
-            s += k + ': ' + str(v) + ', '
-        return s[:-2]    
+            val = getattr(self, key)
+            if key == 'resolution':
+                val = "%.2f" % val
+            elif key == 'frequency':
+                val = "(%.2f, %.2f, %.2f)" % val
+            text += key + ': ' + str(val) + ', '
+        return text[:-2]    
 
-def _eval(v):
+def _eval(val):
     try:
-        return eval(v)
+        return eval(val)
     except:
-        return str(v)
+        return str(val)
 
 if __name__ == '__main__':
     import sys
     dname, fname = os.path.split(sys.argv[1])
     os.environ['PPP_CONFIG_DIR'] = dname
     cfg = read_config(os.path.splitext(fname)[0])
-    for name in ('satellite', 'level1', 'level2'):
-        h = cfg(name)
-        print name
-        for k in sorted(h.keys()):
-            print '    ', k + ':',  h[k]
-    for name in cfg.channel_names:
-        print cfg.get_channel(name)
+    for _name in ('satellite', 'level1', 'level2'):
+        _sec = cfg(_name)
+        print _name
+        for _key in sorted(_sec.keys()):
+            print '    ', _key + ':',  _sec[_key]
+    for _name in cfg.channel_names:
+        print cfg.get_channel(_name)

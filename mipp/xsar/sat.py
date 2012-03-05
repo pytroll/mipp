@@ -2,7 +2,6 @@
 # $Id$ 
 #
 import os
-from datetime import datetime
 import tarfile
 import glob
 import fnmatch
@@ -12,7 +11,6 @@ import logging
 logger = logging.getLogger('mipp')
 
 import mipp
-from mipp import strptime
 import mipp.cfg
 
 __all__ = ['load',]
@@ -40,14 +38,14 @@ class SatelliteLoader(object):
         lv1_format = config_reader('level1')['format']
         logger.info("Loading %s"%lv1_format)
         try:
-            args = imp.find_module(lv1_format)
+            _args = imp.find_module(lv1_format)
         except ImportError:
             raise mipp.ReaderError("unknown level-1 format: '%s'"%lv1_format)
         try:
-            mdl = imp.load_module(lv1_format, *args)
+            mdl = imp.load_module(lv1_format, *_args)
         finally:
-            if args[0]:
-                args[0].close()
+            if _args[0]:
+                _args[0].close()
 
         self._metadata_reader = mdl.read_metadata
         self._image_reader = mdl.read_image
@@ -79,6 +77,7 @@ class SatelliteLoader(object):
 
         
     def _load_metadata(self, channel):
+        del channel
         opt = self._config_reader('level1')
         mda_file = opt['filename_metadata']
         tar = tarfile.open(self._tar_file)
@@ -90,7 +89,8 @@ class SatelliteLoader(object):
             if len(names) == 0:
                 raise mipp.NoFiles("found no metadata file: '%s'"%mda_file)
             elif len(names) > 1:
-                raise mipp.NoFiles("found multiple metadata files: '%s'"%str(names))
+                raise mipp.NoFiles("found multiple metadata files: '%s'" %
+                                   str(names))
             logger.info("Extracting '%s'"%names[0])
             xmldata = tar.extractfile(names[0]).read()
         finally:
@@ -116,16 +116,16 @@ class SatelliteLoader(object):
 
     def _find_tarfile(self, time_stamp):
         opt = self._config_reader('level1')
-        stamp = self.satname + '-' + time_stamp.strftime("%Y%m%dT%H%M%S")
         if not os.path.isdir(opt['dir']):
-            raise IOError, "No such directory: %s"%opt['dir']
+            raise IOError, "No such directory: %s" % opt['dir']
         tar_file = glob.glob(opt['dir'] + '/' +
                              time_stamp.strftime(opt['filename_archive']))
         if not tar_file:
             raise mipp.NoFiles("found no archive file: '%s'"%
                                (time_stamp.strftime(opt['filename_archive'])))
         elif len(tar_file) > 1:
-            raise mipp.NoFiles("found multiple archive files: '%s'"%str(tar_file))
+            raise mipp.NoFiles("found multiple archive files: '%s'" % 
+                               str(tar_file))
         return tar_file[0]
 
 #-----------------------------------------------------------------------------
@@ -138,7 +138,7 @@ def load(satname, time_stamp, channel, **kwarg):
         mipp.cfg.read_config(satname)).load(time_stamp, channel, **kwarg)
 
 def load_file(filename, channel, **kwarg):
-    # Satellite namem should be read from metadata (and not filename) !!!
+    # Satellite name should be read from metadata (and not filename) !!!
     satname = os.path.basename(filename).split('_')[0].lower()
     return SatelliteLoader(
         mipp.cfg.read_config(satname)).load_file(filename, channel, **kwarg)
@@ -148,23 +148,25 @@ def load_file(filename, channel, **kwarg):
 if __name__ == '__main__':
     import sys
     import getopt
+    import loggers.simple
+    logger = loggers.simple.get('mipp')
 
-    only_metadata = False
+    only_mda = False
     opts, args = getopt.getopt(sys.argv[1:], "m")
     for k, v in opts:
         if k == '-m':
-            only_metadata = True
+            only_mda = True
     try:
-        filename = args[0]
+        _file = args[0]
     except IndexError:
-        print >>sys.stderr, "usage: sat.py [-m] <tar-file>"
+        print >> sys.stderr, "usage: sat.py [-m] <tar-file>"
         sys.exit(1)
-    mda = load_file(filename, 'sarx', only_metadata=True)
-    if only_metadata:
+    _mda = load_file(_file, 'sarx', only_metadata=True)
+    if only_mda:
         pass
-    elif mda.calibrated != 'CALIBRATED':
+    elif _mda.calibrated != 'CALIBRATED':
         logger.warning("Data is not calibrated")
-        mda, image = load_file(filename, 'sarx', calibrate=0)
+        _mda, _image = load_file(_file, 'sarx', calibrate=0)
     else:
-        mda, image = load_file(filename, 'sarx')
-    print '\n', mda
+        _mda, _image = load_file(_file, 'sarx')
+    print '\n', _mda

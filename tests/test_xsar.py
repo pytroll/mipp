@@ -61,5 +61,5 @@ class Test(unittest.TestCase):
         self.failUnlessAlmostEqual(cross_sum, tsx1_sum, 3, msg='TSX image reading failed')
 
 if __name__ == '__main__':
-    save_mda = False
+    save_mda = True
     unittest.main()
