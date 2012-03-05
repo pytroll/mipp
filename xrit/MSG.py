@@ -140,6 +140,7 @@ class _Calibrator(object):
         coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
         
         radiances = eval_np('image * cslope + coffset')
+        radiances[radiances < 0] = 0
         
         if calibrate == 2:
             return (np.ma.MaskedArray(radiances, mask=mask),
