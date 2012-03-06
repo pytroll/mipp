@@ -6,7 +6,7 @@ import getopt
 import glob
 from datetime import datetime
 
-import xrit
+from mipp import xrit
 
 #-----------------------------------------------------------------------------
 def usage():

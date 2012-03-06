@@ -5,9 +5,10 @@ import os
 import getopt
 import logging
 
-import xrit
+from mpop import xrit, log
 
-logger = logging.getLogger('gts')
+log.logging_on()
+logger = log.get_logger('gts')
 
 #-----------------------------------------------------------------------------
 

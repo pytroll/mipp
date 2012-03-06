@@ -34,27 +34,27 @@ def logging_on(level=None):
         getLogger('').addHandler(console)
         _is_logging_on = True
 
-    log = getLogger('')
-    log.setLevel(level)
-    for h in log.handlers:
-        h.setLevel(level)
+    logger = getLogger('')
+    logger.setLevel(level)
+    for handler in logger.handlers:
+        handler.setLevel(level)
 
 def logging_off():
     """Turn logging off.
     """
     global _is_logging_on
-    l = getLogger('')
-    for h in l.handlers:
-        h.close()
-        l.removeHandler(h)
-    l.handlers = [NullHandler()]
+    logger = getLogger('')
+    for handler in logger.handlers:
+        handler.close()
+        logger.removeHandler(handler)
+    logger.handlers = [NullHandler()]
     _is_logging_on = False
     
 def get_logger(name):
     """Return logger with null handle
     """
     
-    log = getLogger(name)
-    if not log.handlers:
-        log.addHandler(NullHandler())
-    return log
+    logger = getLogger(name)
+    if not logger.handlers:
+        logger.addHandler(NullHandler())
+    return logger

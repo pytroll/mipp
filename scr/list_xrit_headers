@@ -3,7 +3,7 @@
 import sys
 import getopt
 
-import xrit
+from mipp import xrit
 
 def usage():
     print >>sys.stderr, "usage: list_xrit_headers [-d] <file-name>"

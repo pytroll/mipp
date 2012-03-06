@@ -8,7 +8,7 @@ level1
      dir: /data/xrit/out
      filename: H-000-MSG2__-MSG2________-%(channel)s-%(segment)s-%Y%m%d%H%M-__
      filename_pro: H-000-MSG2__-MSG2________-_________-%(segment)s-%Y%m%d%H%M-__
-     format: xrit/MSG
+     format: mipp/xrit/MSG
 level2
      format: mipp
 frequency: (0.56, 0.64, 0.71), name: VIS006, resolution: 3000.40, size: (3712, 3712)

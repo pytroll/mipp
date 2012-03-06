@@ -10,9 +10,9 @@ Format described in:
 import sys
 import numpy
 
-import xrit
-import xrit.mda
-from xrit.bin_reader import *
+from mipp.xrit import _xrit
+from mipp.xrit.mda import Metadata
+from mipp.xrit.bin_reader import *
 
 no_data_value = 0
 
@@ -66,7 +66,7 @@ class _Calibrator(object):
             offset = cal[0][1] - cal[0][0]*scale
             image = numpy.select([image == no_data_value*scale], [no_data_value], default=offset + image*scale)
         else:
-            raise xrit.SatDecodeError("Could not recognize the shape %s of the calibration table"%str(cal.shape))
+            raise mipp.DecodeError("Could not recognize the shape %s of the calibration table"%str(cal.shape))
 
         return (image,
                 self.hdr['_UNIT'])
@@ -74,9 +74,9 @@ class _Calibrator(object):
 def read_metadata(prologue, image_files):
     """ Selected items from the GOES image data files (not much information in prologue).
     """
-    im = xrit.read_imagedata(image_files[0])
+    im = _xrit.read_imagedata(image_files[0])
     hdr = im.data_function.data_definition
-    md = xrit.mda.Metadata()
+    md = Metadata()
     md.calibrate = _Calibrator(hdr)
     md.satname = im.platform.lower()
     md.product_type = 'full disc'
@@ -121,5 +121,4 @@ def read_prologue_headers(fp):
     return hdr
     
 if __name__ == '__main__':
-    import xrit
-    print read_metadata(xrit.read_prologue(sys.argv[1]), sys.argv[2:])
+    print read_metadata(_xrit.read_prologue(sys.argv[1]), sys.argv[2:])

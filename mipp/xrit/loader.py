@@ -10,8 +10,9 @@ import copy
 import logging
 logger = logging.getLogger('mipp')
 
-import xrit
-import xrit.convert
+import mipp
+from mipp.xrit import _xrit
+import mipp.xrit.convert 
 
 __all__ = ['ImageLoader',]
 
@@ -108,7 +109,7 @@ class ImageLoader(object):
         mda.data_type = 8*image.itemsize
         mda.image_size = numpy.array([image.shape[1], image.shape[0]])
 
-        return xrit.mda.mslice(mda), image
+        return mipp.mda.mslice(mda), image
     
     def __getitem__(self, item):
         """Deafult slicing, handles rotated images.
@@ -267,7 +268,7 @@ class ImageLoader(object):
         #
         segments = {}
         for f in image_files:
-            s = xrit.read_imagedata(f)
+            s = _xrit.read_imagedata(f)
             segments[s.segment.seg_no] = f
         start_seg_no = s.segment.planned_start_seg_no
         end_seg_no = s.segment.planned_end_seg_no
@@ -282,14 +283,14 @@ class ImageLoader(object):
             data_type = numpy.uint8
             data_type_len = 8
         elif mda.data_type == 10:
-            converter = xrit.convert.dec10216
+            converter = mipp.xrit.convert.dec10216
             data_type = numpy.uint16
             data_type_len = 16
         elif mda.data_type == 16:
             data_type = numpy.uint16
             data_type_len = 16
         else:
-            raise xrit.SatReaderError, "unknown data type: %d bit per pixel"\
+            raise mipp.ReaderError, "unknown data type: %d bit per pixel"\
                 %mda.data_type
 
         #
@@ -334,7 +335,7 @@ class ImageLoader(object):
             increment_line = -1
             factor_col = -1
         else:
-            raise xrit.SatReaderError, "unknown geographical orientation of " + \
+            raise mipp.ReaderError, "unknown geographical orientation of " + \
                 "first pixel: '%s'"%mda.first_pixel
 
         #
@@ -387,7 +388,7 @@ class ImageLoader(object):
                 # Data for this segment.
                 #
                 logger.info("Read %s"%seg_file)
-                seg = xrit.read_imagedata(seg_file)
+                seg = _xrit.read_imagedata(seg_file)
             
                 #
                 # Skip lines not processed.

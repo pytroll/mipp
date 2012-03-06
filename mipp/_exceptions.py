@@ -12,28 +12,22 @@ class MippError(Exception):
 
 #-----------------------------------------------------------------------------
 #
-# Decode errors
+# Decoding error
 #
 #-----------------------------------------------------------------------------
-class XRITDecodeError(MippError):
+class DecondingError(MippError):
     pass
-
-class SGSDecodeError(XRITDecodeError):
+class UnknownSatellite(MippError):
     pass
-
-
-class MTPDecodeError(XRITDecodeError):
-    pass
-
 #-----------------------------------------------------------------------------
 #
 # Image readings error
 #
 #-----------------------------------------------------------------------------
-class SatReaderError(MippError):
+class ReaderError(MippError):
     pass
 
-class SatNoFiles(SatReaderError):
+class NoFiles(ReaderError):
     pass
 
 #-----------------------------------------------------------------------------
@@ -41,7 +35,7 @@ class SatNoFiles(SatReaderError):
 # Config file reader error
 #
 #-----------------------------------------------------------------------------
-class SatConfigReaderError(MippError):
+class ConfigReaderError(MippError):
     pass
 
 #-----------------------------------------------------------------------------
