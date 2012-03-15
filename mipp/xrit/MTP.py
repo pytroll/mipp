@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from StringIO import StringIO
 import numpy as np
 
+from mipp import CalibrationError
 from mipp.xrit import _xrit
 from mipp.xrit.mda import Metadata
 from mipp.xrit.bin_reader import *
@@ -274,7 +275,7 @@ class _Calibrator(object):
         
         if(self.hdr["space"] is None or
            self.hdr["calco"] is None):
-            raise mipp.CalibrationError("Not implemented")
+            raise CalibrationError("Not implemented")
         radiances = (image - self.hdr["space"]) * self.hdr["calco"]
         if calibrate == 2:
             return (radiances,
