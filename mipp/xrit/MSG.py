@@ -39,35 +39,66 @@ VIS006_F = 20.76
 VIS008_F = 23.30
 IR_016_F = 19.73
 
-#Central wavenumber (in cm-1) values for conversion between radiances to bt
-VC_IR_039 = 2568.832
-VC_WV_062 = 1600.548
-VC_WV_073 = 1360.330
-VC_IR_087 = 1148.620
-VC_IR_097 = 1035.289
-VC_IR_108 =  931.700
-VC_IR_120 =  836.445
-VC_IR_134 =  751.792
+## Calibration coefficients from 'A Planned Change to the MSG Level 1.5 Image
+## Product Radiance Definition'
 
-#ALPHA values for conversion between radiances to bt
-ALPHA_IR_039 = 0.9954  
-ALPHA_WV_062 = 0.9963
-ALPHA_WV_073 = 0.9991
-ALPHA_IR_087 = 0.9996
-ALPHA_IR_097 = 0.9999
-ALPHA_IR_108 = 0.9983
-ALPHA_IR_120 = 0.9988
-ALPHA_IR_134 = 0.9981
+CALIB = {}
 
-#BETA values for conversion between radiances to bt
-BETA_IR_039 = 3.438
-BETA_WV_062 = 2.185
-BETA_WV_073 = 0.470
-BETA_IR_087 = 0.179
-BETA_IR_097 = 0.056
-BETA_IR_108 = 0.640
-BETA_IR_120 = 0.408
-BETA_IR_134 = 0.561
+# Meteosat 8
+
+CALIB[321] = {'IR_039': {'VC': 2567.33,
+                         'ALPHA': 0.9956,
+                         'BETA': 3.41},
+              'WV_062': {'VC': 1598.103,
+                         'ALPHA': 0.9962,
+                         'BETA': 2.218},
+              'WV_073': {'VC': 1362.081,
+                         'ALPHA': 0.9991,
+                         'BETA': 0.478},
+              'IR_087': {'VC': 1149.069,
+                         'ALPHA': 0.9996,
+                         'BETA': 0.179},
+              'IR_097': {'VC': 1034.343,
+                         'ALPHA': 0.9999,
+                         'BETA': 0.06},
+              'IR_108': {'VC': 930.647,
+                         'ALPHA': 0.9983,
+                         'BETA': 0.625},
+              'IR_120': {'VC': 839.66,
+                         'ALPHA': 0.9988,
+                         'BETA': 0.397},
+              'IR_134': {'VC': 752.387,
+                         'ALPHA': 0.9981,
+                         'BETA': 0.578}}
+
+# Meteosat 9
+
+CALIB[322] = {'IR_039': {'VC': 2568.832,
+                         'ALPHA': 0.9954,
+                         'BETA': 3.438},
+              'WV_062': {'VC': 1600.548,
+                         'ALPHA': 0.9963,
+                         'BETA': 2.185},
+              'WV_073': {'VC': 1360.33,
+                         'ALPHA': 0.9991,
+                         'BETA': 0.47},
+              'IR_087': {'VC': 1148.62,
+                         'ALPHA': 0.9996,
+                         'BETA': 0.179},
+              'IR_097': {'VC': 1035.289,
+                         'ALPHA': 0.9999,
+                         'BETA': 0.056},
+              'IR_108': {'VC': 931.7,
+                         'ALPHA': 0.9983,
+                         'BETA': 0.64},
+              'IR_120': {'VC': 836.445,
+                         'ALPHA': 0.9988,
+                         'BETA': 0.408},
+              'IR_134': {'VC': 751.792,
+                         'ALPHA': 0.9981,
+                         'BETA': 0.561}}
+
+
 
 #Polynomial coefficients for spectral-effective BT fits
 BTFIT_A_IR_039 =  0.0
@@ -113,6 +144,7 @@ class _Calibrator(object):
         default value is 1.
         """
         hdr = self.hdr
+
         channel_name = self.channel_name
 
         if calibrate == 0:
@@ -154,11 +186,12 @@ class _Calibrator(object):
             return (np.ma.MaskedArray(reflectance, mask=mask), 
                     "%")
 
-        wavenumber = eval("VC_" + channel_name)
+        sat = hdr["SatelliteDefinition"]["SatelliteId"]
+        wavenumber = CALIB[sat][channel_name]["VC"]
         if cal_type[chn_nb] == 2:
             #computation based on effective radiance
-            alpha = eval("ALPHA_" + channel_name)
-            beta = eval("BETA_" + channel_name)
+            alpha = CALIB[sat][channel_name]["ALPHA"]
+            beta = CALIB[sat][channel_name]["BETA"]
             
             cal_data = eval_np(('((C2 * 100. * wavenumber / ' 
                                 'log(C1 * 1.0e6 * wavenumber ** 3 / ' 
