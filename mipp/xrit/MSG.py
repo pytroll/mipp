@@ -12,6 +12,7 @@ import sys
 import numpy as np
 from StringIO import StringIO
 
+from mipp import CalibrationError
 from mipp.xrit import _xrit
 from mipp.xrit.mda import Metadata
 from mipp.xrit.bin_reader import *
@@ -187,6 +188,9 @@ class _Calibrator(object):
                     "%")
 
         sat = hdr["SatelliteDefinition"]["SatelliteId"]
+        if sat not in CALIB:
+            raise CalibrationError("No calibration coefficients available for "
+                                   + "this satellite (" + str(sat) + ")")
         wavenumber = CALIB[sat][channel_name]["VC"]
         if cal_type[chn_nb] == 2:
             #computation based on effective radiance
