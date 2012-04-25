@@ -47,7 +47,11 @@ CALIB = {}
 
 # Meteosat 8
 
-CALIB[321] = {'IR_039': {'VC': 2567.33,
+CALIB[321] = {'HRV': {'F': 25.11},
+              'VIS006': {'F': 20.76},
+              'VIS008': {'F': 23.24},
+              'IR_016': {'F': 19.85},
+              'IR_039': {'VC': 2567.33,
                          'ALPHA': 0.9956,
                          'BETA': 3.41},
               'WV_062': {'VC': 1598.103,
@@ -74,7 +78,11 @@ CALIB[321] = {'IR_039': {'VC': 2567.33,
 
 # Meteosat 9
 
-CALIB[322] = {'IR_039': {'VC': 2568.832,
+CALIB[322] = {'HRV': {'F': 25.15},
+              'VIS006': {'F': 20.76},
+              'VIS008': {'F': 23.30},
+              'IR_016': {'F': 19.73},
+              'IR_039': {'VC': 2568.832,
                          'ALPHA': 0.9954,
                          'BETA': 3.438},
               'WV_062': {'VC': 1600.548,
@@ -181,16 +189,17 @@ class _Calibrator(object):
                     "mW m-2 sr-1 (cm-1)-1")
             
         
-        if channel_name in ["HRV", "VIS006", "VIS008", "IR_016"]:
-            solar_irradiance = eval(channel_name + "_F")
-            reflectance = eval_np('(radiances / solar_irradiance) * 100.')
-            return (np.ma.MaskedArray(reflectance, mask=mask), 
-                    "%")
-
         sat = hdr["SatelliteDefinition"]["SatelliteId"]
         if sat not in CALIB:
             raise CalibrationError("No calibration coefficients available for "
                                    + "this satellite (" + str(sat) + ")")
+
+        if channel_name in ["HRV", "VIS006", "VIS008", "IR_016"]:
+            solar_irradiance = CALIB[sat][channel_name]["F"]
+            reflectance = eval_np('(radiances / solar_irradiance) * 100.')
+            return (np.ma.MaskedArray(reflectance, mask=mask), 
+                    "%")
+
         wavenumber = CALIB[sat][channel_name]["VC"]
         if cal_type[chn_nb] == 2:
             #computation based on effective radiance
