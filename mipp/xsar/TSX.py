@@ -8,6 +8,7 @@ from lxml import etree
 from osgeo import osr
 
 import mipp
+import mipp.xsar
 import mipp.geotiff
 import logging
 logger = logging.getLogger('mipp')
