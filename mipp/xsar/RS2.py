@@ -5,7 +5,7 @@ import numpy
 from datetime import datetime
 from lxml import etree
 
-from mipp.xsar.mda import Metadata
+from mipp.xsar import Metadata
 
 class TiePoints(object):
     def __init__(self, image, geodedic):

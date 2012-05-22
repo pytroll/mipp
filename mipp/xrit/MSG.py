@@ -14,8 +14,10 @@ from StringIO import StringIO
 
 from mipp import CalibrationError
 from mipp.xrit import _xrit
-from mipp.xrit.mda import Metadata
-from mipp.xrit.bin_reader import *
+from mipp.xrit import Metadata
+from mipp.xrit import bin_reader as rbin
+
+__all__ = ['read_metadata']
 
 eval_np = eval
 log = np.log
@@ -239,8 +241,8 @@ def read_proheader(fp):
     # Satellite definition
 
     satdef = {}
-    satdef["SatelliteId"] = read_uint2(fp.read(2))
-    satdef["NominalLongitude"] = read_float4(fp.read(4))
+    satdef["SatelliteId"] = rbin.read_uint2(fp.read(2))
+    satdef["NominalLongitude"] = rbin.read_float4(fp.read(4))
     satdef["SatelliteStatus"] = ord(fp.read(1))
 
     hdr["SatelliteDefinition"] = satdef
@@ -250,12 +252,12 @@ def read_proheader(fp):
 
     satop = {}
     satop["LastManoeuvreFlag"] = ord(fp.read(1)) > 0
-    satop["LastManoeuvreStartTime"] = read_cds_time(fp.read(6))
-    satop["LastManoeuvreEndTime"] = read_cds_time(fp.read(6))
+    satop["LastManoeuvreStartTime"] = rbin.read_cds_time(fp.read(6))
+    satop["LastManoeuvreEndTime"] = rbin.read_cds_time(fp.read(6))
     satop["LastManoeuvreType"] =  ord(fp.read(1))
     satop["NextManoeuvreFlag"] = ord(fp.read(1)) > 0
-    satop["NextManoeuvreStartTime"] = read_cds_time(fp.read(6))
-    satop["NextManoeuvreEndTime"] = read_cds_time(fp.read(6))
+    satop["NextManoeuvreStartTime"] = rbin.read_cds_time(fp.read(6))
+    satop["NextManoeuvreEndTime"] = rbin.read_cds_time(fp.read(6))
     satop["NextManoeuvreType"] =  ord(fp.read(1))
 
     hdr["SatelliteOperations"] = satop
@@ -264,8 +266,8 @@ def read_proheader(fp):
     # Orbit
 
     orbit = {}
-    orbit["PeriodStartTime"] = read_cds_time(fp.read(6))
-    orbit["PeriodEndTime"] = read_cds_time(fp.read(6))
+    orbit["PeriodStartTime"] = rbin.read_cds_time(fp.read(6))
+    orbit["PeriodEndTime"] = rbin.read_cds_time(fp.read(6))
     orbitcoef = np.dtype(">u2, >u4, >u2, >u4,"
                          " (8,)>f8, (8,)>f8, (8,)>f8,"
                          " (8,)>f8, (8,)>f8, (8,)>f8")
@@ -279,9 +281,9 @@ def read_proheader(fp):
     # Attitude
 
     attitude = {}
-    attitude["PeriodStartTime"] = read_cds_time(fp.read(6))
-    attitude["PeriodEndTime"] =  read_cds_time(fp.read(6))
-    attitude["PrincipleAxisOffsetAngle"] = read_float8(fp.read(8))
+    attitude["PeriodStartTime"] = rbin.read_cds_time(fp.read(6))
+    attitude["PeriodEndTime"] =  rbin.read_cds_time(fp.read(6))
+    attitude["PrincipleAxisOffsetAngle"] = rbin.read_float8(fp.read(8))
     attitudecoef = np.dtype(">u2, >u4, >u2, >u4, (8,)>f8, (8,)>f8, (8,)>f8")
     attitude["AttitudePolynomial"] = np.fromstring(fp.read(20400),
                                                    dtype=attitudecoef,
@@ -292,20 +294,20 @@ def read_proheader(fp):
     
     # SpinRateatRCStart
     
-    hdr["SpinRateatRCStart"] = read_float8(fp.read(8))
+    hdr["SpinRateatRCStart"] = rbin.read_float8(fp.read(8))
 
     # UTCCorrelation
 
     utccor = {}
     
-    utccor["PeriodStartTime"] = read_cds_time(fp.read(6))
-    utccor["PeriodEndTime"] = read_cds_time(fp.read(6))
-    utccor["OnBoardTimeStart"] = read_cuc_time(fp.read(7), 4, 3)
-    utccor["VarOnBoardTimeStart"] = read_float8(fp.read(8))
-    utccor["A1"] = read_float8(fp.read(8))
-    utccor["VarA1"] = read_float8(fp.read(8))
-    utccor["A2"] = read_float8(fp.read(8))
-    utccor["VarA2"] = read_float8(fp.read(8))
+    utccor["PeriodStartTime"] = rbin.read_cds_time(fp.read(6))
+    utccor["PeriodEndTime"] = rbin.read_cds_time(fp.read(6))
+    utccor["OnBoardTimeStart"] = rbin.read_cuc_time(fp.read(7), 4, 3)
+    utccor["VarOnBoardTimeStart"] = rbin.read_float8(fp.read(8))
+    utccor["A1"] = rbin.read_float8(fp.read(8))
+    utccor["VarA1"] = rbin.read_float8(fp.read(8))
+    utccor["A2"] = rbin.read_float8(fp.read(8))
+    utccor["VarA2"] = rbin.read_float8(fp.read(8))
 
     hdr["UTCCorrelation"] = utccor
     del utccor
@@ -313,9 +315,9 @@ def read_proheader(fp):
     # PlannedAcquisitionTime
 
     pat = {}
-    pat["TrueRepeatCycleStart"] = read_cds_expanded_time(fp.read(10))
-    pat["PlannedForwardScanEnd"] = read_cds_expanded_time(fp.read(10))
-    pat["PlannedRepeatCycleEnd"] = read_cds_expanded_time(fp.read(10))
+    pat["TrueRepeatCycleStart"] = rbin.read_cds_expanded_time(fp.read(10))
+    pat["PlannedForwardScanEnd"] = rbin.read_cds_expanded_time(fp.read(10))
+    pat["PlannedRepeatCycleEnd"] = rbin.read_cds_expanded_time(fp.read(10))
 
     hdr["PlannedAcquisitionTime"] = pat
 
@@ -332,10 +334,10 @@ def read_proheader(fp):
     radiosettings = {}
     radiosettings["MDUSamplingDelays"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
     radiosettings["HRVFrameOffsets"] = {}
-    radiosettings["HRVFrameOffsets"]["MDUNomHRVDelay1"] = read_uint2(fp.read(2))
-    radiosettings["HRVFrameOffsets"]["MDUNomHRVDelay2"] = read_uint2(fp.read(2))
-    radiosettings["HRVFrameOffsets"]["Spare"] = read_uint2(fp.read(2))
-    radiosettings["HRVFrameOffsets"]["MDUNomHRVBreakline"] = read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"]["MDUNomHRVDelay1"] = rbin.read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"]["MDUNomHRVDelay2"] = rbin.read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"]["Spare"] = rbin.read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"]["MDUNomHRVBreakline"] = rbin.read_uint2(fp.read(2))
     radiosettings["DHSSSynchSelection"] = ord(fp.read(1))
     radiosettings["MDUOutGain"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
     radiosettings["MDUCourseGain"] = np.fromstring(fp.read(42), dtype=np.uint8)
@@ -345,22 +347,22 @@ def read_proheader(fp):
     radiosettings["PUOffset"] = np.fromstring(fp.read(27 * 2), dtype=">u2")
     radiosettings["PUBias"] = np.fromstring(fp.read(15 * 2), dtype=">u2")
     radiosettings["OperationParameters"] = {}
-    radiosettings["OperationParameters"]["L0_LineCounter"] = read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K1_RetraceLines"] = read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K2_PauseDeciseconds"] = read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K3_RetraceLines"] = read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K4_PauseDeciseconds"] = read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K5_RetraceLines"] = read_uint2(fp.read(2))
+    radiosettings["OperationParameters"]["L0_LineCounter"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"]["K1_RetraceLines"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"]["K2_PauseDeciseconds"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"]["K3_RetraceLines"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"]["K4_PauseDeciseconds"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"]["K5_RetraceLines"] = rbin.read_uint2(fp.read(2))
     radiosettings["OperationParameters"]["X_DeepSpaceWindowPosition"] = ord(fp.read(1))
-    radiosettings["RefocusingLines"] = read_uint2(fp.read(2))
+    radiosettings["RefocusingLines"] = rbin.read_uint2(fp.read(2))
     radiosettings["RefocusingDirection"] = ord(fp.read(1))
-    radiosettings["RefocusingPosition"] = read_uint2(fp.read(2))
+    radiosettings["RefocusingPosition"] = rbin.read_uint2(fp.read(2))
     radiosettings["ScanRefPosFlag"] = ord(fp.read(1)) > 0
-    radiosettings["ScanRefPosNumber"] = read_uint2(fp.read(2))
-    radiosettings["ScanRefPosVal"] = read_float4(fp.read(4))
-    radiosettings["ScanFirstLine"] = read_uint2(fp.read(2))
-    radiosettings["ScanLastLine"] = read_uint2(fp.read(2))
-    radiosettings["RetraceStartLine"] = read_uint2(fp.read(2))
+    radiosettings["ScanRefPosNumber"] = rbin.read_uint2(fp.read(2))
+    radiosettings["ScanRefPosVal"] = rbin.read_float4(fp.read(4))
+    radiosettings["ScanFirstLine"] = rbin.read_uint2(fp.read(2))
+    radiosettings["ScanLastLine"] = rbin.read_uint2(fp.read(2))
+    radiosettings["RetraceStartLine"] = rbin.read_uint2(fp.read(2))
 
     hdr["RadiometerSettings"] = radiosettings
 
@@ -369,19 +371,19 @@ def read_proheader(fp):
     radiooper = {}
 
     radiooper["LastGainChangeFlag"] = ord(fp.read(1)) > 0
-    radiooper["LastGainChangeTime"] = read_cds_time(fp.read(6))
+    radiooper["LastGainChangeTime"] = rbin.read_cds_time(fp.read(6))
     radiooper["Decontamination"] = {}
     radiooper["Decontamination"]["DecontaminationNow"] = ord(fp.read(1)) > 0
-    radiooper["Decontamination"]["DecontaminationStart"] = read_cds_time(fp.read(6))
-    radiooper["Decontamination"]["DecontaminationEnd"] = read_cds_time(fp.read(6))
+    radiooper["Decontamination"]["DecontaminationStart"] = rbin.read_cds_time(fp.read(6))
+    radiooper["Decontamination"]["DecontaminationEnd"] = rbin.read_cds_time(fp.read(6))
 
 
     radiooper["BBCalScheduled"] = ord(fp.read(1)) > 0
     radiooper["BBCalibrationType"] = ord(fp.read(1))
-    radiooper["BBFirstLine"] = read_uint2(fp.read(2))
-    radiooper["BBLastLine"] = read_uint2(fp.read(2))
-    radiooper["ColdFocalPlaneOpTemp"] = read_uint2(fp.read(2))
-    radiooper["WarmFocalPlaneOpTemp"] = read_uint2(fp.read(2))
+    radiooper["BBFirstLine"] = rbin.read_uint2(fp.read(2))
+    radiooper["BBLastLine"] = rbin.read_uint2(fp.read(2))
+    radiooper["ColdFocalPlaneOpTemp"] = rbin.read_uint2(fp.read(2))
+    radiooper["WarmFocalPlaneOpTemp"] = rbin.read_uint2(fp.read(2))
 
 
     hdr["RadiometerOperations"] = radiooper
@@ -390,8 +392,8 @@ def read_proheader(fp):
     # CelestialBodiesPosition
 
     celbodies = {}
-    celbodies["PeriodTimeStart"] = read_cds_time(fp.read(6))
-    celbodies["PeriodTimeEnd"] = read_cds_time(fp.read(6))
+    celbodies["PeriodTimeStart"] = rbin.read_cds_time(fp.read(6))
+    celbodies["PeriodTimeEnd"] = rbin.read_cds_time(fp.read(6))
     celbodies["RelatedOrbitFileTime"] = fp.read(15)
     celbodies["RelatedAttitudeFileTime"] = fp.read(15)
     earthmoonsuncoef = np.dtype(">u2, >u4, >u2, >u4, (8,)>f8, (8,)>f8")
@@ -417,8 +419,8 @@ def read_proheader(fp):
 
     reltoim = {}
     reltoim["TypeofEclipse"] = ord(fp.read(1))
-    reltoim["EclipseStartTime"] = read_cds_time(fp.read(6))
-    reltoim["EclipseEndTime"] = read_cds_time(fp.read(6))
+    reltoim["EclipseStartTime"] = rbin.read_cds_time(fp.read(6))
+    reltoim["EclipseEndTime"] = rbin.read_cds_time(fp.read(6))
     reltoim["VisibleBodiesInImage"] = ord(fp.read(1))
     reltoim["BodiesClosetoFOV"] = ord(fp.read(1))
     reltoim["ImpactOnImageQuality"] = ord(fp.read(1))
@@ -433,17 +435,17 @@ def read_proheader(fp):
 
     projdes = {}
     projdes["TypeOfProjection"] = ord(fp.read(1))
-    projdes["LongitudeOfSSP"] = read_float4(fp.read(4))
+    projdes["LongitudeOfSSP"] = rbin.read_float4(fp.read(4))
 
     hdr["ProjectionDescription"] = projdes
 
     # ReferenceGridVIS_IR
 
     refvisir = {}
-    refvisir["NumberOfLines"] = read_int4(fp.read(4))
-    refvisir["NumberOfColumns"] = read_int4(fp.read(4))
-    refvisir["LineDirGridStep"] = read_float4(fp.read(4))
-    refvisir["ColumnDirGridStep"] = read_float4(fp.read(4))
+    refvisir["NumberOfLines"] = rbin.read_int4(fp.read(4))
+    refvisir["NumberOfColumns"] = rbin.read_int4(fp.read(4))
+    refvisir["LineDirGridStep"] = rbin.read_float4(fp.read(4))
+    refvisir["ColumnDirGridStep"] = rbin.read_float4(fp.read(4))
     refvisir["GridOrigin"] = grid_origin[ord(fp.read(1))]
 
     hdr["ReferenceGridVIS_IR"] = refvisir
@@ -451,10 +453,10 @@ def read_proheader(fp):
     # ReferenceGridHRV
 
     refhrv = {}
-    refhrv["NumberOfLines"] = read_int4(fp.read(4))
-    refhrv["NumberOfColumns"] = read_int4(fp.read(4))
-    refhrv["LineDirGridStep"] = read_float4(fp.read(4))
-    refhrv["ColumnDirGridStep"] = read_float4(fp.read(4))
+    refhrv["NumberOfLines"] = rbin.read_int4(fp.read(4))
+    refhrv["NumberOfColumns"] = rbin.read_int4(fp.read(4))
+    refhrv["LineDirGridStep"] = rbin.read_float4(fp.read(4))
+    refhrv["ColumnDirGridStep"] = rbin.read_float4(fp.read(4))
     refhrv["GridOrigin"] = grid_origin[ord(fp.read(1))]
 
     hdr["ReferenceGridHRV"] = refhrv
@@ -462,10 +464,10 @@ def read_proheader(fp):
     # PlannedCoverageVIS_IR
 
     covvisir = {}
-    covvisir["SouthernLinePlanned"] = read_int4(fp.read(4))
-    covvisir["NorthernLinePlanned"] = read_int4(fp.read(4))
-    covvisir["EasternColumnPlanned"] = read_int4(fp.read(4))
-    covvisir["WesternColumnPlanned"] = read_int4(fp.read(4))
+    covvisir["SouthernLinePlanned"] = rbin.read_int4(fp.read(4))
+    covvisir["NorthernLinePlanned"] = rbin.read_int4(fp.read(4))
+    covvisir["EasternColumnPlanned"] = rbin.read_int4(fp.read(4))
+    covvisir["WesternColumnPlanned"] = rbin.read_int4(fp.read(4))
 
     hdr["PlannedCoverageVIS_IR"] = covvisir
     
@@ -473,14 +475,14 @@ def read_proheader(fp):
 
     covhrv = {}
     
-    covhrv["LowerSouthLinePlanned"] = read_int4(fp.read(4))
-    covhrv["LowerNorthLinePlanned"] = read_int4(fp.read(4))
-    covhrv["LowerEastColumnPlanned"] = read_int4(fp.read(4))
-    covhrv["LowerWestColumnPlanned"] = read_int4(fp.read(4))
-    covhrv["UpperSouthLinePlanned"] = read_int4(fp.read(4))
-    covhrv["UpperNorthLinePlanned"] = read_int4(fp.read(4))
-    covhrv["UpperEastColumnPlanned"] = read_int4(fp.read(4))
-    covhrv["UpperWestColumnPlanned"] = read_int4(fp.read(4))
+    covhrv["LowerSouthLinePlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["LowerNorthLinePlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["LowerEastColumnPlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["LowerWestColumnPlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["UpperSouthLinePlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["UpperNorthLinePlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["UpperEastColumnPlanned"] = rbin.read_int4(fp.read(4))
+    covhrv["UpperWestColumnPlanned"] = rbin.read_int4(fp.read(4))
 
     hdr["PlannedCoverageHRV"] = covhrv
 
@@ -526,9 +528,9 @@ def read_proheader(fp):
 
     bbdu = {}
 
-    bbdu["BBObservationUTC"] = read_cds_expanded_time(fp.read(10))
+    bbdu["BBObservationUTC"] = rbin.read_cds_expanded_time(fp.read(10))
     bbdu["BBRelatedData"] = {}
-    bbdu["BBRelatedData"]["OnBoardBBTime"] = read_cuc_time(fp.read(7), 4, 3)
+    bbdu["BBRelatedData"]["OnBoardBBTime"] = rbin.read_cuc_time(fp.read(7), 4, 3)
     bbdu["BBRelatedData"]["MDUOutGain"] = np.fromstring(fp.read(42 * 2),
                                                         dtype=">u2")
     bbdu["BBRelatedData"]["MDUCoarseGain"] = np.fromstring(fp.read(42),
@@ -553,34 +555,34 @@ def read_proheader(fp):
     bbdu["BBRelatedData"]["DCRValues"] = result
     bbdu["BBRelatedData"]["X_DeepSpaceWindowPosition"] = ord(fp.read(1))
     bbdu["BBRelatedData"]["ColdFPTemperature"] = {}
-    bbdu["BBRelatedData"]["ColdFPTemperature"]["FCUNominalColdFocalPlaneTemp"] = read_uint2(fp.read(2)) / 100.
-    bbdu["BBRelatedData"]["ColdFPTemperature"]["FCURedundantColdFocalPlaneTemp"] = read_uint2(fp.read(2)) / 100.
+    bbdu["BBRelatedData"]["ColdFPTemperature"]["FCUNominalColdFocalPlaneTemp"] = rbin.read_uint2(fp.read(2)) / 100.
+    bbdu["BBRelatedData"]["ColdFPTemperature"]["FCURedundantColdFocalPlaneTemp"] = rbin.read_uint2(fp.read(2)) / 100.
     bbdu["BBRelatedData"]["WarmFPTemperature"] = {}
-    bbdu["BBRelatedData"]["WarmFPTemperature"]["FCUNominalWarmFocalPlaneVHROTemp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["WarmFPTemperature"]["FCURedundantWarmFocalPlaneVHROTemp"] = read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["WarmFPTemperature"]["FCUNominalWarmFocalPlaneVHROTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["WarmFPTemperature"]["FCURedundantWarmFocalPlaneVHROTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["ScanMirrorTemperature"] = {}
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCUNominalScanMirrorSensor1Temp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCURedundantScanMirrorSensor1Temp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCUNominalScanMirrorSensor2Temp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCURedundantScanMirrorSensor2Temp"] = read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCUNominalScanMirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCURedundantScanMirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCUNominalScanMirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCURedundantScanMirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["M1M2M3Temperature"] = {}
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM1MirrorSensor1Temp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM1MirrorSensor1Temp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM1MirrorSensor2Temp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM1MirrorSensor2Temp"] = read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM1MirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM1MirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM1MirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM1MirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM23AssemblySensor1Temp"] = ord(fp.read(1)) / 4. + 265
     bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM23AssemblySensor1Temp"] = ord(fp.read(1)) / 4. + 265
     bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM23AssemblySensor2Temp"] = ord(fp.read(1)) / 4. + 265
     bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM23AssemblySensor2Temp"] = ord(fp.read(1)) / 4. + 265
     bbdu["BBRelatedData"]["BaffleTemperature"] = {}
-    bbdu["BBRelatedData"]["BaffleTemperature"]["FCUNominalM1BaffleTemp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["BaffleTemperature"]["FCURedundantM1BaffleTemp"] = read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BaffleTemperature"]["FCUNominalM1BaffleTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BaffleTemperature"]["FCURedundantM1BaffleTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["BlackBodyTemperature"] = {}
-    bbdu["BBRelatedData"]["BlackBodyTemperature"]["FCUNominalBlackBodySensorTemp"] = read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["BlackBodyTemperature"]["FCURedundantBlackBodySensorTemp"] = read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BlackBodyTemperature"]["FCUNominalBlackBodySensorTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BlackBodyTemperature"]["FCURedundantBlackBodySensorTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["FCUMode"] = {}
-    bbdu["BBRelatedData"]["FCUMode"]["FCUNominalSMMStatus"] = read_uint2(fp.read(2))
-    bbdu["BBRelatedData"]["FCUMode"]["FCURedundantSMMStatus"] = read_uint2(fp.read(2))
+    bbdu["BBRelatedData"]["FCUMode"]["FCUNominalSMMStatus"] = rbin.read_uint2(fp.read(2))
+    bbdu["BBRelatedData"]["FCUMode"]["FCURedundantSMMStatus"] = rbin.read_uint2(fp.read(2))
     extracted_data_type = np.dtype([('NumberOfPixelsUsed', '>u4'),
                                     ('MeanCount', '>f4'),
                                     ('RMS', '>f4'),
@@ -635,9 +637,9 @@ def read_proheader(fp):
 
     geoproc["EarthModel"] = {}
     geoproc["EarthModel"]["TypeOfEarthModel"] = ord(fp.read(1))
-    geoproc["EarthModel"]["EquatorialRadius"] = read_float8(fp.read(8))
-    geoproc["EarthModel"]["NorthPolarRadius"] = read_float8(fp.read(8))
-    geoproc["EarthModel"]["SouthPolarRadius"] = read_float8(fp.read(8))
+    geoproc["EarthModel"]["EquatorialRadius"] = rbin.read_float8(fp.read(8))
+    geoproc["EarthModel"]["NorthPolarRadius"] = rbin.read_float8(fp.read(8))
+    geoproc["EarthModel"]["SouthPolarRadius"] = rbin.read_float8(fp.read(8))
     geoproc["AtmosphericModel"] = np.fromstring(fp.read(12 * 360 * 4),
                                                 dtype=">f4").reshape((12, 360))
     geoproc["ResamplingFunctions"] = np.fromstring(fp.read(12),
@@ -652,11 +654,11 @@ def read_epiheader(fp):
     """
     ftr = dict()
     ftr["15TRAILERVersion"] = ord(fp.read(1))
-    ftr["SateliteID"] = read_uint2(fp.read(2))
+    ftr["SateliteID"] = rbin.read_uint2(fp.read(2))
     ftr["NominalImageScanning"] = ord(fp.read(1)) > 0
     ftr["ReducedScan"] = ord(fp.read(1)) > 0
-    ftr["ForwardScanStart"] = read_cds_time(fp.read(6))
-    ftr["ForwardScanEnd"] = read_cds_time(fp.read(6))
+    ftr["ForwardScanStart"] = rbin.read_cds_time(fp.read(6))
+    ftr["ForwardScanEnd"] = rbin.read_cds_time(fp.read(6))
     ftr["NominalBehaviour"] = ord(fp.read(1)) > 0
     ftr["RadScanIrregularity"] = ord(fp.read(1)) > 0
     ftr["RadStoppage"] = ord(fp.read(1)) > 0
@@ -686,18 +688,18 @@ def read_epiheader(fp):
     ftr["L15ImageValidity"] = np.fromstring(fp.read(12 * 6),
                                             dtype=validitytype)
 
-    ftr["SouthernLineActual"] = read_int4(fp.read(4))
-    ftr["NorthernLineActual"] = read_int4(fp.read(4))
-    ftr["EasternColumnActual"] = read_int4(fp.read(4))
-    ftr["WesternColumnActual"] = read_int4(fp.read(4))
-    ftr["LowerSouthLineActual"] = read_int4(fp.read(4))
-    ftr["LowerNorthLineActual"] = read_int4(fp.read(4))
-    ftr["LowerEastColumnActual"] = read_int4(fp.read(4))
-    ftr["LowerWestColumnActual"] = read_int4(fp.read(4))
-    ftr["UpperSouthLineActual"] = read_int4(fp.read(4))
-    ftr["UpperNorthLineActual"] = read_int4(fp.read(4))
-    ftr["UpperEastColumnActual"] = read_int4(fp.read(4))
-    ftr["UpperWestColumnActual"] = read_int4(fp.read(4))
+    ftr["SouthernLineActual"] = rbin.read_int4(fp.read(4))
+    ftr["NorthernLineActual"] = rbin.read_int4(fp.read(4))
+    ftr["EasternColumnActual"] = rbin.read_int4(fp.read(4))
+    ftr["WesternColumnActual"] = rbin.read_int4(fp.read(4))
+    ftr["LowerSouthLineActual"] = rbin.read_int4(fp.read(4))
+    ftr["LowerNorthLineActual"] = rbin.read_int4(fp.read(4))
+    ftr["LowerEastColumnActual"] = rbin.read_int4(fp.read(4))
+    ftr["LowerWestColumnActual"] = rbin.read_int4(fp.read(4))
+    ftr["UpperSouthLineActual"] = rbin.read_int4(fp.read(4))
+    ftr["UpperNorthLineActual"] = rbin.read_int4(fp.read(4))
+    ftr["UpperEastColumnActual"] = rbin.read_int4(fp.read(4))
+    ftr["UpperWestColumnActual"] = rbin.read_int4(fp.read(4))
 
     return ftr
 

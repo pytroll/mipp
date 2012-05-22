@@ -10,8 +10,11 @@ from lxml import etree
 import logging
 logger = logging.getLogger('mipp')
 
-import mipp.xsar
-import mipp.geotiff
+import mipp
+from mipp import geotiff
+from mipp.xsar import Metadata
+
+__all__ = ['read_metadata', 'read_image']
 
 class _Calibrator(object):
     def __init__(self, mda):
@@ -24,7 +27,7 @@ class _Calibrator(object):
         raise mipp.CalibrationError, self.error
 
 def read_metadata(xmlbuffer):
-    mda = mipp.xsar.mda.Metadata()    
+    mda = Metadata()    
 
     # Speciel decoders
     def dec_timeformat(strn):
@@ -105,10 +108,10 @@ def read_image(mda, filename=None, mask=True, calibrate=1):
     if not filename:
         filename = mda.image_filename
 
-    params, data = mipp.geotiff.read_geotiff(filename)
-    area_def = mipp.geotiff.tiff2areadef(params['projection'],
-                                         params['geotransform'],
-                                         data.shape)
+    params, data = geotiff.read_geotiff(filename)
+    area_def = geotiff.tiff2areadef(params['projection'],
+                                    params['geotransform'],
+                                    data.shape)
 
     mda.proj4_params = area_def.proj4_string.replace('+', '')
     mda.area_extent = area_def.area_extent

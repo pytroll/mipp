@@ -7,7 +7,7 @@ from ConfigParser import ConfigParser
 
 import mipp
 
-__all__ = ['read_config',]
+__all__ = ['read_config']
 
 def read_config(satname, instrument=''):
     return _ConfigReader(satname, instrument)

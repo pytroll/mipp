@@ -11,32 +11,32 @@ import sys
 import numpy
 
 from mipp.xrit import _xrit
-from mipp.xrit.mda import Metadata
-from mipp.xrit.bin_reader import *
+from mipp.xrit import Metadata
+from mipp.xrit import bin_reader as rbin
 
 no_data_value = 0
 
-__all__ = ['read_metadata',]
+__all__ = ['read_metadata']
 
 def _read_sgs_common_header(fp):
     hdr = dict()
-    hdr['CommonHeaderVersion'] = read_uint1(fp.read(1))
+    hdr['CommonHeaderVersion'] = rbin.read_uint1(fp.read(1))
     fp.read(3)
-    hdr['NominalSGSProductTime'] = read_cds_time(fp.read(6))
-    hdr['SGSProductQuality'] = read_uint1(fp.read(1))
-    hdr['SGSProductCompleteness'] = read_uint1(fp.read(1))
-    hdr['SGSProductTimeliness'] = read_uint1(fp.read(1))
-    hdr['SGSProcessingInstanceId'] = read_uint1(fp.read(1))
+    hdr['NominalSGSProductTime'] = rbin.read_cds_time(fp.read(6))
+    hdr['SGSProductQuality'] = rbin.read_uint1(fp.read(1))
+    hdr['SGSProductCompleteness'] = rbin.read_uint1(fp.read(1))
+    hdr['SGSProductTimeliness'] = rbin.read_uint1(fp.read(1))
+    hdr['SGSProcessingInstanceId'] = rbin.read_uint1(fp.read(1))
     hdr['BaseAlgorithmVersion'] = fp.read(16).strip()
     hdr['ProductAlgorithmVersion'] = fp.read(16).strip()
     return hdr
     
 def _read_sgs_product_header(fp):
     hdr = dict()
-    hdr['ImageProductHeaderVersion'] = read_uint1(fp.read(1))
+    hdr['ImageProductHeaderVersion'] = rbin.read_uint1(fp.read(1))
     fp.read(3)
-    hdr['ImageProductHeaderLength'] = read_uint4(fp.read(4))
-    hdr['ImageProductVersion'] = read_uint1(fp.read(1))
+    hdr['ImageProductHeaderLength'] = rbin.read_uint4(fp.read(4))
+    hdr['ImageProductVersion'] = rbin.read_uint1(fp.read(1))
     #hdr['ImageProductHeaderData'] = fp.read()
     return hdr
 
@@ -61,7 +61,7 @@ class _Calibrator(object):
             cal = cal[:,1] # nasty !!!
             cal[int(no_data_value)] = no_data_value
             image = cal[image] # this does not work on masked arrays !!!
-        elif cal.shape ==(2, 2):
+        elif cal.shape == (2, 2):
             scale = (cal[1][1] - cal[0][1])/(cal[1][0] - cal[0][0])
             offset = cal[0][1] - cal[0][0]*scale
             image = numpy.select([image == no_data_value*scale], [no_data_value], default=offset + image*scale)

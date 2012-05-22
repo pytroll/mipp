@@ -17,7 +17,7 @@ def read_uint4(buf):
 
 def read_uint8(buf):
     v = struct.unpack("!2I", buf)
-    return v[0]*pow(2L,32) + v[1]
+    return v[0]*pow(2L, 32) + v[1]
 
 def read_int2(buf):
     return struct.unpack("!h", buf)[0]

@@ -13,7 +13,7 @@ logger = logging.getLogger('mipp')
 import mipp
 import mipp.cfg
 
-__all__ = ['load',]
+__all__ = ['load']
 
 def _find_in_tarfile(tfile, fname):
     tar = tarfile.open(tfile)
@@ -49,6 +49,7 @@ class SatelliteLoader(object):
 
         self._metadata_reader = mdl.read_metadata
         self._image_reader = mdl.read_image
+        self._tar_file = None
 
         #
         # Attributing

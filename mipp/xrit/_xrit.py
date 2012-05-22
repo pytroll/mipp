@@ -12,7 +12,7 @@ import os
 from StringIO import StringIO 
 
 import mipp
-from mipp.xrit.bin_reader import *
+from mipp.xrit import bin_reader as rbin
 
 __all__ = ['read_prologue',
            'read_epilogue',
@@ -63,10 +63,10 @@ class PrimaryHeader(object):
     hdr_type = 0
     hdr_name = 'primary_header'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
-        self.file_type = read_uint1(fp.read(1))
-        self.total_hdr_len = read_uint4(fp.read(4))
-        self.data_field_len = read_uint8(fp.read(8))
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        self.file_type = rbin.read_uint1(fp.read(1))
+        self.total_hdr_len = rbin.read_uint4(fp.read(4))
+        self.data_field_len = rbin.read_uint8(fp.read(8))
         
     def __str__(self):
         return  "hdr_type:%d, rec_len:%d, file_type:%d, total_hdr_len:%d, data_field_len:%d"%\
@@ -76,11 +76,11 @@ class ImageStructure(object):
     hdr_type = 1
     hdr_name = 'structure'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
-        self.nb = read_uint1(fp.read(1))
-        self.nc = read_uint2(fp.read(2))
-        self.nl = read_uint2(fp.read(2))
-        self.compress_flag = read_uint1(fp.read(1))
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        self.nb = rbin.read_uint1(fp.read(1))
+        self.nc = rbin.read_uint2(fp.read(2))
+        self.nl = rbin.read_uint2(fp.read(2))
+        self.compress_flag = rbin.read_uint1(fp.read(1))
         
     def __str__(self):
         return  "hdr_type:%d, rec_len:%d, nb:%d, nc:%d, nl:%d, compress_flag:%d"%\
@@ -90,12 +90,12 @@ class ImageNavigation(object):
     hdr_type = 2
     hdr_name = 'navigation'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
+        self.rec_len = rbin.read_uint2(fp.read(2))
         self.proj_name = fp.read(32).strip()
-        self.cfac = read_int4(fp.read(4))
-        self.lfac = read_int4(fp.read(4))
-        self.coff = read_int4(fp.read(4))
-        self.loff = read_int4(fp.read(4))
+        self.cfac = rbin.read_int4(fp.read(4))
+        self.lfac = rbin.read_int4(fp.read(4))
+        self.coff = rbin.read_int4(fp.read(4))
+        self.loff = rbin.read_int4(fp.read(4))
         i1 = self.proj_name.find('(')
         i2 = self.proj_name.find(')')
         if i1 != -1 and i2 != -1:
@@ -111,7 +111,7 @@ class ImageDataFunction(object):
     hdr_type = 3
     hdr_name = 'data_function'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
+        self.rec_len = rbin.read_uint2(fp.read(2))
         self.data_definition = _decode_data_definition(fp.read(self.rec_len-3))
         
     def __str__(self):
@@ -122,7 +122,7 @@ class AnnotationHeader(object):
     hdr_type = 4
     hdr_name = 'annotation'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
+        self.rec_len = rbin.read_uint2(fp.read(2))
         self.text = fp.read(self.rec_len-3).strip()
         a = [x.strip('_') for x in self.text.split('-')]
         self.xrit_channel_id = a[0]
@@ -144,9 +144,9 @@ class TimeStampRecord(object):
     hdr_type = 5
     hdr_name = 'time_stamp'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
-        self.cds_p_field = read_uint1(fp.read(1))
-        self.time_stamp = read_cds_time(fp.read(6))
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        self.cds_p_field = rbin.read_uint1(fp.read(1))
+        self.time_stamp = rbin.read_cds_time(fp.read(6))
 
     def __str__(self):
         return  "hdr_type:%d, rec_len:%d, time_stamp:%s"%\
@@ -156,13 +156,13 @@ class SegmentIdentification(object):
     hdr_type = 128
     hdr_name = 'segment'    
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
-        self.gp_sc_id = read_uint2(fp.read(2))
-        self.spectral_channel_id = read_uint1(fp.read(1))
-        self.seg_no = read_uint2(fp.read(2))
-        self.planned_start_seg_no = read_uint2(fp.read(2))
-        self.planned_end_seg_no = read_uint2(fp.read(2))
-        self.data_field_repr = read_uint1(fp.read(1))
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        self.gp_sc_id = rbin.read_uint2(fp.read(2))
+        self.spectral_channel_id = rbin.read_uint1(fp.read(1))
+        self.seg_no = rbin.read_uint2(fp.read(2))
+        self.planned_start_seg_no = rbin.read_uint2(fp.read(2))
+        self.planned_end_seg_no = rbin.read_uint2(fp.read(2))
+        self.data_field_repr = rbin.read_uint1(fp.read(1))
 
     def __str__(self):
         return  "hdr_type:%d, rec_len:%d gp_sc_id:%d, spectral_channel_id:%d, seg_no:%d, planned_start_seg_no:%d, planned_end_seg_no:%d, data_field_repr:%d"%\
@@ -174,15 +174,15 @@ class ImageSegmentLineQuality(object):
     hdr_name = 'image_quality'
     
     def __init__(self, fp):
-        self.rec_len = read_uint2(fp.read(2))
+        self.rec_len = rbin.read_uint2(fp.read(2))
         a = []
         nb = 3
         while nb < (self.rec_len):
-            ln = read_int4(fp.read(4))
-            stamp = read_cds_time(fp.read(6))
-            lv = read_uint1(fp.read(1))
-            lr = read_uint1(fp.read(1))
-            lg = read_uint1(fp.read(1))
+            ln = rbin.read_int4(fp.read(4))
+            stamp = rbin.read_cds_time(fp.read(6))
+            lv = rbin.read_uint1(fp.read(1))
+            lr = rbin.read_uint1(fp.read(1))
+            lg = rbin.read_uint1(fp.read(1))
             a.append((ln, stamp, lv, lr, lg))
             #print ln, lv, lr, lg, stamp
             nb += 13            
@@ -196,7 +196,7 @@ class UnknownHeader(object):
     hdr_name = 'unknown'    
     def __init__(self, hdr_type, fp):
         self.hdr_type = hdr_type
-        self.rec_len = read_uint2(fp.read(2))        
+        self.rec_len = rbin.read_uint2(fp.read(2))        
         self.data = fp.read(self.rec_len-3)
     def __str__(self):
         return  "hdr_type:%d, rec_len:%d"%\
@@ -228,14 +228,14 @@ header_map = {0: PrimaryHeader,
 header_types = tuple(sorted(header_map.keys()))
 
 def read_header(fp):
-    hdr_type = read_uint1(fp.read(1))
+    hdr_type = rbin.read_uint1(fp.read(1))
     if hdr_type != 0:
         raise mipp.DecodeError("first header has to be a Primary Header, this one is of type %d"%hdr_type)
     phdr = PrimaryHeader(fp)
     yield phdr
     current_size = phdr.rec_len
     while current_size < phdr.total_hdr_len:
-        hdr_type = read_uint1(fp.read(1))
+        hdr_type = rbin.read_uint1(fp.read(1))
         cls = header_map.get(hdr_type, None)
         if cls:
             hdr = cls(fp)

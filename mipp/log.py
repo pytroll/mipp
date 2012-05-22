@@ -1,7 +1,7 @@
 import os
-from logging import *
+import logging as log
 
-class NullHandler(Handler):
+class NullHandler(log.Handler):
     """Empty handler.
     """
     def emit(self, record):
@@ -12,7 +12,7 @@ class NullHandler(Handler):
 def debug_on():
     """Turn debugging logging on.
     """
-    logging_on(DEBUG)
+    logging_on(log.DEBUG)
 
 _format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 _is_logging_on = False
@@ -23,18 +23,18 @@ def logging_on(level=None):
 
     if level == None:
         if os.environ.get("DEBUG", ''):
-            level = DEBUG
+            level = log.DEBUG
         else:
-            level = INFO
+            level = log.INFO
 
     if not _is_logging_on:
-        console = StreamHandler()
-        console.setFormatter(Formatter(_format, '%Y-%m-%d %H:%M:%S'))
+        console = log.StreamHandler()
+        console.setFormatter(log.Formatter(_format, '%Y-%m-%d %H:%M:%S'))
         console.setLevel(level)
-        getLogger('').addHandler(console)
+        log.getLogger('').addHandler(console)
         _is_logging_on = True
 
-    logger = getLogger('')
+    logger = log.getLogger('')
     logger.setLevel(level)
     for handler in logger.handlers:
         handler.setLevel(level)
@@ -43,7 +43,7 @@ def logging_off():
     """Turn logging off.
     """
     global _is_logging_on
-    logger = getLogger('')
+    logger = log.getLogger('')
     for handler in logger.handlers:
         handler.close()
         logger.removeHandler(handler)
@@ -54,7 +54,7 @@ def get_logger(name):
     """Return logger with null handle
     """
     
-    logger = getLogger(name)
+    logger = log.getLogger(name)
     if not logger.handlers:
         logger.addHandler(NullHandler())
     return logger

@@ -7,17 +7,17 @@
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import timedelta
 from StringIO import StringIO
 import numpy as np
 
 from mipp import CalibrationError
-from mipp.xrit import _xrit
-from mipp.xrit.mda import Metadata
-from mipp.xrit.bin_reader import *
 from mipp import strptime
+from mipp.xrit import _xrit
+from mipp.xrit import Metadata
+from mipp.xrit import bin_reader as rbin
 
-__all__ = ['read_metadata',]
+__all__ = ['read_metadata']
 
 ASCII_HEADER_LEN = 1345
 BINARY_HEADER_LEN = 144515
@@ -35,16 +35,16 @@ def _read_ascii_header(fp):
 def _read_binary_header(fp, product_type):
     hdr = dict()
     hdr['fname'] =  fp.read(8)
-    hdr['year'] = read_int4(fp.read(4))
-    hdr['jday'] = read_int4(fp.read(4))
-    hdr['slot'] = read_int4(fp.read(4))
-    hdr['dtype'] = read_int4(fp.read(4))
-    hdr['date'] = read_int4(fp.read(4))
-    hdr['time'] = read_int4(fp.read(4))
+    hdr['year'] = rbin.read_int4(fp.read(4))
+    hdr['jday'] = rbin.read_int4(fp.read(4))
+    hdr['slot'] = rbin.read_int4(fp.read(4))
+    hdr['dtype'] = rbin.read_int4(fp.read(4))
+    hdr['date'] = rbin.read_int4(fp.read(4))
+    hdr['time'] = rbin.read_int4(fp.read(4))
     hdr['pltfrm'] = fp.read(2)
     fp.read(2) # spares
-    hdr['proc'] = read_int4(fp.read(4))
-    hdr['chan'] = read_int4(fp.read(4))
+    hdr['proc'] = rbin.read_int4(fp.read(4))
+    hdr['chan'] = rbin.read_int4(fp.read(4))
     calco_str = fp.read(5)
     if calco_str == '\0\0\0\0\0':
         hdr['calco'] =  None
@@ -57,36 +57,36 @@ def _read_binary_header(fp, product_type):
         hdr['space'] = float(space_str) / 10.0
     hdr['caltim'] = fp.read(5)
     fp.read(3) # spares
-    hdr['rec2siz'] = read_int4(fp.read(4))
-    hdr['lrecsiz'] = read_int4(fp.read(4))
-    hdr['loffset'] = read_int4(fp.read(4))
+    hdr['rec2siz'] = rbin.read_int4(fp.read(4))
+    hdr['lrecsiz'] = rbin.read_int4(fp.read(4))
+    hdr['loffset'] = rbin.read_int4(fp.read(4))
     hdr['rtmet'] = fp.read(15)
-    hdr['dmmod'] = read_int4(fp.read(4))
-    hdr['rsmod'] = read_int4(fp.read(4))
-    hdr['ssp'] = read_float4(fp.read(4))
+    hdr['dmmod'] = rbin.read_int4(fp.read(4))
+    hdr['rsmod'] = rbin.read_int4(fp.read(4))
+    hdr['ssp'] = rbin.read_float4(fp.read(4))
     fp.read(12)
     fp.read(4)
     fp.read(8)
-    hdr['line1'] = read_int4(fp.read(4))
-    hdr['pixel1'] = read_int4(fp.read(4))
-    hdr['nlines'] = read_int4(fp.read(4))
-    hdr['npixels'] = read_int4(fp.read(4))
+    hdr['line1'] = rbin.read_int4(fp.read(4))
+    hdr['pixel1'] = rbin.read_int4(fp.read(4))
+    hdr['nlines'] = rbin.read_int4(fp.read(4))
+    hdr['npixels'] = rbin.read_int4(fp.read(4))
     fp.read(16)
     #hdr['mlt1'] = fp.read(2500)
     #hdr['mlt2'] = fp.read(2500)
-    hdr['imgqua'] = read_int4(fp.read(4))
+    hdr['imgqua'] = rbin.read_int4(fp.read(4))
     fp.read(16)
     fp.read(2636) # only present for unrectified images
-    hdr['ndgrp'] = read_int4(fp.read(4))
-    hdr['dmstrt'] = read_int4(fp.read(4))
-    hdr['dmend'] = read_int4(fp.read(4))
-    hdr['dmstep'] = read_int4(fp.read(4))
+    hdr['ndgrp'] = rbin.read_int4(fp.read(4))
+    hdr['dmstrt'] = rbin.read_int4(fp.read(4))
+    hdr['dmend'] = rbin.read_int4(fp.read(4))
+    hdr['dmstep'] = rbin.read_int4(fp.read(4))
     fp.read(8*105*105)
-    hdr['ncor'] = read_int4(fp.read(4))
-    hdr['chid1'] = read_int4(fp.read(4))
+    hdr['ncor'] = rbin.read_int4(fp.read(4))
+    hdr['chid1'] = rbin.read_int4(fp.read(4))
     fp.read(16*3030)
     if product_type == 'PVISBAN':
-        hdr['chid2'] = read_int4(fp.read(4))
+        hdr['chid2'] = rbin.read_int4(fp.read(4))
         fp.read(16*3030)
     return hdr
 

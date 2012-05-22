@@ -11,8 +11,8 @@ import logging
 logger = logging.getLogger('mipp')
 
 import mipp
-from mipp.xrit import _xrit 
 import mipp.cfg
+from mipp.xrit import _xrit 
 from mipp.xrit.loader import ImageLoader
 
 __all__ = ['load_meteosat07',

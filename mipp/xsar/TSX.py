@@ -8,8 +8,9 @@ from lxml import etree
 from osgeo import osr
 
 import mipp
-import mipp.xsar
-import mipp.geotiff
+from mipp import geotiff
+from mipp.xsar import Metadata
+
 import logging
 logger = logging.getLogger('mipp')
 
@@ -121,7 +122,7 @@ def read_metadata(xmlbuffer):
                                    "Level 1B Product, could not find attribute '%s' (%s)" %
                                    (key, path))
 
-    mda = mipp.xsar.Metadata()
+    mda = Metadata()
     for key, val in attributes.items():
         setattr(mda, key, val[1](tree.xpath(val[0])[0].text))
     mda.image_filename = (mda.image_data_path + '/' + mda.image_data_filename)
@@ -143,10 +144,10 @@ def read_image(mda, filename=None, mask=True, calibrate=1):
     if not filename:
         filename = mda.image_filename
 
-    params, data = mipp.geotiff.read_geotiff(filename)
-    area_def = mipp.geotiff.tiff2areadef(params['projection'],
-                                         params['geotransform'],
-                                         data.shape)
+    params, data = geotiff.read_geotiff(filename)
+    area_def = geotiff.tiff2areadef(params['projection'],
+                                    params['geotransform'],
+                                    data.shape)
 
     mda.proj4_params = area_def.proj4_string.replace('+', '')
     mda.area_extent = area_def.area_extent

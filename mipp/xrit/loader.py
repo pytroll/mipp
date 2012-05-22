@@ -11,10 +11,9 @@ import logging
 logger = logging.getLogger('mipp')
 
 import mipp
-from mipp.xrit import _xrit
-import mipp.xrit.convert 
+from mipp.xrit import _xrit, convert
 
-__all__ = ['ImageLoader',]
+__all__ = ['ImageLoader']
 
 def _null_converter(blob):
     return blob
@@ -283,7 +282,7 @@ class ImageLoader(object):
             data_type = numpy.uint8
             data_type_len = 8
         elif mda.data_type == 10:
-            converter = mipp.xrit.convert.dec10216
+            converter = convert.dec10216
             data_type = numpy.uint16
             data_type_len = 16
         elif mda.data_type == 16:
