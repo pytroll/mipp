@@ -38,6 +38,11 @@ def make_image(mda, img, outdir='.'):
 def compare_mda(m1, m2):
     m1 = mslice(m1)
     m2 = mslice(m2)
+    for m in (m1, m2):
+        try:
+            del m.tiff_params
+        except AttributeError:
+            pass
     k1 = sorted(m1.__dict__.keys())
     k2 = sorted(m2.__dict__.keys())
     if not k1 == k2:
