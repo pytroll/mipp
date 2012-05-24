@@ -26,7 +26,7 @@ class MippError(Exception):
 # Decoding error
 #
 #-----------------------------------------------------------------------------
-class DecondingError(MippError):
+class DecodeError(MippError):
     pass
 class UnknownSatellite(MippError):
     pass
