@@ -22,6 +22,7 @@ __all__ = ['load_meteosat07',
            'load_goes13',
            'load_mtsat1r',
            'load_mtsat2',
+           'load_electrol',
            'load',
            'load_files']
 
@@ -239,5 +240,8 @@ def load_mtsat1r(time_stamp, channel, **kwarg):
 
 def load_mtsat2(time_stamp, channel, **kwarg):
     return load('mtsat2', time_stamp, channel, **kwarg)
+
+def load_electrol(time_stamp, channel, **kwarg):
+    return load('electrol', time_stamp, channel, **kwarg)
 
 #-----------------------------------------------------------------------------
