@@ -101,7 +101,8 @@ class ImageLoader(object):
         #
         # Update meta-data
         #
-        mda.area_extent = numpy.array(self._slice2extent(rows, columns, rotated=True), dtype=numpy.float32)
+        mda.area_extent = numpy.array(self._slice2extent(rows, columns, rotated=True), dtype=numpy.float64)
+
         if (rows != self._allrows) or (columns != self._allcolumns):
             mda.region_name = 'sliced'
 
@@ -232,7 +233,6 @@ class ImageLoader(object):
 
         logger.debug('slice2extent: size %d, %d'% \
                          (columns.stop - columns.start, rows.stop - rows.start))
-
         rows = slice(rows.start, rows.stop - 1)
         columns = slice(columns.start, columns.stop - 1)
 
