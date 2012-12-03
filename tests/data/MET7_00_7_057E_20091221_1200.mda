@@ -1,4 +1,4 @@
-area_extent: [-1123120.75, -450822.25, 1125369.25, 898271.75]
+area_extent: [-1123120.7549999999, -450822.24499999994, 1125369.2449999999, 898271.75499999989]
 calibration_table: {'table': None, 'name': '', 'unit': ''}
 calibration_unit: counts
 channel: 00_7
@@ -7,7 +7,7 @@ image_size: [1000, 600]
 instruments: ('mviri',)
 is_calibrated: False
 no_data_value: 0
-pixel_size: [2248.4899999999997817, 2248.4899999999997817]
+pixel_size: [2248.4899999999998, 2248.4899999999998]
 product_name: MET7_00_7_057E_20091221_1200
 product_type: PVISBAN
 production_time: 2009-12-21 11:36:00
