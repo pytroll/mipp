@@ -1,5 +1,5 @@
-area_extent: [-398654.28125, -402660.84375, 402660.84375, 398654.28125]
-calibration_table: {'table': [[0.0, 170.0], [1023.0, 340.0]], 'unit': 'degree Kelvin', 'name': 'calibrated infrared'}
+area_extent: [-398654.27220000001, -402660.84779999999, 402660.84779999999, 398654.27220000001]
+calibration_table: {'table': [[0.0, 170.0], [1023.0, 340.0]], 'name': 'calibrated infrared', 'unit': 'degree Kelvin'}
 calibration_unit: degree Kelvin
 channel: 10_7
 data_type: 32
@@ -7,7 +7,7 @@ image_size: [200, 200]
 instruments: ('mviri',)
 is_calibrated: True
 no_data_value: 0
-pixel_size: [4006.5756000000001222, 4006.5756000000001222]
+pixel_size: [4006.5756000000001, 4006.5756000000001]
 product_name: GOES11_10_7_135W_20100201_0600
 product_type: full disc
 production_time: 2010-02-01 06:47:17.432000

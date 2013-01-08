@@ -65,12 +65,21 @@ def make_image(mda, img, outdir='.'):
     img.save(fname)
 
 def compare_mda(m1, m2):
+    def compare_arrays(e1, e2):
+        for x1, x2 in zip(e1, e2):
+            if "%.3f"%x1 != "%.3f"%x2:
+                return False
+        return True
+            
     k1 = sorted(m1.__dict__.keys())
     k2 = sorted(m2.__dict__.keys())
     if not k1 == k2:
         return False
     for k in k1:
-        if not _nice2cmp(getattr(m1, k)) == _nice2cmp(getattr(m2, k)):
+        if k in ('area_extent', 'pixel_size'):
+            if not compare_arrays(getattr(m1, k), getattr(m2, k)):
+                return False
+        elif not _nice2cmp(getattr(m1, k)) == _nice2cmp(getattr(m2, k)):
             return False
             
     return True
