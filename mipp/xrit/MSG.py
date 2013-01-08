@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010, 2011, 2012
+# Copyright (c) 2010, 2011, 2012, 2013
 
 # Author(s):
 
@@ -63,17 +63,25 @@ VIS006_F = 20.76
 VIS008_F = 23.30
 IR_016_F = 19.73
 
-## Calibration coefficients from 'A Planned Change to the MSG Level 1.5 Image
-## Product Radiance Definition'
+## Calibration coefficients from
+##'A Planned Change to the MSG Level 1.5 Image Product Radiance Definition'
+## ,
+## "Conversion from radiances to reflectances for SEVIRI warm channels"
+## EUM/MET/TEN/12/0332
+## , and
+## "The Conversion from Effective Radiances to Equivalent Brightness
+## Temperatures"
+## EUM/MET/TEN/11/0569
 
 CALIB = {}
 
+
 # Meteosat 8
 
-CALIB[321] = {'HRV': {'F': 25.11},
-              'VIS006': {'F': 20.76},
-              'VIS008': {'F': 23.24},
-              'IR_016': {'F': 19.85},
+CALIB[321] = {'HRV': {'F': 78.7599 / np.pi},
+              'VIS006': {'F': 65.2296 / np.pi},
+              'VIS008': {'F': 73.0127 / np.pi},
+              'IR_016': {'F': 62.3715 / np.pi},
               'IR_039': {'VC': 2567.33,
                          'ALPHA': 0.9956,
                          'BETA': 3.41},
@@ -101,20 +109,20 @@ CALIB[321] = {'HRV': {'F': 25.11},
 
 # Meteosat 9
 
-CALIB[322] = {'HRV': {'F': 25.15},
-              'VIS006': {'F': 20.76},
-              'VIS008': {'F': 23.30},
-              'IR_016': {'F': 19.73},
+CALIB[322] = {'HRV': {'F': 79.0113 / np.pi},
+              'VIS006': {'F': 65.2065 / np.pi},
+              'VIS008': {'F': 73.1869 / np.pi},
+              'IR_016': {'F': 61.9923 / np.pi},
               'IR_039': {'VC': 2568.832,
                          'ALPHA': 0.9954,
                          'BETA': 3.438},
               'WV_062': {'VC': 1600.548,
                          'ALPHA': 0.9963,
                          'BETA': 2.185},
-              'WV_073': {'VC': 1360.33,
+              'WV_073': {'VC': 1360.330,
                          'ALPHA': 0.9991,
                          'BETA': 0.47},
-              'IR_087': {'VC': 1148.62,
+              'IR_087': {'VC': 1148.620,
                          'ALPHA': 0.9996,
                          'BETA': 0.179},
               'IR_097': {'VC': 1035.289,
@@ -130,7 +138,67 @@ CALIB[322] = {'HRV': {'F': 25.15},
                          'ALPHA': 0.9981,
                          'BETA': 0.561}}
 
+# Meteosat 10
 
+CALIB[323] = {'HRV': {'F': 78.9416 / np.pi},
+              'VIS006': {'F': 65.5148 / np.pi},
+              'VIS008': {'F': 73.1807 / np.pi},
+              'IR_016': {'F': 62.0208 / np.pi},
+              'IR_039': {'VC': 2547.771,
+                         'ALPHA': 0.9915,
+                         'BETA': 2.9002},
+              'WV_062': {'VC': 1595.621,
+                         'ALPHA': 0.9960,
+                         'BETA': 2.0337},
+              'WV_073': {'VC': 1360.337,
+                         'ALPHA': 0.9991,
+                         'BETA': 0.4340},
+              'IR_087': {'VC': 1148.130,
+                         'ALPHA': 0.9996,
+                         'BETA': 0.1714},
+              'IR_097': {'VC': 1034.715,
+                         'ALPHA': 0.9999,
+                         'BETA': 0.0527},
+              'IR_108': {'VC': 929.842,
+                         'ALPHA': 0.9983,
+                         'BETA': 0.6084},
+              'IR_120': {'VC': 838.659,
+                         'ALPHA': 0.9988,
+                         'BETA': 0.3882},
+              'IR_134': {'VC': 750.653,
+                         'ALPHA': 0.9982,
+                         'BETA': 0.5390}}
+
+# Meteosat 11
+
+CALIB[324] = {'HRV': {'F': 79.0035/ np.pi},
+              'VIS006': {'F': 65.2656 / np.pi},
+              'VIS008': {'F': 73.1692 / np.pi},
+              'IR_016': {'F': 61.9416 / np.pi},
+              'IR_039': {'VC': 2555.280,
+                         'ALPHA': 0.9916,
+                         'BETA': 2.9438},
+              'WV_062': {'VC': 1596.080,
+                         'ALPHA': 0.9959,
+                         'BETA': 2.0780},
+              'WV_073': {'VC': 1361.748,
+                         'ALPHA': 0.9990,
+                         'BETA': 0.4929},
+              'IR_087': {'VC': 1147.433,
+                         'ALPHA': 0.9996,
+                         'BETA': 0.1731},
+              'IR_097': {'VC': 1034.851,
+                         'ALPHA': 0.9998,
+                         'BETA': 0.0597},
+              'IR_108': {'VC': 931.122,
+                         'ALPHA': 0.9983,
+                         'BETA': 0.6256},
+              'IR_120': {'VC': 839.113,
+                         'ALPHA': 0.9988,
+                         'BETA': 0.4002},
+              'IR_134': {'VC': 748.585,
+                         'ALPHA': 0.9981,
+                         'BETA': 0.5635}}
 
 #Polynomial coefficients for spectral-effective BT fits
 BTFIT_A_IR_039 =  0.0
