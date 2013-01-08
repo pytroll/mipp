@@ -147,9 +147,9 @@ class SatelliteLoader(object):
                 raise mipp.ReaderError("Sub satellite point in config file (%.2f) don't match data (%.2f)"%
                                           (self.sublon, mda.sublon))
             else:
-                self.sublon = mda.sublon
                 logger.warning("Modifying sub satellite point from %.2f to %.2f"%
                                (self.sublon, mda.sublon))
+                self.sublon = mda.sublon
                 
         
         chn = self._config_reader.get_channel(mda.channel)
