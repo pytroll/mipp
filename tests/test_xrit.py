@@ -11,6 +11,8 @@ from mipp.mda import _nice2cmp
 
 datadir = (os.path.dirname(__file__) or '.') + '/data'
 save_mda = False
+debug = os.environ.has_key('DEBUG')
+
 
 try:
     # give the possibility to test other config files
@@ -45,15 +47,15 @@ hrv_files = [datadir + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111
              datadir + '/H-000-MSG2__-MSG2________-HRV______-000012___-201010111400-__',
              datadir + '/H-000-MSG2__-MSG2________-HRV______-000013___-201010111400-__',
              datadir + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
-hrv_sum = 11328375.846757833
+hrv_sum = 11328340.753558
 
 hrv2_files = [datadir + '/H-000-MSG2__-MSG2________-_________-PRO______-201011091200-__',
               datadir + '/H-000-MSG2__-MSG2________-HRV______-000018___-201011091200-__',
               datadir + '/H-000-MSG2__-MSG2________-_________-EPI______-201011091200-__']
-hrv2_sum = 44049725.5234
+hrv2_sum = 44049589.065626
 
 def make_image(mda, img, outdir='.'):
-    if not os.environ.has_key('DEBUG'):
+    if not debug:
         return
     import Image as pil
     fname = outdir + '/' + mda.product_name + '.png'
@@ -97,7 +99,9 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='GOES metadata differ')
         self.assertTrue(img.shape == (200, 200), msg='GOES image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, goes_sum, 3, msg='GOES image reading/slicing failed')
+        self.failUnlessAlmostEqual(cross_sum, goes_sum, 3,
+                                   msg='GOES image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, goes_sum))
 
     def test_mtsat(self):
         loader = xrit.sat.load_files(mtsat_files[0], mtsat_files[1:], calibrate=True)
@@ -110,7 +114,9 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='MTSAT metadata differ')
         self.assertTrue(img.shape == (200, 200), msg='MTSAT image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, mtsat_sum, 3, msg='MTSAT image reading/slicing failed')
+        self.failUnlessAlmostEqual(cross_sum, mtsat_sum, 3,
+                                   msg='MTSAT image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, mtsat_sum))
 
     def test_met7(self):
         loader = xrit.sat.load_files(met7_files[0], met7_files[1:], calibrate=False)
@@ -122,7 +128,9 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='MET7 metadata differ')
         self.assertTrue(img.shape == (600, 1000), msg='MET7 image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, met7_sum, 3, msg='MET7 image reading/slicing failed')
+        self.failUnlessAlmostEqual(cross_sum, met7_sum, 3,
+                                   msg='MET7 image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, met7_sum))
 
     def test_msg(self):
         loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], 
@@ -136,21 +144,28 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='MSG metadata differ')
         self.assertTrue(img.shape == (300, 900), msg='MSG image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing reflectances failed')
+        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3,
+                                   msg='MSG image reading/slicing reflectances failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, msg_sum))
 
         mda, img = loader(mda.area_extent)
         if save_mda:
             mda.save(mda.product_name + '.mda')
         cross_sum = img.sum()
         self.assertTrue(compare_mda(mda, mdac), msg='MSG metadata differ, when using area_extent')
-        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3, msg='MSG image reading/slicing failed, when using area_extent')
+        self.failUnlessAlmostEqual(cross_sum, msg_sum, 3,
+                                   msg='MSG image reading/slicing failed, when using area_extent, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, msg_sum))
 
     def test_msg2(self):
         loader = xrit.sat.load_files(msg_files[0], msg_files[1:-1], epilogue=msg_files[-1], 
                                      calibrate=2)
         mda, img = loader[1656:1956,1756:2656]
         cross_sum = img.sum()
-        self.failUnlessAlmostEqual(cross_sum, 22148991.0194, 3, msg='MSG image reading/slicing radiances failed')
+        expected = 22148991.0194
+        self.failUnlessAlmostEqual(cross_sum, expected, 3,
+                                   msg='MSG image reading/slicing radiances failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, expected))
         
         
     def test_hrv(self):
@@ -164,7 +179,9 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='MSG-HRV metadata differ')
         self.assertTrue(img.shape == (600, 1000), msg='MSG-HRV image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, hrv_sum, 3, msg='MSG-HRV image reading/slicing failed')
+        self.failUnlessAlmostEqual(cross_sum, hrv_sum, 3,
+                                   msg='MSG-HRV image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, hrv_sum))
     
     def test_hrv2(self):
         loader = xrit.sat.load_files(hrv2_files[0], hrv2_files[1:-1], epilogue=hrv2_files[-1], calibrate=True)
@@ -178,7 +195,9 @@ class Test(unittest.TestCase):
         
         self.assertTrue(compare_mda(mda, mdac), msg='MSG-HRV metadata differ')
         self.assertTrue(img.shape == (450, 8998), msg='MSG-HRV image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, hrv2_sum, 3, msg='MSG-HRV image reading/slicing failed')
+        self.failUnlessAlmostEqual(cross_sum, hrv2_sum, 3,
+                                   msg='MSG-HRV image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
+                cross_sum, hrv2_sum))
 
 if __name__ == '__main__':
     save_mda = False
