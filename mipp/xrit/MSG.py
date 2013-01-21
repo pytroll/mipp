@@ -808,7 +808,7 @@ def read_metadata(prologue, image_files, epilogue):
     md = Metadata()
     md.calibrate = _Calibrator(hdr, im.product_name)
 
-    md.sublon = hdr["SatelliteDefinition"]["NominalLongitude"]
+    md.sublon = hdr["ProjectionDescription"]["LongitudeOfSSP"]
     md.product_name = im.product_id
     md.channel = im.product_name
     if md.channel == "HRV":
