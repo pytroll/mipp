@@ -8,3 +8,5 @@ debian
 etc
 tmp
 tests/jojo.py
+setup.cfg
+mipp.egg-info
