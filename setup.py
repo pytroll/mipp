@@ -32,7 +32,7 @@ from setuptools import setup, Extension
 setup(name = 'mipp',
       description='Meteorological ingest processing package',
       author='Lars Orum Rasmussen',
-      author_email='loerum@hmail.com',
+      author_email='loerum@gmail.com',
       classifiers=["Development Status :: 5 - Production/Stable",
                    "Intended Audience :: Science/Research",
                    "License :: OSI Approved :: GNU General Public License v3 " +
