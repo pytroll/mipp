@@ -12,6 +12,7 @@ This is a presentation of:
    :maxdepth: 1
 
    introduction
+   calibration
 
 Indices and tables
 ==================
