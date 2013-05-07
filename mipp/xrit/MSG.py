@@ -849,11 +849,8 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["EasternColumnActual"],
             ftr["WesternColumnActual"]]])
 
-        im_loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
-        md.coff = (ftr[ew_.capitalize()+"ernColumnActual"]
-                   + im.navigation.coff - 1)
-        md.loff = (ftr[ns_.capitalize()+"ernLineActual"]
-                   + im_loff - 1)
+        md.coff = im.navigation.coff
+        md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
 
     md.data_type = im.structure.nb
     md.no_data_value = no_data_value

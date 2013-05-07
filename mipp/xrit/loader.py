@@ -50,13 +50,7 @@ class ImageLoader(object):
             #
             image = None
 
-            offset = 0
-            offset_position = 0
-
             for region in (mda.boundaries - 1):
-                offset += region[0] - offset_position
-                offset_position = region[1] + 1
-
                 rlines = slice(region[0], region[1] + 1)
                 rcols = slice(region[2], region[3] + 1)
 
@@ -67,8 +61,8 @@ class ImageLoader(object):
                     columns.stop < rcols.start):
                     continue
 
-                lines = slice(max(rows.start, rlines.start) - offset,
-                              min(rows.stop, rlines.stop) - offset)
+                lines = slice(max(rows.start, rlines.start),
+                              min(rows.stop, rlines.stop))
                 cols =  slice(max(columns.start, rcols.start) - rcols.start,
                               min(columns.stop, rcols.stop) - rcols.start)
                 rdata = self._read(lines, cols, mda)
@@ -112,7 +106,7 @@ class ImageLoader(object):
         return mipp.mda.mslice(mda), image
     
     def __getitem__(self, item):
-        """Deafult slicing, handles rotated images.
+        """Default slicing, handles rotated images.
         """
         rows, columns = self._handle_item(item)
         ns_, ew_ = self.mda.first_pixel.split()
@@ -190,7 +184,7 @@ class ImageLoader(object):
                     columns = slice(item[1], item[1] + 1)
             else:
                 raise IndexError, "can only handle two indexes, not %d"%len(item)
-        elif item == None:
+        elif item is None:
             # full disc
             rows, columns = self._allrows, self._allcolumns            
         else:
