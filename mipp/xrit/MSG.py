@@ -834,11 +834,9 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["UpperEastColumnActual"],
             ftr["UpperWestColumnActual"]]])
 
-        im_loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
         md.coff = (ftr["Lower"+ew_.capitalize()+"ColumnActual"]
                    + im.navigation.coff - 1)
-        md.loff = (ftr["Lower"+ns_.capitalize()+"LineActual"]
-                   + im_loff - 1)
+        md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
 
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
