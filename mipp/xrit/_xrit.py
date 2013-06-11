@@ -18,6 +18,7 @@ __all__ = ['read_prologue',
            'read_epilogue',
            'read_imagedata',
            'read_gts_message',
+           'read_mpef',
            'read_mpef_clm',
            'decompress',
            'list']
@@ -347,13 +348,16 @@ def read_gts_message(file_name):
     else:
         raise mipp.DecodeError("this is no 'GTS Message' file: '%s'"%file_name)
     
-def read_mpef_clm(file_name):
+def read_mpef(file_name):
     s = Segment(file_name)
     if s.file_type == 144:
         return s
     else:
-        raise mipp.DecodeError("this is no 'MPEF cloud mask' file: '%s'"%file_name)
-    
+        raise mipp.DecodeError("this is no 'MPEF (type=124)' file: '%s'"%file_name)
+
+# Backward compatible
+read_mpef_clm = read_mpef
+
 def list(file_name, dump_data=False):
     fname = 'xrit.dat'
     fp = open(file_name)
