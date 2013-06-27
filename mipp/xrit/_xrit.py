@@ -30,10 +30,19 @@ def decompress(infile, outdir='.'):
     from subprocess import Popen, PIPE
     cmd = os.environ.get('XRIT_DECOMPRESS_PATH', None)
     if not cmd:
-        raise mipp.DecodeError("XRIT_DECOMPRESS_PATH is not defined (path to xRITDecompress")
-        
+        raise IOError("XRIT_DECOMPRESS_PATH is not defined" +
+                      " (complete path to xRITDecompress)")
+    
     cwd = os.getcwd()
     os.chdir(outdir)
+
+    question = ("Did you set the environment variable " +
+                "XRIT_DECOMPRESS_PATH correctly?")
+    if not os.path.exists(cmd):
+        raise IOError(str(cmd) + " does not exist!\n" + question)
+    elif os.path.isdir(cmd):
+        raise IOError(str(cmd) + " is a directory!\n" + question)
+
     p = Popen([cmd, infile], stdout=PIPE)
     stdout = StringIO(p.communicate()[0])
     status = p.returncode
