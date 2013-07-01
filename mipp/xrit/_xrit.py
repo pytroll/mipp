@@ -18,6 +18,7 @@ __all__ = ['read_prologue',
            'read_epilogue',
            'read_imagedata',
            'read_gts_message',
+           'read_mpef',
            'read_mpef_clm',
            'decompress',
            'list']
@@ -29,10 +30,19 @@ def decompress(infile, outdir='.'):
     from subprocess import Popen, PIPE
     cmd = os.environ.get('XRIT_DECOMPRESS_PATH', None)
     if not cmd:
-        raise mipp.DecodeError("XRIT_DECOMPRESS_PATH is not defined (path to xRITDecompress")
-        
+        raise IOError("XRIT_DECOMPRESS_PATH is not defined" +
+                      " (complete path to xRITDecompress)")
+    
     cwd = os.getcwd()
     os.chdir(outdir)
+
+    question = ("Did you set the environment variable " +
+                "XRIT_DECOMPRESS_PATH correctly?")
+    if not os.path.exists(cmd):
+        raise IOError(str(cmd) + " does not exist!\n" + question)
+    elif os.path.isdir(cmd):
+        raise IOError(str(cmd) + " is a directory!\n" + question)
+
     p = Popen([cmd, infile], stdout=PIPE)
     stdout = StringIO(p.communicate()[0])
     status = p.returncode
@@ -347,13 +357,16 @@ def read_gts_message(file_name):
     else:
         raise mipp.DecodeError("this is no 'GTS Message' file: '%s'"%file_name)
     
-def read_mpef_clm(file_name):
+def read_mpef(file_name):
     s = Segment(file_name)
     if s.file_type == 144:
         return s
     else:
-        raise mipp.DecodeError("this is no 'MPEF cloud mask' file: '%s'"%file_name)
-    
+        raise mipp.DecodeError("this is no 'MPEF (type=124)' file: '%s'"%file_name)
+
+# Backward compatible
+read_mpef_clm = read_mpef
+
 def list(file_name, dump_data=False):
     fname = 'xrit.dat'
     fp = open(file_name)
