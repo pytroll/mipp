@@ -118,7 +118,7 @@ class SatelliteLoader(object):
 
         val["segment"] = "EPI".ljust(9, '_')
 
-        filename_epi = opt.get('filename_pro', opt['filename'])
+        filename_epi = opt.get('filename_epi', opt['filename'])
         epilogue = glob.glob(opt['dir'] + '/' + \
                              (time_stamp.strftime(filename_epi)%val))
 
