@@ -13,6 +13,7 @@ This is a presentation of:
 
    introduction
    calibration
+   api
 
 Indices and tables
 ==================

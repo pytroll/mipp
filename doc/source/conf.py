@@ -19,6 +19,7 @@ import sys, os
 #sys.path.append(os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../mipp'))
+sys.path.insert(0, os.path.abspath('../../mipp/xrit'))
 
 class Mock(object):
     def __init__(self, *args, **kwargs):
