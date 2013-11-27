@@ -4,13 +4,16 @@
 
 ``mipp`` is a Meteorological Ingest-Processing Package (http://github.com/loerum/mipp).
 
- It's a Python libray and it's main task is to convert satellite level-1.5 data into a 
- format understood by ``mpop`` (http://github.com/mraspaud/mpop). 
+ It's a Python library and it's main task is to convert low level satellite
+ data into a format understood by ``mpop``
+ (http://github.com/mraspaud/mpop). The primary purpose is to support
+ Geostationary satellite data (level 1.5) but there is also support for the
+ reading of some polar orbiting SAR data (see below).
 
  A more sophisticated interface to satellite data objects is supported by ``mpop``.
 
-In the start, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R**,
-"eumetcasted" FSD data::
+Currently it handles data from all current Meteosat Second Generation (MSG)
+satellites, Meteosat 7, GOES 11-15, MTSAT's, and GOMS, all as retrieved via EUMETCast::
 
   L-000-MTP___-MET7________-00_7_057E-PRO______-201002261600-__
   L-000-MTP___-MET7________-00_7_057E-000001___-201002261600-C_
@@ -25,11 +28,23 @@ In the start, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R**,
   ...
   ...
 
+In addition ``mipp`` handles Synthetic Apperture Radar (SAR) data from
+Terrscan-X, Cosmo-Sky Med, and Radarsat 2.
 
 ``mipp`` will:
-  * decompress XRIT files (if Eumetsat's ``xRITDecompress`` is available).
-  * decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
-  * catenate image data into a numpy-array.
+
+  * Decompress XRIT files (if Eumetsat's ``xRITDecompress`` is
+    available). Please be sure to set the environment variable
+    ``XRIT_DECOMPRESS_PATH`` to point to the full path to the decompression
+    software, e.g. ``/usr/bin/xRITDecompress``. Also you can specify where the
+    decompressed files should be stored after decompression, using the
+    environment variable ``XRIT_DECOMPRESS_OUTDIR``. If this variable is not
+    set the decompressed files will be found in the same directory as the
+    compressed ones.
+
+  * Decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
+
+  * Catenate image data into a numpy-array.
 
     * if needed, convert 10 bit data to 16 bit
     * if a region is defined (by a slice or center, size), only read what is specified.
