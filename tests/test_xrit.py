@@ -96,6 +96,10 @@ def compare_mda(m1, m2):
 
 class Test(unittest.TestCase):
 
+    def setUp(self):
+        self.decompressed_msg_files = []
+
+
     def test_goes(self):
         loader = xrit.sat.load_files(goes_files[0], goes_files[1:], calibrate=True)
         mda, img = loader[1308:1508,1308:1508]
@@ -228,10 +232,17 @@ class Test(unittest.TestCase):
             outdir = xrit_outdir
         uncompressed_chanels = xrit.sat.decompress(cmprs_files[1:-1], 
                                                    outdir=outdir)
+        self.decompressed_msg_files = uncompressed_chanels
         nfiles = len(uncompressed_chanels)
         self.assertEqual(nfiles, len(cmprs_files[1:-1]))
         self.assertTrue(os.path.exists(uncompressed_chanels[0]))
 
+    def tearDown(self):
+        """Clean up"""
+        for filename in self.decompressed_msg_files:
+            if os.path.exists(filename):
+                os.remove(filename)
+            
         
 if __name__ == '__main__':
     save_mda = False
