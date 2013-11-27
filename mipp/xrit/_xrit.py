@@ -362,7 +362,7 @@ def read_mpef(file_name):
     if s.file_type == 144:
         return s
     else:
-        raise mipp.DecodeError("this is no 'MPEF (type=124)' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'MPEF (type=144)' file: '%s'"%file_name)
 
 # Backward compatible
 read_mpef_clm = read_mpef
