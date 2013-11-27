@@ -14,6 +14,7 @@ import mipp
 import mipp.cfg
 from mipp.xrit import _xrit 
 from mipp.xrit.loader import ImageLoader
+import os
 
 __all__ = ['load_meteosat07',
            'load_meteosat09',
@@ -80,9 +81,11 @@ class SatelliteLoader(object):
             try:
                 sublon = float(projname.split('(')[1].split(')')[0])
             except (IndexError, ValueError):
-                raise mipp.ReaderError("Could not determine sub satellite point from projection name '%s'"%
+                raise mipp.ReaderError("Could not determine sub satellite " + 
+                                       "point from projection name '%s'"%
                                        projname)
-            self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"%sublon            
+            self.proj4_params = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00" % sublon
+
 
     def load(self, time_stamp, channel, **kwarg):
         if channel not in self._config_reader.channel_names:
@@ -107,11 +110,16 @@ class SatelliteLoader(object):
         val["segment"] = "0????????"
         image_files = glob.glob(opt['dir'] + '/' + \
                                 time_stamp.strftime(opt['filename'])%val)
+        
         if not image_files:
             raise mipp.NoFiles("no data files: '%s'"%(time_stamp.strftime(opt['filename'])%val))
         image_files.sort()
 
-        logger.info("Read %s"%prologue)
+        # Check if the files are xrit-compressed, and decompress them
+        # accordingly:
+        decomp_files = decompress(image_files)
+                
+        logger.info("Read %s" % prologue)
         prologue = _xrit.read_prologue(prologue)
 
         # Epilogue
@@ -126,12 +134,12 @@ class SatelliteLoader(object):
             logger.info("No epilogue file to read.")
         else:
             epilogue = epilogue[0]
-            logger.info("Read %s"%epilogue)
+            logger.info("Read %s" % epilogue)
             epilogue = _xrit.read_epilogue(epilogue)
-            return self.load_files(prologue, image_files,
+            return self.load_files(prologue, decomp_files,
                                    epilogue=epilogue, **kwarg)
         
-        return self.load_files(prologue, image_files, **kwarg)
+        return self.load_files(prologue, decomp_files, **kwarg)
 
     def load_files(self, prologue, image_files, only_metadata=False, **kwargs):
         image_files.sort()
@@ -208,6 +216,37 @@ class SatelliteLoader(object):
 # Interface
 #
 #-----------------------------------------------------------------------------
+def decompress(infiles, **options):
+    """Check if the files are xrit-compressed, and decompress them
+    accordingly:
+    """
+    if 'outdir' in options:
+        cmd = options['outdir']
+    else:
+        cmd = os.environ.get('XRIT_DECOMPRESS_OUTDIR', None)
+
+    if not cmd:
+        logger.info("XRIT_DECOMPRESS_OUTDIR is not defined. " +
+                    "The decompressed files will be put in " + 
+                    "the same directory as compressed ones")
+        
+    decomp_files = []
+    for filename in infiles:
+        if filename.endswith('C_'):
+            # Try decompress it:
+            logger.debug('Try deompressing ' + filename)
+            if cmd:
+                outdir = cmd
+            else:
+                outdir = os.path.dirname(filename)
+            outfile = _xrit.decompress(filename, outdir)
+            decomp_files.append(outfile)
+        else:
+            decomp_files.append(filename)
+
+    return decomp_files
+
+
 def load_files(prologue, image_files, epilogue=None, **kwarg):
     if type(prologue) == type('string'):
         logger.info("Read %s"%prologue)

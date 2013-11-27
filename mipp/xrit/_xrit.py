@@ -24,8 +24,9 @@ __all__ = ['read_prologue',
            'list']
 
 def decompress(infile, outdir='.'):
-    """Will decompress a XRIT data file and return the path to the decompressed file.
-    It expect to find Eumetsat's xRITDecompress through the environment variable XRIT_DECOMPRESS_PATH 
+    """Will decompress an XRIT data file and return the path to the
+    decompressed file. It expect to find Eumetsat's xRITDecompress through the
+    environment variable XRIT_DECOMPRESS_PATH
     """
     from subprocess import Popen, PIPE
     cmd = os.environ.get('XRIT_DECOMPRESS_PATH', None)
