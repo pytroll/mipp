@@ -34,13 +34,16 @@ Terrscan-X, Cosmo-Sky Med, and Radarsat 2.
 ``mipp`` will:
 
   * Decompress XRIT files (if Eumetsat's ``xRITDecompress`` is
-    available). Please be sure to set the environment variable
+    available). Software to uncompress HRIT/XRIT can be obtained from EUMETSAT
+    (register and download the `Public Wavelet Transform Decompression Library
+    Software`_). Please be sure to set the environment variable
     ``XRIT_DECOMPRESS_PATH`` to point to the full path to the decompression
     software, e.g. ``/usr/bin/xRITDecompress``. Also you can specify where the
     decompressed files should be stored after decompression, using the
     environment variable ``XRIT_DECOMPRESS_OUTDIR``. If this variable is not
     set the decompressed files will be found in the same directory as the
     compressed ones.
+
 
   * Decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
 
@@ -183,6 +186,11 @@ Usage
 
 A script, process_fsd
 ---------------------
+
+The script is intended for work on other geostationary data than the MSG
+(Meteosat) data, the so-called Foreign Satellite Data (FSD). That is e.g. GOES,
+MTSAT and COMS.
+
 .. code-block:: text
 
     process_fsd --check-satellite <prologue-file>
@@ -210,3 +218,6 @@ A script, process_fsd
     EUM/MSG/SPE/057; Issue 6; 21 June 2006 
  .. [MTP] "The Meteosat Archive; Format Guide No. 1; Basic Imagery: OpenMTP Format"; EUM FG 1; Rev 2.1; April 2000
  .. [SGS] "MSG Ground Segment LRIT/HRIT Mission Specific Implementation"; EUM/MSG/SPE/057; Issue 6; 21 June 2006
+.. _Public Wavelet Transform Decompression Library Software: http://www.eumetsat.int/website/home/Data/DataDelivery/SupportSoftwareandTools/index.html
+
+
