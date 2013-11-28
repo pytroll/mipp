@@ -49,6 +49,7 @@ def check_platform(prologue):
 def check_segments(prologue, listit=False):
     dname, fname = os.path.split(prologue.file_name)
     fname = fname.replace('-PRO______-', '-0????????-')
+    fname = fname.replace('-_________-', '-?????????-')
     fname = fname[:-2] + '??'
     image_files = glob.glob(dname + '/' + fname)
     if not image_files:
@@ -154,10 +155,16 @@ if pro_file:
 return_code = 0
 
 if check:
+    if prologue.platform not in max_age.keys():
+        print ("Platform " + str(prologue.platform) +
+               " not supported by the Foreign Satellite Data script!")
     if not check_segments(prologue, listit):
         return_code = 1
         
 elif check_satellite:
+    if prologue.platform not in max_age.keys():
+        print ("Platform " + str(prologue.platform) +
+               " not supported by the Foreign Satellite Data script!")
     if not check_platform(prologue):
         return_code = 1
         
@@ -165,9 +172,15 @@ elif decomp:
     decompress(image_files, outdir, listit)
     
 elif metadata:
+    if prologue.platform not in max_age.keys():
+        print ("Platform " + str(prologue.platform) +
+               " not supported by the Foreign Satellite Data script!")
     print xrit.sat.load_files(prologue, image_files, only_metadata=True)
 
 else:
+    if prologue.platform not in max_age.keys():
+        print ("Platform " + str(prologue.platform) +
+               " not supported by the Foreign Satellite Data script!")
     process(prologue, image_files, outdir, saveashdf5)
 
 sys.exit(return_code)
