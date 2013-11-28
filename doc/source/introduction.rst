@@ -184,6 +184,24 @@ Usage
     image_data.tofile(fp)
     fp.close()
 
+
+Examples of the usage of some lower level tools
+-----------------------------------------------
+ 
+Here an example how to get the observation times (embedded in the 'Image
+Segment Line Quality' record) of each scanline in a segment:
+
+.. code-block:: python
+
+    import mipp.xrit.MSG
+
+    segfile = "/local_disk/data/MSG/HRIT/H-000-MSG3__-MSG3________-WV_062___-000002___-201311211300-__"
+    lineq = mipp.xrit.MSG.get_scanline_quality(segfile)
+    print lineq[0]
+   
+    (465, datetime.datetime(2013, 11, 21, 13, 1, 48, 924000), 1, 1, 0)
+    
+
 A script, process_fsd
 ---------------------
 
@@ -213,11 +231,13 @@ MTSAT and COMS.
 
 ==============================
 
+ .. _Public Wavelet Transform Decompression Library Software: http://www.eumetsat.int/website/home/Data/DataDelivery/SupportSoftwareandTools/index.html
  .. [CGMS] LRIT/HRIT Global Specification; CGMS 03; Issue 2.6; 12 August 1999 
     "MSG Ground Segment LRIT/HRIT Mission Specific Implementation"
     EUM/MSG/SPE/057; Issue 6; 21 June 2006 
  .. [MTP] "The Meteosat Archive; Format Guide No. 1; Basic Imagery: OpenMTP Format"; EUM FG 1; Rev 2.1; April 2000
  .. [SGS] "MSG Ground Segment LRIT/HRIT Mission Specific Implementation"; EUM/MSG/SPE/057; Issue 6; 21 June 2006
-.. _Public Wavelet Transform Decompression Library Software: http://www.eumetsat.int/website/home/Data/DataDelivery/SupportSoftwareandTools/index.html
+
+
 
 

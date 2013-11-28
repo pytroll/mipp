@@ -793,7 +793,7 @@ def read_epiheader(fp):
     return ftr
 
 def read_metadata(prologue, image_files, epilogue):
-    """ Selected items from the Meteosat-9 prolog file.
+    """ Selected items from the MSG prologue file.
     """
     segment_size = 464 # number of lines in a segment
 
@@ -858,6 +858,29 @@ def read_metadata(prologue, image_files, epilogue):
     md.calibration_unit = 'counts'
 
     return md
+
+def get_obstimes(epilogue):
+    """Get the start and end full disk scan times from the Epilogue file."""
+    epi = _xrit.read_epilogue(epilogue)
+    fpt = StringIO(epi.data)
+    ftr = read_epiheader(fpt)
+    return (ftr['ForwardScanStart'], ftr['ForwardScanEnd'])
+
+def get_scanline_quality(segment_filename):
+    """Get the line quality data from the segment file. This is from the
+    ImageSegmentLineQuality class of the _xrit module, which maps the Header
+    Type 129 - Image Segment Line Quality as decribed in the 'MSG Ground
+    Segment LRIT/HRIT Mission Specific Implementation, EUM/MSG/SPE/057'
+    document, see reference below.
+    
+    This record contains the scan line mean acquisition times
+    
+    http://www.eumetsat.int/website/wcm/idc/idcplg?IdcService=GET_FILE&dDocName=PDF_TEN_05057_SPE_MSG_LRIT_HRI&RevisionSelectionMethod=LatestReleased&Rendition=Web
+
+    """
+    imgdata = _xrit.read_imagedata(segment_filename)
+    return imgdata.image_quality.line_quality
+    
 
 if __name__ == '__main__':
     p = _xrit.read_prologue(sys.argv[1])
