@@ -183,6 +183,11 @@ Usage
 
 A script, process_fsd
 ---------------------
+
+The script is intended for work on other geostationary data than the MSG
+(Meteosat) data, the so-called Foreign Satellite Data (FSD). That is e.g. GOES,
+MTSAT and COMS.
+
 .. code-block:: text
 
     process_fsd --check-satellite <prologue-file>
