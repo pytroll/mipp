@@ -17,6 +17,7 @@ max_age = {'MET7': timedelta(seconds=25*60),
            'GOES12' : timedelta(seconds=5*60),
            'GOES13' : timedelta(seconds=5*60),
            'MTSAT1R' : timedelta(seconds=5*60)}
+supported_platforms = max_age.keys()
 
 #-----------------------------------------------------------------------------
 
@@ -44,7 +45,7 @@ def usage():
 #-----------------------------------------------------------------------------
 
 def check_platform(prologue, verbose=False):
-    if not max_age.has_key(prologue.platform):
+    if prologue.platform not in supported_platforms:
         if verbose:
             print >> sys.stderr, "Platform " + str(prologue.platform) + \
                 " not supported by the Foreign Satellite Data script!"
