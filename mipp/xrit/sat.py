@@ -234,7 +234,7 @@ def decompress(infiles, **options):
     for filename in infiles:
         if filename.endswith('C_'):
             # Try decompress it:
-            logger.debug('Try deompressing ' + filename)
+            logger.debug('Try decompressing ' + filename)
             if cmd:
                 outdir = cmd
             else:
