@@ -33,7 +33,8 @@ def decompress(infile, outdir='.'):
     if not cmd:
         raise IOError("XRIT_DECOMPRESS_PATH is not defined" +
                       " (complete path to xRITDecompress)")
-    
+
+    infile = os.path.abspath(infile)
     cwd = os.getcwd()
     os.chdir(outdir)
 
