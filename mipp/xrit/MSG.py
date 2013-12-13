@@ -859,14 +859,14 @@ def read_metadata(prologue, image_files, epilogue):
 
     return md
 
-def get_obstimes(epilogue):
+def read_obstimes(epilogue):
     """Get the start and end full disk scan times from the Epilogue file."""
     epi = _xrit.read_epilogue(epilogue)
     fpt = StringIO(epi.data)
     ftr = read_epiheader(fpt)
     return (ftr['ForwardScanStart'], ftr['ForwardScanEnd'])
 
-def get_scanline_quality(segment_filename):
+def read_scanline_quality(segment_filename):
     """Get the line quality data from the segment file. This is from the
     ImageSegmentLineQuality class of the _xrit module, which maps the Header
     Type 129 - Image Segment Line Quality as decribed in the 'MSG Ground
