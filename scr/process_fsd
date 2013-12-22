@@ -43,12 +43,18 @@ def usage():
 
 #-----------------------------------------------------------------------------
 
-def check_platform(prologue):
-    return max_age.has_key(prologue.platform)
+def check_platform(prologue, verbose=False):
+    if not max_age.has_key(prologue.platform):
+        if verbose:
+            print >> sys.stderr, "Platform " + str(prologue.platform) + \
+                " not supported by the Foreign Satellite Data script!"
+        return False
+    return True
 
 def check_segments(prologue, listit=False):
     dname, fname = os.path.split(prologue.file_name)
     fname = fname.replace('-PRO______-', '-0????????-')
+    fname = fname.replace('-_________-', '-?????????-')
     fname = fname[:-2] + '??'
     image_files = glob.glob(dname + '/' + fname)
     if not image_files:
@@ -57,7 +63,7 @@ def check_segments(prologue, listit=False):
     if listit:
         for f in image_files:
             print f
-    ctime = os.path.getctime(prologue.file_name)
+    ctime = datetime.fromtimestamp(os.path.getctime(prologue.file_name))
     now = datetime.now()
     im = xrit.read_imagedata(image_files[-1])
     if im.segment.planned_end_seg_no == im.segment.seg_no:
@@ -149,12 +155,13 @@ except IndexError:
 if pro_file:
     prologue = xrit.read_prologue(pro_file)
     
+    
 #-----------------------------------------------------------------------------
-
 return_code = 0
 
 if check:
-    if not check_segments(prologue, listit):
+    if not (check_platform(prologue, verbose=True) and 
+            check_segments(prologue, listit)):
         return_code = 1
         
 elif check_satellite:
@@ -165,9 +172,11 @@ elif decomp:
     decompress(image_files, outdir, listit)
     
 elif metadata:
-    print xrit.sat.load_files(prologue, image_files, only_metadata=True)
+    if check_platform(prologue, verbose=True):
+        print xrit.sat.load_files(prologue, image_files, only_metadata=True)
 
 else:
-    process(prologue, image_files, outdir, saveashdf5)
+    if check_platform(prologue, verbose=True):
+        process(prologue, image_files, outdir, saveashdf5)
 
 sys.exit(return_code)

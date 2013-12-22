@@ -4,13 +4,16 @@
 
 ``mipp`` is a Meteorological Ingest-Processing Package (http://github.com/loerum/mipp).
 
- It's a Python libray and it's main task is to convert satellite level-1.5 data into a 
- format understood by ``mpop`` (http://github.com/mraspaud/mpop). 
+ It's a Python library and it's main task is to convert low level satellite
+ data into a format understood by ``mpop``
+ (http://github.com/mraspaud/mpop). The primary purpose is to support
+ Geostationary satellite data (level 1.5) but there is also support for the
+ reading of some polar orbiting SAR data (see below).
 
  A more sophisticated interface to satellite data objects is supported by ``mpop``.
 
-In the start, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R**,
-"eumetcasted" FSD data::
+Currently it handles data from all current Meteosat Second Generation (MSG)
+satellites, Meteosat 7, GOES 11-15, MTSAT's, and GOMS, all as retrieved via EUMETCast::
 
   L-000-MTP___-MET7________-00_7_057E-PRO______-201002261600-__
   L-000-MTP___-MET7________-00_7_057E-000001___-201002261600-C_
@@ -25,11 +28,26 @@ In the start, it will handle **MET7**, **GEOS11**, **GOES12** and **MTSAT1R**,
   ...
   ...
 
+In addition ``mipp`` handles Synthetic Apperture Radar (SAR) data from
+Terrscan-X, Cosmo-Sky Med, and Radarsat 2.
 
 ``mipp`` will:
-  * decompress XRIT files (if Eumetsat's ``xRITDecompress`` is available).
-  * decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
-  * catenate image data into a numpy-array.
+
+  * Decompress XRIT files (if Eumetsat's ``xRITDecompress`` is
+    available). Software to uncompress HRIT/XRIT can be obtained from EUMETSAT
+    (register and download the `Public Wavelet Transform Decompression Library
+    Software`_). Please be sure to set the environment variable
+    ``XRIT_DECOMPRESS_PATH`` to point to the full path to the decompression
+    software, e.g. ``/usr/bin/xRITDecompress``. Also you can specify where the
+    decompressed files should be stored after decompression, using the
+    environment variable ``XRIT_DECOMPRESS_OUTDIR``. If this variable is not
+    set the decompressed files will be found in the same directory as the
+    compressed ones.
+
+
+  * Decode/strip-off (according to [CGMS]_, [MTP]_, [SGS]_) XRIT headers and collect meta-data.
+
+  * Catenate image data into a numpy-array.
 
     * if needed, convert 10 bit data to 16 bit
     * if a region is defined (by a slice or center, size), only read what is specified.
@@ -166,8 +184,31 @@ Usage
     image_data.tofile(fp)
     fp.close()
 
+
+Examples of the usage of some lower level tools
+-----------------------------------------------
+ 
+Here an example how to get the observation times (embedded in the 'Image
+Segment Line Quality' record) of each scanline in a segment:
+
+.. code-block:: python
+
+    import mipp.xrit.MSG
+
+    segfile = "/local_disk/data/MSG/HRIT/H-000-MSG3__-MSG3________-WV_062___-000002___-201311211300-__"
+    lineq = mipp.xrit.MSG.get_scanline_quality(segfile)
+    print lineq[0]
+   
+    (465, datetime.datetime(2013, 11, 21, 13, 1, 48, 924000), 1, 1, 0)
+    
+
 A script, process_fsd
 ---------------------
+
+The script is intended for work on other geostationary data than the MSG
+(Meteosat) data, the so-called Foreign Satellite Data (FSD). That is e.g. GOES,
+MTSAT and COMS.
+
 .. code-block:: text
 
     process_fsd --check-satellite <prologue-file>
@@ -190,8 +231,13 @@ A script, process_fsd
 
 ==============================
 
+ .. _Public Wavelet Transform Decompression Library Software: http://www.eumetsat.int/website/home/Data/DataDelivery/SupportSoftwareandTools/index.html
  .. [CGMS] LRIT/HRIT Global Specification; CGMS 03; Issue 2.6; 12 August 1999 
     "MSG Ground Segment LRIT/HRIT Mission Specific Implementation"
     EUM/MSG/SPE/057; Issue 6; 21 June 2006 
  .. [MTP] "The Meteosat Archive; Format Guide No. 1; Basic Imagery: OpenMTP Format"; EUM FG 1; Rev 2.1; April 2000
  .. [SGS] "MSG Ground Segment LRIT/HRIT Mission Specific Implementation"; EUM/MSG/SPE/057; Issue 6; 21 June 2006
+
+
+
+
