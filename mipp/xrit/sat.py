@@ -55,8 +55,9 @@ class SatelliteLoader(object):
                 pth = [imp.find_module(mod, pth)[1]]
             args = imp.find_module(format.split("/")[-1], pth)
 
-        except ImportError:
-            raise mipp.ReaderError("unknown level-1 format: '%s'"%format)
+        except ImportError, err:
+            raise mipp.ReaderError(("unknown level-1 format: '%s'"%format)
+                                   + "in " + str(pth) + "\n" + str(err))
         try:
             m = imp.load_module(format, *args)
         finally:

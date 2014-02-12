@@ -2,7 +2,7 @@ from StringIO import StringIO
 import numpy as np
 
 def dec10216(in_buffer):
-    return _dec10216(in_buffer)
+    return _dec10216(np.fromstring(in_buffer, dtype=np.uint8))
 
 def hrpt_dec10216(in_buffer):
     #
@@ -27,9 +27,8 @@ def hrpt_dec10216(in_buffer):
     return data
 
 def _dec10216(inbuf):
-    inbuf = np.fromstring(inbuf, dtype=np.uint8)
     arr10 = inbuf.astype(np.uint16)
-    arr16 = np.zeros((len(arr10) / 5 * 4,), dtype=np.uint16)
+    arr16 = np.zeros((len(arr10) *4 / 5,), dtype=np.uint16)
     arr10_len = (len(arr16) * 5) / 4
     arr10 = arr10[:arr10_len] # adjust size
     """
