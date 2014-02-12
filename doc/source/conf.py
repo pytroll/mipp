@@ -17,6 +17,33 @@ import sys, os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.append(os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../mipp'))
+sys.path.insert(0, os.path.abspath('../../mipp/xrit'))
+
+class Mock(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return Mock()
+
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        elif name[0] == name[0].upper():
+            mockType = type(name, (), {})
+            mockType.__module__ = __name__
+            return mockType
+        else:
+            return Mock()
+
+
+MOCK_MODULES = ['numpy', ]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock()
+
 
 # -- General configuration -----------------------------------------------------
 
@@ -58,6 +85,10 @@ release = '0.2'
 #today = ''
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
+
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build']
 
 # List of documents that shouldn't be included in the build.
 #unused_docs = []

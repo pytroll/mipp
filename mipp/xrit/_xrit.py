@@ -24,15 +24,17 @@ __all__ = ['read_prologue',
            'list']
 
 def decompress(infile, outdir='.'):
-    """Will decompress a XRIT data file and return the path to the decompressed file.
-    It expect to find Eumetsat's xRITDecompress through the environment variable XRIT_DECOMPRESS_PATH 
+    """Will decompress an XRIT data file and return the path to the
+    decompressed file. It expect to find Eumetsat's xRITDecompress through the
+    environment variable XRIT_DECOMPRESS_PATH
     """
     from subprocess import Popen, PIPE
     cmd = os.environ.get('XRIT_DECOMPRESS_PATH', None)
     if not cmd:
         raise IOError("XRIT_DECOMPRESS_PATH is not defined" +
                       " (complete path to xRITDecompress)")
-    
+
+    infile = os.path.abspath(infile)
     cwd = os.getcwd()
     os.chdir(outdir)
 
@@ -362,7 +364,7 @@ def read_mpef(file_name):
     if s.file_type == 144:
         return s
     else:
-        raise mipp.DecodeError("this is no 'MPEF (type=124)' file: '%s'"%file_name)
+        raise mipp.DecodeError("this is no 'MPEF (type=144)' file: '%s'"%file_name)
 
 # Backward compatible
 read_mpef_clm = read_mpef
