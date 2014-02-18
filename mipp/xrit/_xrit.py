@@ -10,6 +10,7 @@
 import sys
 import os
 from StringIO import StringIO 
+import numpy as np
 
 import mipp
 from mipp.xrit import bin_reader as rbin
@@ -137,17 +138,24 @@ class AnnotationHeader(object):
         self.rec_len = rbin.read_uint2(fp.read(2))
         self.text = fp.read(self.rec_len-3).strip()
         a = [x.strip('_') for x in self.text.split('-')]
-        self.xrit_channel_id = a[0]
-        self.dissemination_id = int(a[1])
-        self.dissemination_sc = a[2]
-        self.platform = a[3]
-        self.product_name = a[4]
-        self.segment_name = a[5]
-        self.time_stamp = mipp.strptime(a[6], "%Y%m%d%H%M")
-        self.flags = a[7]
-        self.segment_id = a[3] + '_' + a[4] + '_' + a[5] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
-        self.product_id = a[3] + '_' + a[4] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
-
+        if len(a) > 1:
+            self.xrit_channel_id = a[0]
+            self.dissemination_id = int(a[1])
+            self.dissemination_sc = a[2]
+            self.platform = a[3]
+            self.product_name = a[4]
+            self.segment_name = a[5]
+            self.time_stamp = mipp.strptime(a[6], "%Y%m%d%H%M")
+            self.flags = a[7]
+            self.segment_id = a[3] + '_' + a[4] + '_' + a[5] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
+            self.product_id = a[3] + '_' + a[4] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
+        else: #noaa lrit
+            self.platform = self.text[:5]
+            self.product_name = "goes lrit"
+            self.segment_name = self.text[20:23]
+            self.product_id = "goes lrit"
+            self.segment_id = self.text[20:23]
+            self.time_stamp = self.text[31:43]
     def __str__(self):
         return  "hdr_type:%d, rec_len:%d, text:%s"%\
                (self.hdr_type, self.rec_len, self.text)
@@ -204,6 +212,71 @@ class ImageSegmentLineQuality(object):
         return  "hdr_type:%d, rec_len:%d"%\
                (self.hdr_type, self.rec_len)
 
+# NOAA mission-specific headers.
+# http://noaasis.noaa.gov/LRIT/pdf-files/3_LRIT_Receiver-specs.pdf
+
+class SegmentIdentificationNOAA(object):
+    hdr_type = 128
+    hdr_name = 'segment'    
+    def __init__(self, fp):
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        self.im_id = rbin.read_uint2(fp.read(2))
+        self.seg_no = rbin.read_uint2(fp.read(2))
+        self.start_col_no = rbin.read_uint2(fp.read(2))
+        self.start_row_no = rbin.read_uint2(fp.read(2))
+        self.max_segment = rbin.read_uint2(fp.read(2))
+        self.max_col = rbin.read_uint2(fp.read(2))
+        self.max_row = rbin.read_uint2(fp.read(2))
+
+class NOAALRITHeader(object):
+    hdr_type = 129
+    hdr_name = 'noaa_lrit_header'
+
+    def __init__(self, fp):
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        nhdr = np.dtype([("agency_signature", "S4"),
+                         ("product_id", "u2"),
+                         ("product_sub_id", "u2"),
+                         ("parameter", "u2"),
+                         ("noaa_specific_compression", "u1")])
+        self.noaa_header = np.fromfile(fp, nhdr, count=1)[0]
+
+
+    
+class HeaderStructureRecord(object):
+    hdr_type = 130
+    hdr_name = 'header_structure_record'
+    
+    def __init__(self, fp):
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        a = []
+        
+        tmap = {"UI": "u",
+                "CHAR": "S",
+                "I": "i",
+                }
+        stuff = fp.read(self.rec_len - 3)
+        types = zip(*[stuff.split()[x::3] for x in (0, 1, 2)])
+        for t in types:
+            ftype = tmap[t[2]] + t[1]
+            a.append((t[0], ftype))
+
+        self.header_record_structure = np.dtype(a)
+
+    def __str__(self):
+        return  "hdr_type:%d, rec_len:%d"%\
+               (self.hdr_type, self.rec_len)
+
+class RiceCompressionSecondaryHeader(object):
+    hdr_type = 131
+    hdr_name = "rice_compression_secondary_header"
+
+    def __init__(self, fp):
+        self.rec_len = rbin.read_uint2(fp.read(2))
+        self.flags = rbin.read_uint2(fp.read(2))
+        self.pixels_per_block = rbin.read_uint1(fp.read(1))
+        self.scan_lines_per_packet = rbin.read_uint1(fp.read(1))
+
 class UnknownHeader(object):
     hdr_name = 'unknown'    
     def __init__(self, hdr_type, fp):
@@ -235,8 +308,18 @@ header_map = {0: PrimaryHeader,
               3: ImageDataFunction,
               4: AnnotationHeader,
               5: TimeStampRecord,
-              128: SegmentIdentification,
-              129: ImageSegmentLineQuality}
+              128: SegmentIdentificationNOAA,
+              129: NOAALRITHeader,
+              130: HeaderStructureRecord,
+              131: RiceCompressionSecondaryHeader}
+# header_map = {0: PrimaryHeader,
+#               1: ImageStructure,
+#               2: ImageNavigation,
+#               3: ImageDataFunction,
+#               4: AnnotationHeader,
+#               5: TimeStampRecord,
+#               128: SegmentIdentification,
+#               129: ImageSegmentLineQuality}
 header_types = tuple(sorted(header_map.keys()))
 
 def read_header(fp):
