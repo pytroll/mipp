@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010, 2011, 2012, 2013
+# Copyright (c) 2010, 2011, 2012, 2013, 2014
 
 # Author(s):
 
@@ -27,7 +27,7 @@
 """
 #raise NotImplementedError
 import logging
-logger = logging.getLogger('mipp')
+logger = logging.getLogger(__name__)
 
 import sys
 import numpy as np

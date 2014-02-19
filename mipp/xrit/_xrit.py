@@ -296,7 +296,7 @@ class Segment(object):
             fp = open(self.file_name)
             read_headers(fp)
             self._blob = fp.read()
-            fp.close
+            fp.close()
         return self._blob
 
     def pprint(self):
