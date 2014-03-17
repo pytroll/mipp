@@ -432,6 +432,8 @@ class ImageLoader(object):
                 calibrate = int(calibrate)
             image, mda.calibration_unit = mda.calibrate(image, calibrate=calibrate)
             mda.is_calibrated = True
+        else:
+            mda.calibration_unit = ""
 
         #
         # With or without mask ?
