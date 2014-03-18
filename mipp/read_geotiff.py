@@ -151,7 +151,7 @@ if __name__ == '__main__':
     interpolator = SatelliteInterpolator((tie_lons, tie_lats),
                                          (tie_rows, tie_cols),
                                          (fine_rows, fine_cols),
-                                         1, 3, chunk_size=40)
+                                         1, 3)
     interpolator.fill_borders("y", "x")
     lons, lats = interpolator.interpolate()
     print 'DATA'
