@@ -1,4 +1,5 @@
 from osgeo import gdal, osr
+import numpy as np
 
 import logging
 logger = logging.getLogger('mipp')
@@ -39,20 +40,76 @@ def read_geotiff(filename):
     #
     # Dataset information
     #
-    geotransform = dst.GetGeoTransform()
-    projection = dst.GetProjection()
     metadata = dst.GetMetadata()
-
     logger.debug('description: %s'%dst.GetDescription())
     logger.debug('driver: %s / %s'%(dst.GetDriver().ShortName,
                                     dst.GetDriver().LongName))
     logger.debug('size: %d x %d x %d'%(dst.RasterXSize, dst.RasterYSize,
                                        dst.RasterCount))
-    logger.debug('geo transform: %s'%str(geotransform))
-    logger.debug('origin: %.3f, %.3f'%(geotransform[0], geotransform[3]))
-    logger.debug('pixel size: %.3f, %.3f'%(geotransform[1], geotransform[5]))
-    logger.debug('projection: %s'%projection)
     logger.debug('metadata: %s', metadata)
+
+    if dst.GetProjectionRef():
+        #
+        # Affine georeferencing transform will be returned by GetGeoTransform().
+        # (Terra, CosmoSkyMed)
+        #
+        geotransform = dst.GetGeoTransform()
+        projection = dst.GetProjection()
+
+        logger.info('GEO transform: %s'%str(geotransform))
+        logger.debug('origin: %.3f, %.3f'%(geotransform[0], geotransform[3]))
+        logger.debug('pixel size: %.3f, %.3f'%(geotransform[1], geotransform[5]))
+        logger.debug('projection: %s'%projection)
+
+        params = dict((('geotransform', geotransform),
+                       ('projection', projection),
+                       ('metadata', metadata)))
+
+    elif dst.GetGCPProjection():
+        #
+        # Coordinate system is defined by GetGCPs() (tiepoints).
+        # (Radarsat-2, Sentinel-1)
+        #
+        metadata['GCPProjection'] = dst.GetGCPProjection()
+        logger.info("GCP Projection '%s'" % str(dst.GetGCPProjection()))
+        tiep_count = dst.GetGCPCount()
+
+        rows, cols, lons, lats = [], [], [], []
+        n_cols, n_rows, _row = 0, 0, -1
+        for gcp in dst.GetGCPs():
+            if gcp.GCPLine != _row:
+                rows.append(gcp.GCPLine)
+                n_rows += 1
+                n_cols = 0
+                _row = gcp.GCPLine
+            if gcp.GCPLine == 0:
+                cols.append(gcp.GCPPixel)
+            n_cols += 1
+            lons.append(gcp.GCPX)
+            lats.append(gcp.GCPY)
+
+        print  'Tiepoints', dst.GetGCPCount()
+        logger.debug("Tiepoint shape (rows, columns): %d, %d" % (n_rows, n_cols))
+        lons = np.array(lons, dtype=np.float).reshape((n_rows, n_cols))
+        lats = np.array(lats, dtype=np.float).reshape((n_rows, n_cols))
+        rows = np.array(rows, dtype=np.int)
+        cols = np.array(cols, dtype=np.int)
+        print 'LONS'
+        print lons
+        print 'LATS'
+        print lats
+        print 'ROWS'
+        print rows
+        print 'COLS'
+        print cols
+        sys.exit(0)
+        tiepoints = dict((('rows', rows),
+                          ('cols', cols),
+                          ('lons', lons),
+                          ('lats', lats)))
+        
+        params = dict((('tiepoints', tiepoints),
+                       ('metadata', metadata)))
 
     #
     # Fetching raster data
@@ -73,8 +130,38 @@ def read_geotiff(filename):
                 (type(data), str(data.shape), data.dtype,
                  data.min(), data.mean(), data.max()))
 
-    params = dict((('geotransform', geotransform),
-                   ('projection', projection),
-                   ('metadata', metadata)))
-
     return params, data
+
+if __name__ == '__main__':
+    import sys
+    import mpop.utils
+    from geotiepoints import SatelliteInterpolator
+
+    logger = mpop.utils.get_logger('mipp')
+    mpop.utils.debug_on()
+
+    params, data = read_geotiff(sys.argv[1])
+    tie_lons = params['tiepoints']['lons']
+    tie_lats = params['tiepoints']['lats']
+    tie_cols = params['tiepoints']['cols']
+    tie_rows = params['tiepoints']['rows']
+    #print params
+    fine_cols = np.arange(0, data.shape[1])
+    fine_rows = np.arange(0, data.shape[0])
+    interpolator = SatelliteInterpolator((tie_lons, tie_lats),
+                                         (tie_rows, tie_cols),
+                                         (fine_rows, fine_cols),
+                                         1, 3, chunk_size=40)
+    interpolator.fill_borders("y", "x")
+    lons, lats = interpolator.interpolate()
+    print 'DATA'
+    print data.shape
+    print data
+    print 'LON'
+    print lons.shape
+    print lons
+    print 'LAT'
+    print lats.shape
+    print lats
+
+
