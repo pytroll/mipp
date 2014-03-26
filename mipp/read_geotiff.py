@@ -102,7 +102,6 @@ def read_geotiff(filename):
         print rows
         print 'COLS'
         print cols
-        sys.exit(0)
         tiepoints = dict((('rows', rows),
                           ('cols', cols),
                           ('lons', lons),
@@ -152,7 +151,6 @@ if __name__ == '__main__':
                                          (tie_rows, tie_cols),
                                          (fine_rows, fine_cols),
                                          1, 3)
-    interpolator.fill_borders("y", "x")
     lons, lats = interpolator.interpolate()
     print 'DATA'
     print data.shape
