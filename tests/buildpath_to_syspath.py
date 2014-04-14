@@ -1,11 +1,11 @@
 import sys
 import os
-from distutils.util import get_platform
 
 home = os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
 sys.path.insert(0, home)
 
 """
+from distutils.util import get_platform
 build_base = 'build'
 plat = get_platform()
 
@@ -17,6 +17,6 @@ build_path = os.path.join(home, build_platlib)
 if not os.path.isdir(build_path):
     assert False, "No such build path '%s'"%build_path
 sys.path.insert(0, build_path)
-"""
 if __name__ == '__main__':
-    print home
+    print build_path
+"""
