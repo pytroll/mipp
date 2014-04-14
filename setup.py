@@ -41,7 +41,7 @@ setup(name = 'mipp',
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/loerum/mipp",
-      version = '0.9.1',
+      version = '0.9.2',
       packages = ['mipp', 'mipp.xrit', 'mipp.xsar'],
       zip_safe = False,
       )
