@@ -164,7 +164,10 @@ class SatelliteLoader(object):
                                (self.sublon, mda.sublon))
                 self.sublon = mda.sublon
 
-        self.satnumber = mda.satnumber
+        try:
+            self.satnumber = mda.satnumber
+        except AttributeError:
+            pass
 
         chn = self._config_reader.get_channel(mda.channel)
         if mda.image_size[0] != chn.size[0]:
