@@ -317,7 +317,7 @@ def read_metadata(prologue, image_files):
     d, t = strptime(asc_hdr['Date'], "%y%m%d"), int(asc_hdr['Time'])
     md.time_stamp = d + timedelta(hours=t//100, minutes=t%100)
     md.production_time = strptime(asc_hdr['ProdDate'] + asc_hdr['ProdTime'], "%y%m%d%H:%M:%S")
-    md.calibration_unit = 'counts'
+    md.calibration_unit = ""
 
     # Calibration table
     md.calibration_table = dict((('name', ''),

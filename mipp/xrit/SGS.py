@@ -94,7 +94,7 @@ def read_metadata(prologue, image_files):
     md.line_offset = 0
     md.time_stamp = im.time_stamp
     md.production_time = im.production_time
-    md.calibration_unit = 'counts'
+    md.calibration_unit = ""
 
     # Calibration table
     dd = []
