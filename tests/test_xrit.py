@@ -111,7 +111,7 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='GOES metadata differ')
         self.assertTrue(img.shape == (200, 200), msg='GOES image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, goes_sum, 3,
+        self.failUnlessAlmostEqual(int(round(cross_sum/200.)), int(round(goes_sum/200.)), 
                                    msg='GOES image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
                 cross_sum, goes_sum))
 
@@ -126,7 +126,7 @@ class Test(unittest.TestCase):
         make_image(mda, img)
         self.assertTrue(compare_mda(mda, mdac), msg='MTSAT metadata differ')
         self.assertTrue(img.shape == (200, 200), msg='MTSAT image reading/slicing failed, wrong shape')
-        self.failUnlessAlmostEqual(cross_sum, mtsat_sum, 3,
+        self.failUnlessAlmostEqual(int(round(cross_sum/100.)), int(round(mtsat_sum/100.)),
                                    msg='MTSAT image reading/slicing failed, wrong cross_sum (%.3f != %.3f)'%(
                 cross_sum, mtsat_sum))
 
