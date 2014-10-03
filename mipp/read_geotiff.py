@@ -102,6 +102,15 @@ def read_geotiff(filename):
         print rows
         print 'COLS'
         print cols
+
+        print "Regular grid ?"
+        for i in (('row', rows), ('col', cols)):
+            name, data = i
+            j0 = data[0]
+            for j in data[1:]:
+                print name, j, j - j0
+                j0 = j
+
         tiepoints = dict((('rows', rows),
                           ('cols', cols),
                           ('lons', lons),
@@ -144,22 +153,42 @@ if __name__ == '__main__':
     tie_lats = params['tiepoints']['lats']
     tie_cols = params['tiepoints']['cols']
     tie_rows = params['tiepoints']['rows']
+    
+    # From tie_cols and tie_rows, generate a gegulaer grid
+    #fine_rows = np.arange(0, 3085, 257)
+    #fine_cols = np.arange(0, 6313, 332)
+    fine_rows = np.arange(0, 15436, 250)
+    fine_cols = np.arange(0, 31561, 250)
+    
+
     #print params
-    fine_cols = np.arange(0, data.shape[1])
-    fine_rows = np.arange(0, data.shape[0])
+    #fine_cols = np.arange(0, data.shape[1])
+    #fine_rows = np.arange(0, data.shape[0])
+
     interpolator = SatelliteInterpolator((tie_lons, tie_lats),
                                          (tie_rows, tie_cols),
                                          (fine_rows, fine_cols),
                                          1, 3)
+    #np.save('tie_lons.npy', tie_lons)
+    #np.save('tie_lats.npy', tie_lats)
+    #np.save('tie_cols.npy', tie_cols)
+    #np.save('tie_rows.npy', tie_rows)
+    #np.save('fine_cols.npy', fine_cols)
+    #np.save('fine_rows.npy', fine_rows)
     lons, lats = interpolator.interpolate()
-    print 'DATA'
-    print data.shape
-    print data
-    print 'LON'
-    print lons.shape
+    print 'RESULT :'
     print lons
-    print 'LAT'
-    print lats.shape
     print lats
+    np.save('result_lons.npy', lons)
+    np.save('result_lats.npy', lats)
+    #print 'DATA'
+    #print data.shape
+    #print data
+    #print 'LON'
+    #print lons.shape
+    #print lons
+    #print 'LAT'
+    #print lats.shape
+    #print lats
 
 
