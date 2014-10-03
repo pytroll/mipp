@@ -28,6 +28,9 @@
 """
 import os
 from setuptools import setup, Extension
+import imp
+
+version = imp.load_source('mipp.version', 'mipp/version.py')
 
 setup(name = 'mipp',
       description='Meteorological ingest processing package',
@@ -41,7 +44,7 @@ setup(name = 'mipp',
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/loerum/mipp",
-      version = '0.9.2',
+      version = version.__version__,
       packages = ['mipp', 'mipp.xrit', 'mipp.xsar'],
       zip_safe = False,
       )
