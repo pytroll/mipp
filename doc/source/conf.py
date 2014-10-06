@@ -44,7 +44,8 @@ class Mock(object):
 
 
 MOCK_MODULES = ['numpy', 'numpy.core', 'numpy.core.multiarray',
-                'pyresample', 'pyresample.utils','pyresample.geometry']
+                'pyresample', 'pyresample.utils','pyresample.geometry',
+                'osgeo', 'osgeo.gdal', 'osgeo.osr']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
