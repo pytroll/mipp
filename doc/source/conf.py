@@ -45,7 +45,7 @@ class Mock(object):
 
 MOCK_MODULES = ['numpy', 'numpy.core', 'numpy.core.multiarray',
                 'pyresample', 'pyresample.utils','pyresample.geometry',
-                'osgeo', 'osgeo.gdal', 'osgeo.osr']
+                'osgeo', 'osgeo.gdal', 'osgeo.osr', 'logging']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
@@ -232,4 +232,4 @@ latex_documents = [
 #latex_use_modindex = True
 
 # Example configuration for intersphinx: refer to the Python standard library.
-##intersphinx_mapping = {'http://docs.python.org/': None}
+##intersphinx_mapping = {'python': ('http://docs.python.org/', None)}
