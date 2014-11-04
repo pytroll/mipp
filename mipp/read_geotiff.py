@@ -94,22 +94,14 @@ def read_geotiff(filename):
         lats = np.array(lats, dtype=np.float).reshape((n_rows, n_cols))
         rows = np.array(rows, dtype=np.int)
         cols = np.array(cols, dtype=np.int)
-        print 'LONS'
-        print lons
-        print 'LATS'
-        print lats
-        print 'ROWS'
-        print rows
-        print 'COLS'
-        print cols
 
-        print "Regular grid ?"
-        for i in (('row', rows), ('col', cols)):
-            name, data = i
-            j0 = data[0]
-            for j in data[1:]:
-                print name, j, j - j0
-                j0 = j
+        ##print "Regular grid ?"
+        ##for i in (('row', rows), ('col', cols)):
+        ##    name, data = i
+        ##    j0 = data[0]
+        ##    for j in data[1:]:
+        ##        print name, j, j - j0
+        ##        j0 = j
 
         tiepoints = dict((('rows', rows),
                           ('cols', cols),
