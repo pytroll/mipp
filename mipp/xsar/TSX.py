@@ -8,43 +8,13 @@ from lxml import etree
 from osgeo import osr
 
 import mipp
-from mipp import geotiff
+from mipp.read_geotiff import read_geotiff, tiff2areadef
 from mipp.xsar import Metadata
 
 import logging
 logger = logging.getLogger('mipp')
 
 no_data_value = 0
-
-def _tiff2areadef(projection, geotransform, shape):
-    # revamp projection
-    import pyresample
-
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(projection)
-    proj4 = srs.ExportToProj4()
-    proj4_dict = {}
-    for i in proj4.replace('+', '').split():
-        try:
-            key, val = [val.strip() for val in i.split('=')]
-        except ValueError:
-            continue
-        
-        proj4_dict[key] = val
-    area_extent = [geotransform[0],
-                   geotransform[3] + geotransform[5]*shape[0],
-                   geotransform[0] + geotransform[1]*shape[1],
-                   geotransform[3]]
-    aid = proj4_dict['proj']
-    if aid.lower() == 'utm':
-        aid += proj4_dict['zone']
-    # give it some kind of ID
-    aname = aid + '_' + str(int(sum(geotransform)/1000.))
-
-    return pyresample.utils.get_area_def(aname, aname, aid,
-                                         proj4_dict,
-                                         shape[1], shape[0],
-                                         area_extent)
 
 class _Calibrator(object):
     def __init__(self, mda):
@@ -144,10 +114,10 @@ def read_image(mda, filename=None, mask=True, calibrate=1):
     if not filename:
         filename = mda.image_filename
 
-    params, data = geotiff.read_geotiff(filename)
-    area_def = geotiff.tiff2areadef(params['projection'],
-                                    params['geotransform'],
-                                    data.shape)
+    params, data = read_geotiff(filename)
+    area_def = tiff2areadef(params['projection'],
+                            params['geotransform'],
+                            data.shape)
 
     mda.proj4_params = area_def.proj4_string.replace('+', '')
     mda.area_extent = area_def.area_extent
