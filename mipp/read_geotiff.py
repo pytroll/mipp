@@ -88,7 +88,7 @@ def read_geotiff(filename):
             lons.append(gcp.GCPX)
             lats.append(gcp.GCPY)
 
-        print  'Tiepoints', dst.GetGCPCount()
+        #print  'Tiepoints', dst.GetGCPCount()
         logger.debug("Tiepoint shape (rows, columns): %d, %d" % (n_rows, n_cols))
         lons = np.array(lons, dtype=np.float).reshape((n_rows, n_cols))
         lats = np.array(lats, dtype=np.float).reshape((n_rows, n_cols))
