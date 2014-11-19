@@ -35,9 +35,8 @@ def read_metadata(dirname):
         manifest : Metadata object
             Selected paramters
     """
-    mda0 = decode_dirname(dirname)
-    return read_manifest(os.path.join(dirname, 'manifest.safe'),
-                         resolution=mda0['resolution'])
+    dirname_mda = decode_dirname(dirname)
+    return read_manifest(os.path.join(dirname, 'manifest.safe'), **dirname_mda)
 
 def decode_dirname(dirname):
     """Decode a top Sentinel-1 directory name (or zip file), like
@@ -66,10 +65,10 @@ def decode_dirname(dirname):
     names = os.path.basename(dirname).split('.')
     dname, ext = names[:2]
     items = dname.split('_')
-    mda = {'satellite': items[0].lower(),
+    mda = {'mission_id': items[0].lower(),
            'instrument_mode': items[1].lower(),
            'product_type': items[2][:3].lower(),
-           'resolution': items[2][3].lower(),
+           'resolution_class': items[2][3].lower(),
            'processing_level': items[3][0].lower(),
            'product_class': items[3][1].lower(),
            'polarisations': _POLARISATIONS[items[3][2:4].lower()],
@@ -77,14 +76,14 @@ def decode_dirname(dirname):
            'stop_time': datetime.strptime(items[5], "%Y%m%dT%H%M%S"),
            'orbit_number': items[6].lower(),
            'mission_data_id': items[7],
-           'product_unique_id': items[8],
+           'product_id': items[8],
            'product_format': ext[1:]}
     mda['channels'] = []
     for p__ in mda['polarisations']:
-        mda['channels'].append('-'.join((mda['instrument_mode'], mda['resolution'], p__)))
+        mda['channels'].append('-'.join((mda['instrument_mode'], mda['resolution_class'], p__)))
     return mda
     
-def read_manifest(filename, resolution=None):
+def read_manifest(filename, **mdax):
     """Read a Sentinel-1 manifest file, and extract selected parameters.
 
     :Parameters:
@@ -158,7 +157,6 @@ def read_manifest(filename, resolution=None):
     with open(filename) as fp:
         xml = etree.parse(fp)
         for e in xml.getroot().iter():
-            #print e.tag, e.attrib, e.text
             if e.tag in tags:
                 name, count, decoder =  named_decoder[e.tag]
                 value = decoder(e)
@@ -171,8 +169,13 @@ def read_manifest(filename, resolution=None):
                     else:
                         setattr(manifest, name, value)
 
-    if resolution:
-        manifest.resolution = resolution
+    # Add extra metadata 
+    for key, val in mdax.items():
+        if not hasattr(manifest, key):
+            setattr(manifest, key, val)
+
+    try:
+        resolution = manifest.resolution_class
         channels = {}
         for pol in manifest.polarisations:
             _text = '-'.join([SATELLITE, manifest.instrument_mode, manifest.product_type, pol])
@@ -182,6 +185,8 @@ def read_manifest(filename, resolution=None):
                     channels[_name] = fn
         manifest.channels = channels
         manifest.pixel_spacing = PIXEL_SPACING[manifest.instrument_mode + '-' + resolution]
+    except AttributeError:
+        pass
                 
     return manifest
 
