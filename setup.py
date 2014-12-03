@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2012.
+# Copyright (c) 2009-2012, 2014.
 
 # DMI,
 # Lyngbyvej 100
@@ -7,7 +7,9 @@
 
 # Author(s):
 
-#   Lars Orum Rasmussen <loerum@gmail.com>  
+#   Lars Orum Rasmussen <loerum@gmail.com>
+#   Adam Dybbroe <adam.dybbroe@smhi.se>
+#   Sauli Joro <sauli.joro@eumetsat.int>
 
 # This file is part of mipp.
 
@@ -29,7 +31,7 @@
 import os
 from setuptools import setup, Extension
 
-setup(name = 'mipp',
+setup(name='mipp',
       description='Meteorological ingest processing package',
       author='Lars Orum Rasmussen',
       author_email='loerum@gmail.com',
@@ -41,7 +43,7 @@ setup(name = 'mipp',
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/loerum/mipp",
-      version = '0.9.2',
-      packages = ['mipp', 'mipp.xrit', 'mipp.xsar'],
-      zip_safe = False,
+      version='0.9.2',
+      packages=['mipp', 'mipp.native', 'mipp.xrit', 'mipp.xsar'],
+      zip_safe=False,
       )
