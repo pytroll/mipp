@@ -11,23 +11,26 @@ import logging
 logger = logging.getLogger('mipp')
 
 import mipp
-from mipp.xrit import _xrit, convert
+from mipp.xrit import _xrit
+from mipp import convert
 
 __all__ = ['ImageLoader']
+
 
 def _null_converter(blob):
     return blob
 
+
 class ImageLoader(object):
-    
+
     def __init__(self, mda, image_files, mask=False, calibrate=False):
         self.mda = mda
         self.image_files = image_files
-        self.do_mask = mask        
+        self.do_mask = mask
         self.do_calibrate = calibrate
         # full disc and square
-        self._allrows = slice(0, self.mda.image_size[0]) # !!!
-        self._allcolumns = slice(0, self.mda.image_size[0])        
+        self._allrows = slice(0, self.mda.image_size[0])  # !!!
+        self._allcolumns = slice(0, self.mda.image_size[0])
 
     def raw_slicing(self, item):
         """Raw slicing, no rotation of image.
@@ -56,20 +59,20 @@ class ImageLoader(object):
 
                 # check is we are outside the region
                 if (rows.start > rlines.stop or
-                    rows.stop < rlines.start or
-                    columns.start > rcols.stop or
-                    columns.stop < rcols.start):
+                        rows.stop < rlines.start or
+                        columns.start > rcols.stop or
+                        columns.stop < rcols.start):
                     continue
 
                 lines = slice(max(rows.start, rlines.start),
                               min(rows.stop, rlines.stop))
-                cols =  slice(max(columns.start, rcols.start) - rcols.start,
-                              min(columns.stop, rcols.stop) - rcols.start)
+                cols = slice(max(columns.start, rcols.start) - rcols.start,
+                             min(columns.stop, rcols.stop) - rcols.start)
                 rdata = self._read(lines, cols, mda)
                 lines = slice(max(rows.start, rlines.start) - rows.start,
                               min(rows.stop, rlines.stop) - rows.start)
-                cols =  slice(max(columns.start, rcols.start) - columns.start,
-                              min(columns.stop, rcols.stop) - columns.start)
+                cols = slice(max(columns.start, rcols.start) - columns.start,
+                             min(columns.stop, rcols.stop) - columns.start)
                 if image is None:
                     image = (numpy.zeros((rows.stop - rows.start,
                                           columns.stop - columns.start),
@@ -95,16 +98,17 @@ class ImageLoader(object):
         #
         # Update meta-data
         #
-        mda.area_extent = numpy.array(self._slice2extent(rows, columns, rotated=True), dtype=numpy.float64)
+        mda.area_extent = numpy.array(
+            self._slice2extent(rows, columns, rotated=True), dtype=numpy.float64)
 
         if (rows != self._allrows) or (columns != self._allcolumns):
             mda.region_name = 'sliced'
 
-        mda.data_type = 8*image.itemsize
+        mda.data_type = 8 * image.itemsize
         mda.image_size = numpy.array([image.shape[1], image.shape[0]])
 
         return mipp.mda.mslice(mda), image
-    
+
     def __getitem__(self, item):
         """Default slicing, handles rotated images.
         """
@@ -124,7 +128,7 @@ class ImageLoader(object):
         if area_extent == None:
             # full disc
             return self[:]
-            
+
         # slice
         area_extent = tuple(area_extent)
         if len(area_extent) != 4:
@@ -142,17 +146,18 @@ class ImageLoader(object):
         else:
             coff = self.mda.coff - 1
 
-            
         row_size = self.mda.pixel_size[0]
         col_size = self.mda.pixel_size[1]
 
-        logger.debug('area_extent: %.2f, %.2f, %.2f, %.2f'%tuple(area_extent))
-        logger.debug('area_extent: resolution %.2f, %.2f'%(row_size, col_size))
-        logger.debug('area_extent: loff, coff %d, %d'%(loff, coff))
-        logger.debug('area_extent: expected size %d, %d'%\
-                         (int(numpy.round((area_extent[2] - area_extent[0])/col_size)),\
-                         int(numpy.round((area_extent[3] - area_extent[1])/row_size))))
-        
+        logger.debug('area_extent: %.2f, %.2f, %.2f, %.2f' %
+                     tuple(area_extent))
+        logger.debug('area_extent: resolution %.2f, %.2f' %
+                     (row_size, col_size))
+        logger.debug('area_extent: loff, coff %d, %d' % (loff, coff))
+        logger.debug('area_extent: expected size %d, %d' %
+                     (int(numpy.round((area_extent[2] - area_extent[0]) / col_size)),
+                      int(numpy.round((area_extent[3] - area_extent[1]) / row_size))))
+
         col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
         row_stop = int(numpy.round(area_extent[1] / -row_size + loff - 0.5))
         col_stop = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
@@ -161,7 +166,8 @@ class ImageLoader(object):
         row_stop += 1
         col_stop += 1
 
-        logger.debug('area_extent: computed size %d, %d'%(col_stop - col_start, row_stop - row_start))
+        logger.debug('area_extent: computed size %d, %d' %
+                     (col_stop - col_start, row_stop - row_start))
 
         return self[row_start:row_stop, col_start:col_stop]
 
@@ -176,17 +182,18 @@ class ImageLoader(object):
             rows, columns = slice(item, item + 1), self._allcolumns
         elif isinstance(item, tuple):
             if len(item) == 2:
-                # both row and column are specified 
+                # both row and column are specified
                 rows, columns = item
                 if isinstance(rows, int):
                     rows = slice(item[0], item[0] + 1)
                 if isinstance(columns, int):
                     columns = slice(item[1], item[1] + 1)
             else:
-                raise IndexError, "can only handle two indexes, not %d"%len(item)
+                raise IndexError, "can only handle two indexes, not %d" % len(
+                    item)
         elif item is None:
             # full disc
-            rows, columns = self._allrows, self._allcolumns            
+            rows, columns = self._allrows, self._allcolumns
         else:
             raise IndexError, "don't understand the indexes"
 
@@ -195,9 +202,9 @@ class ImageLoader(object):
             rows = self._allrows
         if columns.start == None:
             columns = self._allcolumns
-            
+
         if (rows.step != 1 and rows.step != None) or \
-               (columns.step != 1 and columns.step != None):
+                (columns.step != 1 and columns.step != None):
             raise IndexError, "Currently we don't support steps different from one"
 
         return rows, columns
@@ -225,37 +232,37 @@ class ImageLoader(object):
         else:
             coff -= 1
 
-        logger.debug('slice2extent: size %d, %d'% \
-                         (columns.stop - columns.start, rows.stop - rows.start))
+        logger.debug('slice2extent: size %d, %d' %
+                     (columns.stop - columns.start, rows.stop - rows.start))
         rows = slice(rows.start, rows.stop - 1)
         columns = slice(columns.start, columns.stop - 1)
 
         row_size = self.mda.pixel_size[0]
         col_size = self.mda.pixel_size[1]
-      
-        ll_x = (columns.start - coff - 0.5)*col_size
-        ll_y = -(rows.stop - loff + 0.5)*row_size
-        ur_x = (columns.stop - coff + 0.5)*col_size
-        ur_y = -(rows.start - loff - 0.5)*row_size
 
-        logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f'% \
-                         (ll_x, ll_y, ur_x, ur_y))
-        logger.debug('slice2extent: computed size %d, %d'% \
-                         (int(numpy.round((ur_x - ll_x)/col_size)), \
-                              int(numpy.round((ur_y - ll_y)/row_size))))
+        ll_x = (columns.start - coff - 0.5) * col_size
+        ll_y = -(rows.stop - loff + 0.5) * row_size
+        ur_x = (columns.stop - coff + 0.5) * col_size
+        ur_y = -(rows.start - loff - 0.5) * row_size
+
+        logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f' %
+                     (ll_x, ll_y, ur_x, ur_y))
+        logger.debug('slice2extent: computed size %d, %d' %
+                     (int(numpy.round((ur_x - ll_x) / col_size)),
+                      int(numpy.round((ur_y - ll_y) / row_size))))
 
         return [ll_x, ll_y, ur_x, ur_y]
 
     def _read(self, rows, columns, mda):
         shape = (rows.stop - rows.start, columns.stop - columns.start)
         if (columns.start < 0 or
-            columns.stop > mda.image_size[0] or
-            rows.start < 0 or
-            rows.stop > mda.image_size[1]):
+                columns.stop > mda.image_size[0] or
+                rows.start < 0 or
+                rows.stop > mda.image_size[1]):
             raise IndexError, "index out of range"
 
         image_files = self.image_files
-        
+
         #
         # Order segments
         #
@@ -265,14 +272,14 @@ class ImageLoader(object):
             segments[s.segment.seg_no] = f
         start_seg_no = s.segment.planned_start_seg_no
         end_seg_no = s.segment.planned_end_seg_no
-        ncols =  s.structure.nc
+        ncols = s.structure.nc
         segment_nlines = s.structure.nl
 
         #
         # Data type
         #
         converter = _null_converter
-        if mda.data_type == 8:        
+        if mda.data_type == 8:
             data_type = numpy.uint8
             data_type_len = 8
         elif mda.data_type == 10:
@@ -284,26 +291,26 @@ class ImageLoader(object):
             data_type_len = 16
         else:
             raise mipp.ReaderError, "unknown data type: %d bit per pixel"\
-                %mda.data_type
+                % mda.data_type
 
         #
         # Calculate initial and final line and column.
         # The interface 'load(..., center, size)' will produce
-        # correct values relative to the image orientation. 
+        # correct values relative to the image orientation.
         # line_init, line_end : 1-based
         #
         line_init = rows.start + 1
         line_end = line_init + rows.stop - rows.start - 1
         col_count = shape[1]
-        col_offset = (columns.start)*data_type_len//8
+        col_offset = (columns.start) * data_type_len // 8
 
         #
         # Calculate initial and final segments
         # depending on the image orientation.
         # seg_init, seg_end : 1-based.
         #
-        seg_init = ((line_init-1)//segment_nlines) + 1
-        seg_end = ((line_end-1)//segment_nlines) + 1
+        seg_init = ((line_init - 1) // segment_nlines) + 1
+        seg_end = ((line_end - 1) // segment_nlines) + 1
 
         #
         # Calculate initial line in image, line increment
@@ -329,13 +336,13 @@ class ImageLoader(object):
             factor_col = -1
         else:
             raise mipp.ReaderError, "unknown geographical orientation of " + \
-                "first pixel: '%s'"%mda.first_pixel
+                "first pixel: '%s'" % mda.first_pixel
 
         #
         # Generate final image with no data
         #
         image = numpy.zeros(shape, dtype=data_type) + mda.no_data_value
-    
+
         #
         # Begin the segment processing.
         #
@@ -343,13 +350,13 @@ class ImageLoader(object):
         line_in_image = first_line
         while seg_no <= seg_end:
             line_in_segment = 1
-      
+
             #
             # Calculate initial line in actual segment.
             #
             if seg_no == seg_init:
                 init_line_in_segment = (line_init
-                                        - (segment_nlines*(seg_init - 1)))
+                                        - (segment_nlines * (seg_init - 1)))
             else:
                 init_line_in_segment = 1
 
@@ -357,7 +364,8 @@ class ImageLoader(object):
             # Calculate final line in actual segment.
             #
             if seg_no == seg_end:
-                end_line_in_segment = line_end - (segment_nlines*(seg_end - 1))
+                end_line_in_segment = line_end - \
+                    (segment_nlines * (seg_end - 1))
             else:
                 end_line_in_segment = segment_nlines
 
@@ -369,7 +377,7 @@ class ImageLoader(object):
                 #
                 # No data for this segment.
                 #
-                logger.warning("Segment number %d not found"%seg_no)
+                logger.warning("Segment number %d not found" % seg_no)
 
                 # all image lines are already set to no-data count.
                 line_in_segment = init_line_in_segment
@@ -380,9 +388,9 @@ class ImageLoader(object):
                 #
                 # Data for this segment.
                 #
-                logger.info("Read %s"%seg_file)
+                logger.info("Read %s" % seg_file)
                 seg = _xrit.read_imagedata(seg_file)
-            
+
                 #
                 # Skip lines not processed.
                 #
@@ -401,15 +409,15 @@ class ImageLoader(object):
                                              dtype=data_type,
                                              count=col_count,
                                              offset=col_offset)[::factor_col])
-                
+
                     #
                     # Insert image data.
                     #
                     image[line_in_image] = line
-                
+
                     line_in_segment += 1
                     line_in_image += increment_line
-            
+
                 seg.close()
 
             seg_no += 1
@@ -430,7 +438,8 @@ class ImageLoader(object):
             if isinstance(calibrate, bool):
                 # allow boolean True/False for 1/0
                 calibrate = int(calibrate)
-            image, mda.calibration_unit = mda.calibrate(image, calibrate=calibrate)
+            image, mda.calibration_unit = mda.calibrate(
+                image, calibrate=calibrate)
             mda.is_calibrated = True
         else:
             mda.calibration_unit = ""
@@ -440,9 +449,8 @@ class ImageLoader(object):
         #
         if self.do_mask and not isinstance(image, numpy.ma.core.MaskedArray):
             image = numpy.ma.array(image, mask=mask, copy=False)
-        elif ((not self.do_mask) and 
+        elif ((not self.do_mask) and
                 isinstance(image, numpy.ma.core.MaskedArray)):
             image = image.filled(mda.no_data_value)
-            
-        return image
 
+        return image
