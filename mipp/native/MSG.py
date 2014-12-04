@@ -29,24 +29,26 @@ from glob import glob
 import os.path
 from datetime import datetime, timedelta
 import numpy as np
-from mipp.header_records import Level15HeaderRecord
-from mipp.header_records import GP_PK_HeaderRecord
+from mipp.header_records import (
+    Msg15NativeHeaderRecord, GpPkHeaderRecord, GpPkSh1Record)
+
 import mipp.xrit.MSG
 
 
 class ChannelData(object):
 
-    def __init__(self, data, mda, name, calibrate=1):
+    def __init__(self, data, mda, name):
 
         self.header = mda
         self.channel_name = name
-        self.do_calibrate = calibrate
-        self.calibrate = mipp.xrit.MSG._Calibrator(
+        self.calibrator = mipp.xrit.MSG._Calibrator(
             self.header, self.channel_name)
+        self.data, self.unit = data, 'counts'
 
-        print("Calibrate...")
-        self.data, self.unit = self.calibrate(
-            data, calibrate=self.do_calibrate)
+    def calibrate(self, calswitch):
+        """calibrate the data"""
+        print("Calibrate... ")
+        self.data, self.unit = self.calibrator(self.data, calibrate=calswitch)
 
     def show(self):
         """Show an image of the data"""
@@ -59,10 +61,12 @@ class NativeImage(object):
 
     """Handling the MSG Native data format"""
 
-    def __init__(self, satname, time_slot=None, filename=None):
+    def __init__(self, satname, time_slot=None, filename=None, calibflag=1):
         """Intialise the object, setting the time slot and finding the filename
         (if not given) and reading the header data
         """
+        self.calibflag = calibflag
+        self.units = {}
         self.satname = satname
         self.channel_name_mapping = None
         self.channel_numbers = []
@@ -77,7 +81,6 @@ class NativeImage(object):
 
         self.header = None
         self.pk_head = None
-
         self._umarf = None
         self._pk_head_dtype = None
         self._cols_visir = None
@@ -95,7 +98,7 @@ class NativeImage(object):
 
         self.get_header()
         if not self.time_slot:
-            self.time_slot = self.header['SatelliteStatus'][
+            self.time_slot = self.header['15HEADER']['SatelliteStatus'][
                 'UTCCorrelation']['PeriodStartTime']
 
         self.memmap = self.load()  # Pointer to the data
@@ -103,49 +106,65 @@ class NativeImage(object):
         for name in self.channel_names:
             self.add_property(name.lower())
 
+    def _get_unitnames(self):
+        """Get the present unit names for each channel"""
+        pass
+
     def get_header(self):
         """Read the header info"""
 
-        hdumarf, offs = read_umarf_header(self.filename)
+        hdrrec = Msg15NativeHeaderRecord().get()
+        hd_dt = np.dtype(hdrrec)
+        hd_dt = hd_dt.newbyteorder('>')
+        self.header = np.fromfile(self.filename, dtype=hd_dt, count=1)
 
-        from pprint import pprint
-        pprint(hdumarf)
-        self._umarf = hdumarf
+        pkhrec = [
+            ('GP_PK_HEADER', GpPkHeaderRecord().get()),
+            ('GP_PK_SH1', GpPkSh1Record().get())
+        ]
+        pkht = np.dtype(pkhrec)
+        self._pk_head_dtype = pkht.newbyteorder('>')
 
-        pkh, offs = read_pkhead(self.filename, offs)
-        self._pk_head_dtype = pkh
-        with open(self.filename, 'r') as fpt:
-            fpt.seek(offs)
-            self.pk_head = np.fromfile(fpt, dtype=self._pk_head_dtype, count=1)
+        # hdumarf, offs = read_umarf_header(self.filename)
 
-        self.header = read_level15header(self.filename, offs)
+        # from pprint import pprint
+        # pprint(hdumarf)
+        # self._umarf = hdumarf
 
-        # read line data
+        # pkh, offs = read_pkhead(self.filename, offs)
+        # self._pk_head_dtype = pkh
+        # with open(self.filename, 'r') as fpt:
+        #     fpt.seek(offs)
+        #     self.pk_head = np.fromfile(fpt, dtype=self._pk_head_dtype, count=1)
 
-        cols_visir = np.ceil(
-            int(self._umarf["NumberColumnsVISIR"]) * 5.0 / 4)  # 4640
-        if (int(self._umarf['WestColumnSelectedRectangle'])
-                - int(self._umarf['EastColumnSelectedRectangle'])) < 3711:
-            cols_hrv = np.ceil(
-                int(self._umarf["NumberColumnsHRV"]) * 5.0 / 4)  # 6960
+        # self.header = read_level15header(self.filename, offs)
+
+        sec15hd = self.header['15_SECONDARY_PRODUCT_HEADER']
+        numlines_visir = int(sec15hd['NumberLinesVISIR']['Value'][0])
+        west = int(sec15hd['WestColumnSelectedRectangle']['Value'][0])
+        east = int(sec15hd['EastColumnSelectedRectangle']['Value'][0])
+        # north = int(sec15hd["NorthLineSelectedRectangle"]['Value'][0])
+        # south = int(sec15hd["SouthLineSelectedRectangle"]['Value'][0])
+        numcols_hrv = int(sec15hd["NumberColumnsHRV"]['Value'][0])
+
+        self._cols_visir = np.ceil(numlines_visir * 5.0 / 4)  # 4640
+        if (west - east) < 3711:
+            self._cols_hrv = np.ceil(numcols_hrv * 5.0 / 4)  # 6960
         else:
-            cols_hrv = np.ceil(5568 * 5.0 / 4)  # 6960
+            self._cols_hrv = np.ceil(5568 * 5.0 / 4)  # 6960
         #'WestColumnSelectedRectangle' - 'EastColumnSelectedRectangle'
         #'NorthLineSelectedRectangle' - 'SouthLineSelectedRectangle'
 
-        area_extent = ((1856 - int(self._umarf["WestColumnSelectedRectangle"]) - 0.5) *
-                       self.header['ImageDescription'][
-                           "ReferenceGridVIS_IR"]["ColumnDirGridStep"],
-                       (1856 - int(self._umarf["NorthLineSelectedRectangle"]) +
-                        0.5) * self.header['ImageDescription']["ReferenceGridVIS_IR"]["LineDirGridStep"],
-                       (1856 - int(self._umarf["EastColumnSelectedRectangle"]) +
-                        0.5) * self.header['ImageDescription']["ReferenceGridVIS_IR"]["ColumnDirGridStep"],
-                       (1856 - int(self._umarf["SouthLineSelectedRectangle"]) + 1.5) *
-                       self.header['ImageDescription']["ReferenceGridVIS_IR"]["LineDirGridStep"])
+        # coldir_step = self.header['ImageDescription'][
+        #     "ReferenceGridVIS_IR"]["ColumnDirGridStep"]
+        # lindir_step = self.header['ImageDescription'][
+        #     "ReferenceGridVIS_IR"]["LineDirGridStep"]
+        # area_extent = ((1856 - west - 0.5) * coldir_step,
+        #                (1856 - north + 0.5) * lindir_step,
+        #                (1856 - east + 0.5) * coldir_step,
+        #                (1856 - south + 1.5) * lindir_step)
 
-        self._cols_visir = cols_visir
-        self._cols_hrv = cols_hrv
-        self.data_len = int(self._umarf["NumberLinesVISIR"])
+        self.data_len = numlines_visir
 
     def load(self):
         """Open the file and generate a memory map of the data using numpy memmap"""
@@ -237,13 +256,16 @@ class NativeImage(object):
 
     def _get_property(self, prop):
         attr = '_{0}'.format(prop)
-        if not hasattr(self, attr):
-            chidx = self.channel_name_mapping[prop.upper()].channel_number - 1
+        # When accessing the attribute the data is fetched, and calibrated as
+        # specified using the self.calibflag:
+        chidx = self.channel_name_mapping[prop.upper()].channel_number - 1
+        chname = self.channel_name_mapping[prop.upper()].name
+        tmpch = ChannelData(self.read_channel(chidx), self.header, chname)
+        if self.calibflag > 0:
             chname = self.channel_name_mapping[prop.upper()].name
-            setattr(self, attr, ChannelData(self.read_channel(chidx),
-                                            self.header, chname))
+            tmpch.calibrate(self.calibflag)
 
-        return getattr(self, attr)
+        return tmpch
 
     def get_filename(self):
         """Get the file name (incl path) given the satellite and the time slot"""
