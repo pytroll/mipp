@@ -268,7 +268,7 @@ class _Calibrator(object):
 
         #cal_type = (hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
         cal_type = (
-            hdr['15HEADER']['ImageDescription']['Level15ImageProduction']["PlannedChanProcessing"])
+            hdr['15HEADER']['ImageDescription']['Level15ImageProduction']["PlannedChanProcessing"][0])
         chn_nb = channels[channel_name] - 1
 
         mask = (image == no_data_value)

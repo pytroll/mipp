@@ -87,6 +87,8 @@ class NativeImage(object):
         self._cols_hrv = None
         self.data_len = None
 
+        self.area_extent = None
+
         if time_slot:
             self.time_slot = time_slot
             self.filename = self.get_filename()
@@ -143,8 +145,8 @@ class NativeImage(object):
         numlines_visir = int(sec15hd['NumberLinesVISIR']['Value'][0])
         west = int(sec15hd['WestColumnSelectedRectangle']['Value'][0])
         east = int(sec15hd['EastColumnSelectedRectangle']['Value'][0])
-        # north = int(sec15hd["NorthLineSelectedRectangle"]['Value'][0])
-        # south = int(sec15hd["SouthLineSelectedRectangle"]['Value'][0])
+        north = int(sec15hd["NorthLineSelectedRectangle"]['Value'][0])
+        south = int(sec15hd["SouthLineSelectedRectangle"]['Value'][0])
         numcols_hrv = int(sec15hd["NumberColumnsHRV"]['Value'][0])
 
         self._cols_visir = np.ceil(numlines_visir * 5.0 / 4)  # 4640
@@ -155,14 +157,16 @@ class NativeImage(object):
         #'WestColumnSelectedRectangle' - 'EastColumnSelectedRectangle'
         #'NorthLineSelectedRectangle' - 'SouthLineSelectedRectangle'
 
-        # coldir_step = self.header['ImageDescription'][
-        #     "ReferenceGridVIS_IR"]["ColumnDirGridStep"]
-        # lindir_step = self.header['ImageDescription'][
-        #     "ReferenceGridVIS_IR"]["LineDirGridStep"]
-        # area_extent = ((1856 - west - 0.5) * coldir_step,
-        #                (1856 - north + 0.5) * lindir_step,
-        #                (1856 - east + 0.5) * coldir_step,
-        #                (1856 - south + 1.5) * lindir_step)
+        coldir_step = self.header['15HEADER']['ImageDescription'][
+            "ReferenceGridVIS_IR"]["ColumnDirGridStep"]
+        lindir_step = self.header['15HEADER']['ImageDescription'][
+            "ReferenceGridVIS_IR"]["LineDirGridStep"]
+        area_extent = ((1856 - west - 0.5) * coldir_step,
+                       (1856 - north + 0.5) * lindir_step,
+                       (1856 - east + 0.5) * coldir_step,
+                       (1856 - south + 1.5) * lindir_step)
+
+        self.area_extent = area_extent
 
         self.data_len = numlines_visir
 
