@@ -6,6 +6,7 @@
 # Author(s):
 
 #   Adam.Dybbroe <a000680@c14526.ad.smhi.se>
+#
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +31,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from mipp.header_records import Level15HeaderRecord
 from mipp.header_records import GP_PK_HeaderRecord
+import mipp.xrit.MSG
 
 
 class ChannelData(object):
@@ -74,8 +76,10 @@ class NativeImage(object):
                 self.channel_name_mapping[name].channel_number)
 
         self.header = None
+        self.pk_head = None
+
         self._umarf = None
-        self._pk_head = None
+        self._pk_head_dtype = None
         self._cols_visir = None
         self._cols_hrv = None
         self.data_len = None
@@ -109,7 +113,10 @@ class NativeImage(object):
         self._umarf = hdumarf
 
         pkh, offs = read_pkhead(self.filename, offs)
-        self._pk_head = pkh
+        self._pk_head_dtype = pkh
+        with open(self.filename, 'r') as fpt:
+            fpt.seek(offs)
+            self.pk_head = np.fromfile(fpt, dtype=self._pk_head_dtype, count=1)
 
         self.header = read_level15header(self.filename, offs)
 
@@ -143,14 +150,11 @@ class NativeImage(object):
     def load(self):
         """Open the file and generate a memory map of the data using numpy memmap"""
 
-        import pdb
-        pdb.set_trace()
-
         with open(self.filename) as fp_:
 
             # fp_.seek(450400)
 
-            linetype = np.dtype([("visir", [("gp_pk", self._pk_head),
+            linetype = np.dtype([("visir", [("gp_pk", self._pk_head_dtype),
                                             ("version", ">u1"),
                                             ("satid", ">u2"),
                                             ("time", ">u2", (5, )),
@@ -162,7 +166,7 @@ class NativeImage(object):
                                             ("line_gquality", ">u1"),
                                             ("line_data", ">u1", (self._cols_visir, ))],
                                   (11, )),
-                                 ("hrv",  [("gp_pk", self._pk_head),
+                                 ("hrv",  [("gp_pk", self._pk_head_dtype),
                                            ("version", ">u1"),
                                            ("satid", ">u2"),
                                            ("time", ">u2", (5, )),
@@ -306,10 +310,11 @@ def read_pkhead(filename, offset):
     pkhrec = GP_PK_HeaderRecord().get()
     dt_ = np.dtype(pkhrec)
     dtl = dt_.newbyteorder('>')
-    with open(filename) as fpt:
-        data = np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
+    # with open(filename) as fpt:
+    #    data = np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
 
-    return data, offset + dtl.itemsize
+    # return data, offset + dtl.itemsize
+    return dtl, offset + dtl.itemsize
 
 
 def read_level15header(filename, offset):
@@ -320,4 +325,5 @@ def read_level15header(filename, offset):
     dt_ = np.dtype(hrec)
     dtl = dt_.newbyteorder('>')
     with open(filename) as fpt:
-        return np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
+        fpt.seek(offset)
+        return np.fromfile(fpt, dtype=dtl, count=1)
