@@ -6,6 +6,7 @@
 # Author(s):
 
 #   Adam.Dybbroe <a000680@c14526.ad.smhi.se>
+#   northaholic <northaholic@icloud.com>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +21,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Definition of Header Records for the MSG Level 1.5 data (hrit or native)
-"""
+'''Definition of Header Records for the MSG Level 1.5 data (hrit or native)
+'''
 
 
 import numpy as np
@@ -36,7 +37,8 @@ class CommonRecords(object):
             ('Day', np.uint16),
             ('MilliSecsOfDay', np.uint32),
             ('MicrosecsOfMillisecs', np.uint16),
-            ('NanosecsOfMicrosecs', np.uint16)]
+            ('NanosecsOfMicrosecs', np.uint16)
+        ]
 
         return record
 
@@ -45,57 +47,148 @@ class CommonRecords(object):
 
         record = [
             ('Day', np.uint16),
-            ('MilliSeconds', np.uint32)]
-
-        return record
-
-
-class GP_PK_HeaderRecord(object):
-
-    def get(self):
-
-        record = [
-            ("GP_PK_HEADER", self.gp_pk_header),
-            ("GP_PK_SH1", self.gp_pk_sh1)]
-
-        return record
-
-    @property
-    def gp_pk_header(self):
-
-        record = [
-            ('HeaderVersionNo', np.uint8),
-            ("PacketType", np.uint8),
-            ("SubHeaderType", np.uint8),
-            ("SourceFacilityId", np.uint8),
-            ("SourceEnvId", np.uint8),
-            ("SourceInstanceId", np.uint8),
-            ("SourceSUId", np.int32),
-            ("SourceCPUId", (np.uint8, 4)),
-            ("DestFacilityId", np.uint8),
-            ("DestEnvId", np.uint8),
-            ("SequenceCount", np.uint16),
-            ("PacketLength", np.int32)]
-
-        return record
-
-    @property
-    def gp_pk_sh1(self):
-
-        record = [
-            ("SubHeaderVersionNo", np.uint8),
-            ("ChecksumFlag", np.uint8),
-            ("Acknowledgement", (np.uint8, 4)),
-            ("ServiceType", np.uint8),
-            ("ServiceSubtype", np.uint8),
-            ("PacketTime", (np.uint8, 6)),
-            ("SpacecraftId", np.int16)
+            ('MilliSeconds', np.uint32)
         ]
 
         return record
 
+class Msg15NativeHeaderRecord(object):
+    
+    def get(self):
+        
+        record = [
+            ('15_MAIN_PRODUCT_HEADER',L15MainProductHeaderRecord().get()),
+            ('15_SECONDARY_PRODUCT_HEADER',L15SecondaryProductHeaderRecord().get()),
+            ('GP_PK_HEADER',GpPkHeaderRecord().get()),
+            ('GP_PK_SH1',GpPkHeaderRecord().get()),
+            ('15HEADER',L15HeaderRecord().get())
+        ]
+    
+        return record
 
-class Level15HeaderRecord(CommonRecords):
+class L15PhData(object):
+    
+    @property
+    def l15_ph_data(self):
+        
+        record = [
+            ('Name',(np.str,30)),
+            ('Value',(np.str,50))
+        ]
+        
+        return record
+    
+class L15MainProductHeaderRecord(L15PhData):
+    
+    def get(self):
+        
+        record = [
+            ('FormatName',self.l15_ph_data),
+            ('FormatDocumentName',self.l15_ph_data),
+            ('FormatDocumentMajorVersion',self.l15_ph_data),
+            ('FormatDocumentMinorVersion',self.l15_ph_data),
+            ('CreationDateTime',self.l15_ph_data),
+            ('CreatingCentre',self.l15_ph_data),
+            ('DataSetIdentification',(self.l15_ph_data_identification,27)),
+            ('TotalFileSize',self.l15_ph_data),
+            ('GORT',self.l15_ph_data),
+            ('ASTI',self.l15_ph_data),
+            ('LLOS',self.l15_ph_data),
+            ('SNIT',self.l15_ph_data),
+            ('AIID',self.l15_ph_data),
+            ('SSBT',self.l15_ph_data),
+            ('SSST',self.l15_ph_data),
+            ('RRCC',self.l15_ph_data),
+            ('RRBT',self.l15_ph_data),
+            ('RRST',self.l15_ph_data),
+            ('PPRC',self.l15_ph_data),
+            ('PPDT',self.l15_ph_data),
+            ('GPLV',self.l15_ph_data),
+            ('APNM',self.l15_ph_data),
+            ('AARF',self.l15_ph_data),
+            ('UUDT',self.l15_ph_data),
+            ('QQOV',self.l15_ph_data),
+            ('UDSP',self.l15_ph_data)
+        ]
+        
+        return record
+    
+
+    @property
+    def l15_ph_data_identification(self):
+        
+        record = [
+            ('Name',(np.str,30)),
+            ('Size',(np.str,16)),
+            ('Address',(np.str,16))]
+        
+        return record
+    
+class L15SecondaryProductHeaderRecord(L15PhData):
+    
+    def get(self):
+        
+        record = [
+            ('ABID',self.l15_ph_data),
+            ('SMOD',self.l15_ph_data),
+            ('APXS',self.l15_ph_data),
+            ('AVPA',self.l15_ph_data),
+            ('LSCD',self.l15_ph_data),
+            ('LMAP',self.l15_ph_data),
+            ('QDLC',self.l15_ph_data),
+            ('QDLP',self.l15_ph_data),
+            ('QQAI',self.l15_ph_data),
+            ('SelectedBandIDs',self.l15_ph_data),
+            ('SouthLineSelectedRectangle',self.l15_ph_data),
+            ('NorthLineSelectedRectangle',self.l15_ph_data),
+            ('EastColumnSelectedRectangle',self.l15_ph_data),
+            ('WestColumnSelectedRectangle',self.l15_ph_data),
+            ('NumberLinesVISIR',self.l15_ph_data),
+            ('NumberColumnsVISIR',self.l15_ph_data),
+            ('NumberLinesHRV',self.l15_ph_data),
+            ('NumberColumnsHRV',self.l15_ph_data)
+        ]            
+            
+        return record
+
+class GpPkHeaderRecord(object):
+            
+    def get(self):
+
+        record = [
+            ('HeaderVersionNo', np.uint8),
+            ('PacketType', np.uint8),
+            ('SubHeaderType', np.uint8),
+            ('SourceFacilityId', np.uint8),
+            ('SourceEnvId', np.uint8),
+            ('SourceInstanceId', np.uint8),
+            ('SourceSUId', np.int32),
+            ('SourceCPUId', (np.uint8, 4)),
+            ('DestFacilityId', np.uint8),
+            ('DestEnvId', np.uint8),
+            ('SequenceCount', np.uint16),
+            ('PacketLength', np.int32)
+        ]
+
+        return record            
+
+class GpPkSh1Record(object):
+            
+    def get(self):
+
+        record = [
+            ('SubHeaderVersionNo', np.uint8),
+            ('ChecksumFlag', np.uint8),
+            ('Acknowledgement', (np.uint8, 4)),
+            ('ServiceType', np.uint8),
+            ('ServiceSubtype', np.uint8),
+            ('PacketTime', (np.uint8, 6)),
+            ('SpacecraftId', np.int16)
+        ]
+
+        return record      
+    
+class L15HeaderRecord(CommonRecords):
 
     def get(self, umarf=True):
 
@@ -563,5 +656,51 @@ class Level15HeaderRecord(CommonRecords):
             ('SUDetails', (su_details, 50)),
             ('WarmStartParams', warm_start_params),
             ('Dummy', (np.void, 5156))]  # FIXME!
+
+        return record
+
+            
+                        
+class GpPkHeaderRecord(object):
+
+    def get(self):
+
+        record = [
+            ("GP_PK_HEADER", self.gp_pk_header),
+            ("GP_PK_SH1", self.gp_pk_sh1)]
+
+        return record
+
+    @property
+    def gp_pk_header(self):
+
+        record = [
+            ('HeaderVersionNo', np.uint8),
+            ('PacketType', np.uint8),
+            ('SubHeaderType', np.uint8),
+            ('SourceFacilityId', np.uint8),
+            ('SourceEnvId', np.uint8),
+            ('SourceInstanceId', np.uint8),
+            ('SourceSUId', np.int32),
+            ('SourceCPUId', (np.uint8, 4)),
+            ('DestFacilityId', np.uint8),
+            ('DestEnvId', np.uint8),
+            ('SequenceCount', np.uint16),
+            ('PacketLength', np.int32)]
+
+        return record
+
+    @property
+    def gp_pk_sh1(self):
+
+        record = [
+            ('SubHeaderVersionNo', np.uint8),
+            ('ChecksumFlag', np.uint8),
+            ('Acknowledgement', (np.uint8, 4)),
+            ('ServiceType', np.uint8),
+            ('ServiceSubtype', np.uint8),
+            ('PacketTime', (np.uint8, 6)),
+            ('SpacecraftId', np.int16)
+        ]
 
         return record
