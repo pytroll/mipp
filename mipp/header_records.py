@@ -52,107 +52,112 @@ class CommonRecords(object):
 
         return record
 
+
 class Msg15NativeHeaderRecord(object):
-    
+
     def get(self):
-        
+
         record = [
-            ('15_MAIN_PRODUCT_HEADER',L15MainProductHeaderRecord().get()),
-            ('15_SECONDARY_PRODUCT_HEADER',L15SecondaryProductHeaderRecord().get()),
-            ('GP_PK_HEADER',GpPkHeaderRecord().get()),
-            ('GP_PK_SH1',GpPkHeaderRecord().get()),
-            ('15HEADER',L15HeaderRecord().get())
+            ('15_MAIN_PRODUCT_HEADER', L15MainProductHeaderRecord().get()),
+            ('15_SECONDARY_PRODUCT_HEADER',
+             L15SecondaryProductHeaderRecord().get()),
+            ('GP_PK_HEADER', GpPkHeaderRecord().get()),
+            ('GP_PK_SH1', GpPkSh1Record().get()),
+            ('15HEADER', L15HeaderRecord().get())
         ]
-    
+
         return record
 
+
 class L15PhData(object):
-    
+
     @property
     def l15_ph_data(self):
-        
+
         record = [
-            ('Name',(np.str,30)),
-            ('Value',(np.str,50))
+            ('Name', (np.str, 30)),
+            ('Value', (np.str, 50))
         ]
-        
+
         return record
-    
+
+
 class L15MainProductHeaderRecord(L15PhData):
-    
+
     def get(self):
-        
+
         record = [
-            ('FormatName',self.l15_ph_data),
-            ('FormatDocumentName',self.l15_ph_data),
-            ('FormatDocumentMajorVersion',self.l15_ph_data),
-            ('FormatDocumentMinorVersion',self.l15_ph_data),
-            ('CreationDateTime',self.l15_ph_data),
-            ('CreatingCentre',self.l15_ph_data),
-            ('DataSetIdentification',(self.l15_ph_data_identification,27)),
-            ('TotalFileSize',self.l15_ph_data),
-            ('GORT',self.l15_ph_data),
-            ('ASTI',self.l15_ph_data),
-            ('LLOS',self.l15_ph_data),
-            ('SNIT',self.l15_ph_data),
-            ('AIID',self.l15_ph_data),
-            ('SSBT',self.l15_ph_data),
-            ('SSST',self.l15_ph_data),
-            ('RRCC',self.l15_ph_data),
-            ('RRBT',self.l15_ph_data),
-            ('RRST',self.l15_ph_data),
-            ('PPRC',self.l15_ph_data),
-            ('PPDT',self.l15_ph_data),
-            ('GPLV',self.l15_ph_data),
-            ('APNM',self.l15_ph_data),
-            ('AARF',self.l15_ph_data),
-            ('UUDT',self.l15_ph_data),
-            ('QQOV',self.l15_ph_data),
-            ('UDSP',self.l15_ph_data)
+            ('FormatName', self.l15_ph_data),
+            ('FormatDocumentName', self.l15_ph_data),
+            ('FormatDocumentMajorVersion', self.l15_ph_data),
+            ('FormatDocumentMinorVersion', self.l15_ph_data),
+            ('CreationDateTime', self.l15_ph_data),
+            ('CreatingCentre', self.l15_ph_data),
+            ('DataSetIdentification', (self.l15_ph_data_identification, 27)),
+            ('TotalFileSize', self.l15_ph_data),
+            ('GORT', self.l15_ph_data),
+            ('ASTI', self.l15_ph_data),
+            ('LLOS', self.l15_ph_data),
+            ('SNIT', self.l15_ph_data),
+            ('AIID', self.l15_ph_data),
+            ('SSBT', self.l15_ph_data),
+            ('SSST', self.l15_ph_data),
+            ('RRCC', self.l15_ph_data),
+            ('RRBT', self.l15_ph_data),
+            ('RRST', self.l15_ph_data),
+            ('PPRC', self.l15_ph_data),
+            ('PPDT', self.l15_ph_data),
+            ('GPLV', self.l15_ph_data),
+            ('APNM', self.l15_ph_data),
+            ('AARF', self.l15_ph_data),
+            ('UUDT', self.l15_ph_data),
+            ('QQOV', self.l15_ph_data),
+            ('UDSP', self.l15_ph_data)
         ]
-        
+
         return record
-    
 
     @property
     def l15_ph_data_identification(self):
-        
+
         record = [
-            ('Name',(np.str,30)),
-            ('Size',(np.str,16)),
-            ('Address',(np.str,16))]
-        
-        return record
-    
-class L15SecondaryProductHeaderRecord(L15PhData):
-    
-    def get(self):
-        
-        record = [
-            ('ABID',self.l15_ph_data),
-            ('SMOD',self.l15_ph_data),
-            ('APXS',self.l15_ph_data),
-            ('AVPA',self.l15_ph_data),
-            ('LSCD',self.l15_ph_data),
-            ('LMAP',self.l15_ph_data),
-            ('QDLC',self.l15_ph_data),
-            ('QDLP',self.l15_ph_data),
-            ('QQAI',self.l15_ph_data),
-            ('SelectedBandIDs',self.l15_ph_data),
-            ('SouthLineSelectedRectangle',self.l15_ph_data),
-            ('NorthLineSelectedRectangle',self.l15_ph_data),
-            ('EastColumnSelectedRectangle',self.l15_ph_data),
-            ('WestColumnSelectedRectangle',self.l15_ph_data),
-            ('NumberLinesVISIR',self.l15_ph_data),
-            ('NumberColumnsVISIR',self.l15_ph_data),
-            ('NumberLinesHRV',self.l15_ph_data),
-            ('NumberColumnsHRV',self.l15_ph_data)
-        ]            
-            
+            ('Name', (np.str, 30)),
+            ('Size', (np.str, 16)),
+            ('Address', (np.str, 16))]
+
         return record
 
+
+class L15SecondaryProductHeaderRecord(L15PhData):
+
+    def get(self):
+
+        record = [
+            ('ABID', self.l15_ph_data),
+            ('SMOD', self.l15_ph_data),
+            ('APXS', self.l15_ph_data),
+            ('AVPA', self.l15_ph_data),
+            ('LSCD', self.l15_ph_data),
+            ('LMAP', self.l15_ph_data),
+            ('QDLC', self.l15_ph_data),
+            ('QDLP', self.l15_ph_data),
+            ('QQAI', self.l15_ph_data),
+            ('SelectedBandIDs', self.l15_ph_data),
+            ('SouthLineSelectedRectangle', self.l15_ph_data),
+            ('NorthLineSelectedRectangle', self.l15_ph_data),
+            ('EastColumnSelectedRectangle', self.l15_ph_data),
+            ('WestColumnSelectedRectangle', self.l15_ph_data),
+            ('NumberLinesVISIR', self.l15_ph_data),
+            ('NumberColumnsVISIR', self.l15_ph_data),
+            ('NumberLinesHRV', self.l15_ph_data),
+            ('NumberColumnsHRV', self.l15_ph_data)
+        ]
+
+        return record
+
+
 class GpPkHeaderRecord(object):
-            
+
     def get(self):
 
         record = [
@@ -170,10 +175,11 @@ class GpPkHeaderRecord(object):
             ('PacketLength', np.int32)
         ]
 
-        return record            
+        return record
+
 
 class GpPkSh1Record(object):
-            
+
     def get(self):
 
         record = [
@@ -186,8 +192,9 @@ class GpPkSh1Record(object):
             ('SpacecraftId', np.int16)
         ]
 
-        return record      
-    
+        return record
+
+
 class L15HeaderRecord(CommonRecords):
 
     def get(self, umarf=True):
@@ -655,13 +662,12 @@ class L15HeaderRecord(CommonRecords):
             ('OverallConfiguration', overall_configuration),
             ('SUDetails', (su_details, 50)),
             ('WarmStartParams', warm_start_params),
-            ('Dummy', (np.void, 5156))]  # FIXME!
+            ('Dummy', (np.void, 4))]  # FIXME!
 
         return record
 
-            
-                        
-class GpPkHeaderRecord(object):
+
+class _GpPkHeaderRecord(object):
 
     def get(self):
 
