@@ -50,9 +50,54 @@ class CommonRecords(object):
         return record
 
 
-class Level15HeaderRecord(CommonRecords):
+class GP_PK_HeaderRecord(object):
 
     def get(self):
+
+        record = [
+            ("GP_PK_HEADER", self.gp_pk_header),
+            ("GP_PK_SH1", self.gp_pk_sh1)]
+
+        return record
+
+    @property
+    def gp_pk_header(self):
+
+        record = [
+            ('HeaderVersionNo', np.uint8),
+            ("PacketType", np.uint8),
+            ("SubHeaderType", np.uint8),
+            ("SourceFacilityId", np.uint8),
+            ("SourceEnvId", np.uint8),
+            ("SourceInstanceId", np.uint8),
+            ("SourceSUId", np.int32),
+            ("SourceCPUId", (np.uint8, 4)),
+            ("DestFacilityId", np.uint8),
+            ("DestEnvId", np.uint8),
+            ("SequenceCount", np.uint16),
+            ("PacketLength", np.int32)]
+
+        return record
+
+    @property
+    def gp_pk_sh1(self):
+
+        record = [
+            ("SubHeaderVersionNo", np.uint8),
+            ("ChecksumFlag", np.uint8),
+            ("Acknowledgement", (np.uint8, 4)),
+            ("ServiceType", np.uint8),
+            ("ServiceSubtype", np.uint8),
+            ("PacketTime", (np.uint8, 6)),
+            ("SpacecraftId", np.int16)
+        ]
+
+        return record
+
+
+class Level15HeaderRecord(CommonRecords):
+
+    def get(self, umarf=True):
 
         record = [
             ('15HEADERVersion', np.uint8),
@@ -61,8 +106,10 @@ class Level15HeaderRecord(CommonRecords):
             ('CelestialEvents', self.celestial_events),
             ('ImageDescription', self.image_description),
             ('RadiometricProcessing', self.radiometric_processing),
-            ('GeometricProcessing', self.geometric_processing),
-            ('IMPFConfiguration', self.impf_configuration)]
+            ('GeometricProcessing', self.geometric_processing)]
+
+        if umarf:
+            record.append(('IMPFConfiguration', self.impf_configuration))
 
         return record
 
@@ -434,6 +481,8 @@ class Level15HeaderRecord(CommonRecords):
 
     @property
     def impf_configuration(self):
+        # This needs to be checked further. We believe something is missing
+        # after overall configuration
 
         overall_configuration = [
             ('Issue', np.uint16),
@@ -484,7 +533,7 @@ class Level15HeaderRecord(CommonRecords):
             ('MinFeedbackVoltage', np.float64),
             ('MirrorSlipEstimate', np.float64)]
 
-        hkt_parameters = [
+        hktm_parameters = [
             ('TimeS0Packet', self.time_cds_short),
             ('TimeS1Packet', self.time_cds_short),
             ('TimeS2Packet', self.time_cds_short),
@@ -500,18 +549,19 @@ class Level15HeaderRecord(CommonRecords):
 
         warm_start_params = [
             ('ScanningLaw', (np.float64, 1527)),
-            ('RadFramesAlignment', (np.float64, 60)),
+            ('RadFramesAlignment', (np.float64, 3)),
             ('ScanningLawVariation', (np.float32, 2)),
             ('EqualisationParams', (equalisation_params, 42)),
             ('BlackBodyDataForWarmStart', black_body_data_for_warm_start),
             ('MirrorParameters', mirror_parameters),
             ('LastSpinPeriod', np.float64),
-            ('HKTMParameters', hkt_parameters),
+            ('HKTMParameters', hktm_parameters),
             ('WSPReserved', (np.uint8, 3408))]
 
         record = [
             ('OverallConfiguration', overall_configuration),
-            ('SUDetails', su_details),
-            ('WarmStartParams', warm_start_params)]
+            ('SUDetails', (su_details, 50)),
+            ('WarmStartParams', warm_start_params),
+            ('Dummy', (np.void, 5156))]  # FIXME!
 
         return record

@@ -24,6 +24,7 @@
 """
 
 from mipp.header_records import Level15HeaderRecord
+from mipp.header_records import GP_PK_HeaderRecord
 import numpy as np
 
 
@@ -61,43 +62,13 @@ def read_umarf_header(filename):
 def read_pkhead(filename, offset):
     """Read the rest of the native header"""
 
-    gp_pk_header = np.dtype([
-        ("HeaderVersionNo", ">i1"),
-        ("PacketType", ">i1"),
-        ("SubHeaderType", ">i1"),
-        ("SourceFacilityId", ">i1"),
-        ("SourceEnvId", ">i1"),
-        ("SourceInstanceId", ">i1"),
-        ("SourceSUId", ">i4"),
-        ("SourceCPUId", ">i1", (4, )),
-        ("DestFacilityId", ">i1"),
-        ("DestEnvId", ">i1"),
-        ("SequenceCount", ">u2"),
-        ("PacketLength", ">i4"),
-    ])
+    pkhrec = GP_PK_HeaderRecord().get()
+    dt_ = np.dtype(pkhrec)
+    dtl = dt_.newbyteorder('>')
+    with open(filename) as fpt:
+        data = np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
 
-    gp_pk_subheader = np.dtype([
-        ("SubHeaderVersionNo", ">i1"),
-        ("ChecksumFlag", ">i1"),
-        ("Acknowledgement", ">i1", (4, )),
-        ("ServiceType", ">i1"),
-        ("ServiceSubtype", ">i1"),
-        ("PacketTime", ">i1", (6, )),
-        ("SpacecraftId", ">i2"),
-    ])
-
-    pk_head = np.dtype([("gp_pk_header", gp_pk_header),
-                        ("gp_pk_sh1", gp_pk_subheader)])
-
-    print pk_head.itemsize
-
-    fp_ = open(filename, 'r')
-    fp_.seek(offset)
-    pk_header = np.fromfile(fp_, pk_head, count=1)
-    fp_.close()
-    pos = offset + pk_header.itemsize
-
-    return pk_header, pos
+    return data, offset + dtl.itemsize
 
 
 def read_level15header(filename, offset):

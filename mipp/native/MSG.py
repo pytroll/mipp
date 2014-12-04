@@ -24,15 +24,12 @@
 """
 
 import mipp.cfg
-import imp
 from glob import glob
 import os.path
 from datetime import datetime, timedelta
 import numpy as np
-import mipp.xrit.MSG
-
-
-# class Calibrator(mipp.xrit.MSG._Calibrator):
+from mipp.header_records import Level15HeaderRecord
+from mipp.header_records import GP_PK_HeaderRecord
 
 
 class ChannelData(object):
@@ -76,6 +73,13 @@ class NativeImage(object):
             self.channel_numbers.append(
                 self.channel_name_mapping[name].channel_number)
 
+        self.header = None
+        self._umarf = None
+        self._pk_head = None
+        self._cols_visir = None
+        self._cols_hrv = None
+        self.data_len = None
+
         if time_slot:
             self.time_slot = time_slot
             self.filename = self.get_filename()
@@ -87,7 +91,8 @@ class NativeImage(object):
 
         self.get_header()
         if not self.time_slot:
-            self.time_slot = self.header['UTCCorrelation']['PeriodStartTime']
+            self.time_slot = self.header['SatelliteStatus'][
+                'UTCCorrelation']['PeriodStartTime']
 
         self.memmap = self.load()  # Pointer to the data
 
@@ -97,98 +102,49 @@ class NativeImage(object):
     def get_header(self):
         """Read the header info"""
 
-        umarf = {}
-        with open(self.filename) as fp_:
-            for i in range(6):
-                name = (fp_.read(30).strip("\x00"))[:-2].strip()
-                umarf[name] = fp_.read(50).strip("\x00").strip()
+        hdumarf, offs = read_umarf_header(self.filename)
 
-            for i in range(27):
-                name = fp_.read(30).strip("\x00")
-                if name == '':
-                    fp_.read(32)
-                    continue
-                name = name[:-2].strip()
-                umarf[name] = {"size": fp_.read(16).strip("\x00").strip(),
-                               "adress": fp_.read(16).strip("\x00").strip()}
-            for i in range(19):
-                name = (fp_.read(30).strip("\x00"))[:-2].strip()
-                umarf[name] = fp_.read(50).strip("\x00").strip()
+        from pprint import pprint
+        pprint(hdumarf)
+        self._umarf = hdumarf
 
-            for i in range(18):
-                name = (fp_.read(30).strip("\x00"))[:-2].strip()
-                umarf[name] = fp_.read(50).strip("\x00").strip()
+        pkh, offs = read_pkhead(self.filename, offs)
+        self._pk_head = pkh
 
-            from pprint import pprint
-            pprint(umarf)
+        self.header = read_level15header(self.filename, offs)
 
-            gp_pk_header = np.dtype([
-                ("HeaderVersionNo", ">i1"),
-                ("PacketType", ">i1"),
-                ("SubHeaderType", ">i1"),
-                ("SourceFacilityId", ">i1"),
-                ("SourceEnvId", ">i1"),
-                ("SourceInstanceId", ">i1"),
-                ("SourceSUId", ">i4"),
-                ("SourceCPUId", ">i1", (4, )),
-                ("DestFacilityId", ">i1"),
-                ("DestEnvId", ">i1"),
-                ("SequenceCount", ">u2"),
-                ("PacketLength", ">i4"),
-            ])
+        # read line data
 
-            gp_pk_subheader = np.dtype([
-                ("SubHeaderVersionNo", ">i1"),
-                ("ChecksumFlag", ">i1"),
-                ("Acknowledgement", ">i1", (4, )),
-                ("ServiceType", ">i1"),
-                ("ServiceSubtype", ">i1"),
-                ("PacketTime", ">i1", (6, )),
-                ("SpacecraftId", ">i2"),
-            ])
+        cols_visir = np.ceil(
+            int(self._umarf["NumberColumnsVISIR"]) * 5.0 / 4)  # 4640
+        if (int(self._umarf['WestColumnSelectedRectangle'])
+                - int(self._umarf['EastColumnSelectedRectangle'])) < 3711:
+            cols_hrv = np.ceil(
+                int(self._umarf["NumberColumnsHRV"]) * 5.0 / 4)  # 6960
+        else:
+            cols_hrv = np.ceil(5568 * 5.0 / 4)  # 6960
+        #'WestColumnSelectedRectangle' - 'EastColumnSelectedRectangle'
+        #'NorthLineSelectedRectangle' - 'SouthLineSelectedRectangle'
 
-            pk_head = np.dtype([("gp_pk_header", gp_pk_header),
-                                ("gp_pk_sh1", gp_pk_subheader)])
+        area_extent = ((1856 - int(self._umarf["WestColumnSelectedRectangle"]) - 0.5) *
+                       self.header['ImageDescription'][
+                           "ReferenceGridVIS_IR"]["ColumnDirGridStep"],
+                       (1856 - int(self._umarf["NorthLineSelectedRectangle"]) +
+                        0.5) * self.header['ImageDescription']["ReferenceGridVIS_IR"]["LineDirGridStep"],
+                       (1856 - int(self._umarf["EastColumnSelectedRectangle"]) +
+                        0.5) * self.header['ImageDescription']["ReferenceGridVIS_IR"]["ColumnDirGridStep"],
+                       (1856 - int(self._umarf["SouthLineSelectedRectangle"]) + 1.5) *
+                       self.header['ImageDescription']["ReferenceGridVIS_IR"]["LineDirGridStep"])
 
-            # read header
-
-            from mipp.xrit.MSG import read_proheader, read_epiheader
-
-            pk_header = np.fromfile(fp_, pk_head, count=1)
-            print pk_header
-            hdr_version = ord(fp_.read(1))
-            hdr = read_proheader(fp_)
-
-            # FIXME: read impf configuration here
-
-            # read line data
-
-            cols_visir = np.ceil(
-                int(umarf["NumberColumnsVISIR"]) * 5.0 / 4)  # 4640
-            if (int(umarf['WestColumnSelectedRectangle'])
-                    - int(umarf['EastColumnSelectedRectangle'])) < 3711:
-                cols_hrv = np.ceil(
-                    int(umarf["NumberColumnsHRV"]) * 5.0 / 4)  # 6960
-            else:
-                cols_hrv = np.ceil(5568 * 5.0 / 4)  # 6960
-            #'WestColumnSelectedRectangle' - 'EastColumnSelectedRectangle'
-            #'NorthLineSelectedRectangle' - 'SouthLineSelectedRectangle'
-
-            area_extent = ((1856 - int(umarf["WestColumnSelectedRectangle"]) - 0.5) * hdr["ReferenceGridVIS_IR"]["ColumnDirGridStep"],
-                           (1856 - int(umarf["NorthLineSelectedRectangle"]) +
-                            0.5) * hdr["ReferenceGridVIS_IR"]["LineDirGridStep"],
-                           (1856 - int(umarf["EastColumnSelectedRectangle"]) +
-                            0.5) * hdr["ReferenceGridVIS_IR"]["ColumnDirGridStep"],
-                           (1856 - int(umarf["SouthLineSelectedRectangle"]) + 1.5) * hdr["ReferenceGridVIS_IR"]["LineDirGridStep"])
-
-        self.header = hdr
-        self._pk_head = pk_head
         self._cols_visir = cols_visir
         self._cols_hrv = cols_hrv
-        self.data_len = int(umarf["NumberLinesVISIR"])
+        self.data_len = int(self._umarf["NumberLinesVISIR"])
 
     def load(self):
         """Open the file and generate a memory map of the data using numpy memmap"""
+
+        import pdb
+        pdb.set_trace()
 
         with open(self.filename) as fp_:
 
@@ -311,3 +267,57 @@ class NativeImage(object):
                 break
         if dtobj:
             return os.path.join(path, dtobj[0])
+
+
+def read_umarf_header(filename):
+    """Read the umarf header from file"""
+
+    umarf = {}
+
+    with open(filename) as fp_:
+        for i in range(6):
+            name = (fp_.read(30).strip("\x00"))[:-2].strip()
+            umarf[name] = fp_.read(50).strip("\x00").strip()
+
+        for i in range(27):
+            name = fp_.read(30).strip("\x00")
+            if name == '':
+                fp_.read(32)
+                continue
+            name = name[:-2].strip()
+            umarf[name] = {"size": fp_.read(16).strip("\x00").strip(),
+                           "adress": fp_.read(16).strip("\x00").strip()}
+        for i in range(19):
+            name = (fp_.read(30).strip("\x00"))[:-2].strip()
+            umarf[name] = fp_.read(50).strip("\x00").strip()
+
+        for i in range(18):
+            name = (fp_.read(30).strip("\x00"))[:-2].strip()
+            umarf[name] = fp_.read(50).strip("\x00").strip()
+
+        pos = fp_.tell()
+
+    return umarf, pos
+
+
+def read_pkhead(filename, offset):
+    """Read the rest of the native header"""
+
+    pkhrec = GP_PK_HeaderRecord().get()
+    dt_ = np.dtype(pkhrec)
+    dtl = dt_.newbyteorder('>')
+    with open(filename) as fpt:
+        data = np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
+
+    return data, offset + dtl.itemsize
+
+
+def read_level15header(filename, offset):
+    """Read the level 1.5 SEVIRI header"""
+
+    # Create the header record object:
+    hrec = Level15HeaderRecord().get()
+    dt_ = np.dtype(hrec)
+    dtl = dt_.newbyteorder('>')
+    with open(filename) as fpt:
+        return np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
