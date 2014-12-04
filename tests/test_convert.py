@@ -20,12 +20,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit testing the (10 to 16 bit) convertion functions
+"""Unit testing the (10 to 16 bit) conversion functions
 """
 
 import unittest
 
 from mipp import convert
+from mipp import xrit
+import os
+from mipp.xrit import _xrit
+import numpy as np
 
 
 class ConvertTest(unittest.TestCase):
@@ -38,6 +42,42 @@ class ConvertTest(unittest.TestCase):
 
     def test_10to16(self):
         """Test 10 to 16 bit conversion"""
+
+        datadir = (os.path.dirname(__file__) or '.') + '/data'
+        msg_files = [datadir + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111400-__',
+                     datadir + '/H-000-MSG2__-MSG2________-IR_108___-000004___-201010111400-__',
+                     datadir + '/H-000-MSG2__-MSG2________-IR_108___-000005___-201010111400-__',
+                     datadir + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
+
+        
+        EXPECTED_SUM = 1578433028
+
+        # 
+        # Raw reading
+        #
+        fp = open(msg_files[1], 'r')
+        _xrit.read_headers(fp)
+        s = fp.read()
+        fp.close()
+
+        fp = open(msg_files[2], 'r')
+        _xrit.read_headers(fp)
+        s2 = fp.read()
+        fp.close()
+        s = s + s2
+
+        #
+        # Do conversion
+        #
+        x = convert.dec10216(s)
+        this = np.frombuffer(x, dtype=np.uint16)
+
+        #
+        # Validate conversion through known sum
+        #
+        self.assertEqual(this.sum(), EXPECTED_SUM)
+
+
 
     def tearDown(self):
         """Clean up"""
