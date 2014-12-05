@@ -266,19 +266,26 @@ class _Calibrator(object):
                     "IR_134": 11,
                     "HRV": 12}
 
-        #cal_type = (hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
-        cal_type = (
-            hdr['15_DATA_HEADER']['ImageDescription']['Level15ImageProduction']["PlannedChanProcessing"][0])
+        try:
+            cal_type = (
+                hdr['15_DATA_HEADER']['ImageDescription']['Level15ImageProduction']["PlannedChanProcessing"][0])
+        except KeyError:
+            cal_type = (
+                hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
+
         chn_nb = channels[channel_name] - 1
 
         mask = (image == no_data_value)
 
-        # cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
-        # coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
-        cslope = hdr['15_DATA_HEADER']['RadiometricProcessing'][
-            'Level15ImageCalibration'][0]['CalSlope'][chn_nb]
-        coffset = hdr['15_DATA_HEADER']['RadiometricProcessing'][
-            'Level15ImageCalibration'][0]['CalOffset'][chn_nb]
+        # Trying the new MSG header record handling (see header_records.py)
+        try:
+            cslope = hdr['15_DATA_HEADER']['RadiometricProcessing'][
+                'Level15ImageCalibration'][0]['CalSlope'][chn_nb]
+            coffset = hdr['15_DATA_HEADER']['RadiometricProcessing'][
+                'Level15ImageCalibration'][0]['CalOffset'][chn_nb]
+        except KeyError:
+            cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
+            coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
 
         radiances = eval_np('image * cslope + coffset')
         radiances[radiances < 0] = 0
@@ -287,8 +294,13 @@ class _Calibrator(object):
             return (np.ma.MaskedArray(radiances, mask=mask),
                     "mW m-2 sr-1 (cm-1)-1")
 
-        sat = hdr['15_DATA_HEADER']['SatelliteStatus'][
-            'SatelliteDefinition']["SatelliteId"][0]
+        # Trying the new MSG header record handling (see header_records.py)
+        try:
+            sat = hdr['15_DATA_HEADER']['SatelliteStatus'][
+                'SatelliteDefinition']["SatelliteId"][0]
+        except KeyError:
+            sat = hdr["SatelliteDefinition"]["SatelliteId"]
+
         if sat not in CALIB:
             raise CalibrationError("No calibration coefficients available for "
                                    + "this satellite (" + str(sat) + ")")
