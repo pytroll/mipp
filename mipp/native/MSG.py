@@ -100,7 +100,7 @@ class NativeImage(object):
 
         self.get_header()
         if not self.time_slot:
-            self.time_slot = self.header['15HEADER']['SatelliteStatus'][
+            self.time_slot = self.header['15_DATA_HEADER']['SatelliteStatus'][
                 'UTCCorrelation']['PeriodStartTime']
 
         self.memmap = self.load()  # Pointer to the data
@@ -127,19 +127,6 @@ class NativeImage(object):
         pkht = np.dtype(pkhrec)
         self._pk_head_dtype = pkht.newbyteorder('>')
 
-        # hdumarf, offs = read_umarf_header(self.filename)
-
-        # from pprint import pprint
-        # pprint(hdumarf)
-        # self._umarf = hdumarf
-
-        # pkh, offs = read_pkhead(self.filename, offs)
-        # self._pk_head_dtype = pkh
-        # with open(self.filename, 'r') as fpt:
-        #     fpt.seek(offs)
-        #     self.pk_head = np.fromfile(fpt, dtype=self._pk_head_dtype, count=1)
-
-        # self.header = read_level15header(self.filename, offs)
 
         sec15hd = self.header['15_SECONDARY_PRODUCT_HEADER']
         numlines_visir = int(sec15hd['NumberLinesVISIR']['Value'][0])
@@ -157,9 +144,9 @@ class NativeImage(object):
         #'WestColumnSelectedRectangle' - 'EastColumnSelectedRectangle'
         #'NorthLineSelectedRectangle' - 'SouthLineSelectedRectangle'
 
-        coldir_step = self.header['15HEADER']['ImageDescription'][
+        coldir_step = self.header['15_DATA_HEADER']['ImageDescription'][
             "ReferenceGridVIS_IR"]["ColumnDirGridStep"]
-        lindir_step = self.header['15HEADER']['ImageDescription'][
+        lindir_step = self.header['15_DATA_HEADER']['ImageDescription'][
             "ReferenceGridVIS_IR"]["LineDirGridStep"]
         area_extent = ((1856 - west - 0.5) * coldir_step,
                        (1856 - north + 0.5) * lindir_step,
@@ -298,58 +285,3 @@ class NativeImage(object):
         if dtobj:
             return os.path.join(path, dtobj[0])
 
-
-def read_umarf_header(filename):
-    """Read the umarf header from file"""
-
-    umarf = {}
-
-    with open(filename) as fp_:
-        for i in range(6):
-            name = (fp_.read(30).strip("\x00"))[:-2].strip()
-            umarf[name] = fp_.read(50).strip("\x00").strip()
-
-        for i in range(27):
-            name = fp_.read(30).strip("\x00")
-            if name == '':
-                fp_.read(32)
-                continue
-            name = name[:-2].strip()
-            umarf[name] = {"size": fp_.read(16).strip("\x00").strip(),
-                           "adress": fp_.read(16).strip("\x00").strip()}
-        for i in range(19):
-            name = (fp_.read(30).strip("\x00"))[:-2].strip()
-            umarf[name] = fp_.read(50).strip("\x00").strip()
-
-        for i in range(18):
-            name = (fp_.read(30).strip("\x00"))[:-2].strip()
-            umarf[name] = fp_.read(50).strip("\x00").strip()
-
-        pos = fp_.tell()
-
-    return umarf, pos
-
-
-def read_pkhead(filename, offset):
-    """Read the rest of the native header"""
-
-    pkhrec = GP_PK_HeaderRecord().get()
-    dt_ = np.dtype(pkhrec)
-    dtl = dt_.newbyteorder('>')
-    # with open(filename) as fpt:
-    #    data = np.memmap(fpt, dtype=dtl, shape=(1,), offset=offset, mode='r')
-
-    # return data, offset + dtl.itemsize
-    return dtl, offset + dtl.itemsize
-
-
-def read_level15header(filename, offset):
-    """Read the level 1.5 SEVIRI header"""
-
-    # Create the header record object:
-    hrec = Level15HeaderRecord().get()
-    dt_ = np.dtype(hrec)
-    dtl = dt_.newbyteorder('>')
-    with open(filename) as fpt:
-        fpt.seek(offset)
-        return np.fromfile(fpt, dtype=dtl, count=1)
