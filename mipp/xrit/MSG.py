@@ -268,16 +268,16 @@ class _Calibrator(object):
 
         #cal_type = (hdr["Level 1_5 ImageProduction"]["PlannedChanProcessing"])
         cal_type = (
-            hdr['15HEADER']['ImageDescription']['Level15ImageProduction']["PlannedChanProcessing"][0])
+            hdr['15_DATA_HEADER']['ImageDescription']['Level15ImageProduction']["PlannedChanProcessing"][0])
         chn_nb = channels[channel_name] - 1
 
         mask = (image == no_data_value)
 
         # cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
         # coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
-        cslope = hdr['15HEADER']['RadiometricProcessing'][
+        cslope = hdr['15_DATA_HEADER']['RadiometricProcessing'][
             'Level15ImageCalibration'][0]['CalSlope'][chn_nb]
-        coffset = hdr['15HEADER']['RadiometricProcessing'][
+        coffset = hdr['15_DATA_HEADER']['RadiometricProcessing'][
             'Level15ImageCalibration'][0]['CalOffset'][chn_nb]
 
         radiances = eval_np('image * cslope + coffset')
@@ -287,7 +287,7 @@ class _Calibrator(object):
             return (np.ma.MaskedArray(radiances, mask=mask),
                     "mW m-2 sr-1 (cm-1)-1")
 
-        sat = hdr['15HEADER']['SatelliteStatus'][
+        sat = hdr['15_DATA_HEADER']['SatelliteStatus'][
             'SatelliteDefinition']["SatelliteId"][0]
         if sat not in CALIB:
             raise CalibrationError("No calibration coefficients available for "

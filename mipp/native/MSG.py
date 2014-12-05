@@ -30,7 +30,7 @@ import os.path
 from datetime import datetime, timedelta
 import numpy as np
 from mipp.header_records import (
-    Msg15NativeHeaderRecord, GpPkHeaderRecord, GpPkSh1Record)
+    Msg15NativeHeaderRecord, GSDTRecords)
 
 import mipp.xrit.MSG
 
@@ -121,12 +121,11 @@ class NativeImage(object):
         self.header = np.fromfile(self.filename, dtype=hd_dt, count=1)
 
         pkhrec = [
-            ('GP_PK_HEADER', GpPkHeaderRecord().get()),
-            ('GP_PK_SH1', GpPkSh1Record().get())
+            ('GP_PK_HEADER', GSDTRecords().gp_pk_header),
+            ('GP_PK_SH1', GSDTRecords().gp_pk_sh1)
         ]
         pkht = np.dtype(pkhrec)
         self._pk_head_dtype = pkht.newbyteorder('>')
-
 
         sec15hd = self.header['15_SECONDARY_PRODUCT_HEADER']
         numlines_visir = int(sec15hd['NumberLinesVISIR']['Value'][0])
@@ -284,4 +283,3 @@ class NativeImage(object):
                 break
         if dtobj:
             return os.path.join(path, dtobj[0])
-

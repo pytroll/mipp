@@ -32,6 +32,7 @@ import numpy as np
 
 
 class GSDTRecords(object):
+
     '''MSG Ground Segment Data Type records.
     Reference Document:
             MSG Ground Segment Design Specification (GSDS)
@@ -39,31 +40,29 @@ class GSDTRecords(object):
 
     @property
     def gp_cpu_address(self):
-        
+
         record = [
-            ('Qualifier_1',np.uint8),
-            ('Qualifier_2',np.uint8),
-            ('Qualifier_3',np.uint8),
-            ('Qualifier_4',np.uint8)
+            ('Qualifier_1', np.uint8),
+            ('Qualifier_2', np.uint8),
+            ('Qualifier_3', np.uint8),
+            ('Qualifier_4', np.uint8)
         ]
-    
+
         return record
-    
+
     @property
     def gp_fac_env(self):
-        
+
         return np.uint8
-    
-    
+
     @property
     def gp_fac_id(self):
-        
+
         return np.uint8
-    
-    
+
     @property
     def gp_pk_header(self):
-        
+
         record = [
             ('HeaderVersionNo', np.uint8),
             ('PacketType', np.uint8),
@@ -79,11 +78,11 @@ class GSDTRecords(object):
             ('PacketLength', np.int32)
         ]
 
-        return record        
-    
+        return record
+
     @property
     def gp_pk_sh1(self):
-        
+
         record = [
             ('SubHeaderVersionNo', np.uint8),
             ('ChecksumFlag', np.bool),
@@ -94,28 +93,33 @@ class GSDTRecords(object):
             ('SpacecraftId', self.gp_sc_id)
         ]
 
-        return record        
-    
+        return record
+
     @property
     def gp_sc_id(self):
-        
+
         return np.uint16
-    
+
+    @property
+    def gp_su_id(self):
+
+        return np.uint32
+
     @property
     def gp_svce_type(self):
-        
+
         return np.uint8
-    
+
     @property
     def time_cds(self):
-        
+
         record = [
             ('Day', np.uint16),
             ('MilliSecsOfDay', np.uint32),
             ('MicrosecsOfMillisecs', np.uint16)]
-        
+
         return record
-    
+
     @property
     def time_cds_expanded(self):
 
@@ -171,11 +175,12 @@ class L15PhData(object):
 
 
 class L15MainProductHeaderRecord(L15PhData):
+
     '''
     Reference Document:
             MSG Level 1.5 Native Format File Definition
     '''
-    
+
     def get(self):
 
         record = [
@@ -221,10 +226,11 @@ class L15MainProductHeaderRecord(L15PhData):
 
 
 class L15SecondaryProductHeaderRecord(L15PhData):
+
     '''
     Reference Document:
             MSG Level 1.5 Native Format File Definition
-    '''  
+    '''
 
     def get(self):
 
@@ -250,9 +256,9 @@ class L15SecondaryProductHeaderRecord(L15PhData):
         ]
 
         return record
-            
-    
-#class GpPkHeaderRecord(object):
+
+
+# class GpPkHeaderRecord(object):
 #
 #    def get(self):
 #
@@ -274,7 +280,7 @@ class L15SecondaryProductHeaderRecord(L15PhData):
 #        return record
 
 
-#class GpPkSh1Record(GSDTRecords):
+# class GpPkSh1Record(GSDTRecords):
 #
 #    def get(self):
 #
@@ -292,6 +298,7 @@ class L15SecondaryProductHeaderRecord(L15PhData):
 
 
 class L15DataHeaderRecord(GSDTRecords):
+
     '''
     Reference Document:
             MSG Level 1.5 Image Data Format Description
@@ -765,4 +772,3 @@ class L15DataHeaderRecord(GSDTRecords):
             ('Dummy', (np.void, 4))]  # FIXME!
 
         return record
-
