@@ -24,6 +24,9 @@
 """A reader for the native format MSG data
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 import mipp.cfg
 from glob import glob
 import os.path
@@ -33,6 +36,7 @@ from mipp.header_records import (
     Msg15NativeHeaderRecord, GSDTRecords)
 
 import mipp.xrit.MSG
+from mipp import get_cds_time
 
 
 class ChannelData(object):
@@ -47,7 +51,7 @@ class ChannelData(object):
 
     def calibrate(self, calswitch):
         """calibrate the data"""
-        print("Calibrate... ")
+        logger.debug('Calibrate... ')
         self.data, self.unit = self.calibrator(self.data, calibrate=calswitch)
 
     def show(self):
@@ -86,7 +90,6 @@ class NativeImage(object):
         self._cols_visir = None
         self._cols_hrv = None
         self.data_len = None
-
         self.area_extent = None
 
         if time_slot:
@@ -99,14 +102,22 @@ class NativeImage(object):
             raise IOError("Either filename or time slot needed as input!")
 
         self.get_header()
+
         if not self.time_slot:
-            self.time_slot = self.header['15_DATA_HEADER']['SatelliteStatus'][
-                'UTCCorrelation']['PeriodStartTime']
+            tstart = self.header['15_DATA_HEADER']['ImageAcquisition'][
+                'PlannedAcquisitionTime']['TrueRepeatCycleStart']
+            # t__ = self.header['15_DATA_HEADER']['SatelliteStatus'][
+            #    'UTCCorrelation']['PeriodStartTime']
+            # print get_cds_time(t__['Day'][0], t__['MilliSeconds'][0])
+            self.time_slot = get_cds_time(
+                tstart['Day'][0], tstart['MilliSecsOfDay'][0])
 
         self.memmap = self.load()  # Pointer to the data
 
+        self.units = {}
         for name in self.channel_names:
             self.add_property(name.lower())
+            self.units[name.lower()] = ''
 
     def _get_unitnames(self):
         """Get the present unit names for each channel"""
@@ -161,8 +172,6 @@ class NativeImage(object):
 
         with open(self.filename) as fp_:
 
-            # fp_.seek(450400)
-
             linetype = np.dtype([("visir", [("gp_pk", self._pk_head_dtype),
                                             ("version", ">u1"),
                                             ("satid", ">u2"),
@@ -188,10 +197,7 @@ class NativeImage(object):
                                            ("line_data", ">u1", (self._cols_hrv, ))],
                                   (3, ))])
 
-            # read everything in memory
-            #res = np.fromfile(fp_, dtype=linetype, count=data_len)
-
-            # lazy reading
+            # Lazy reading:
             return np.memmap(
                 fp_, dtype=linetype, shape=(self.data_len, ), offset=450400, mode="r")
 
@@ -221,31 +227,21 @@ class NativeImage(object):
 
     def _dec10to16(self, data):
         """Unpacking the 10 bit data to 16 bit"""
-
-        arr10 = data.astype(np.uint16).flat
-        new_shape = list(data.shape[:-1]) + [(data.shape[-1] * 8) / 10]
-        arr16 = np.zeros(new_shape, dtype=np.uint16)
-        arr16.flat[::4] = np.left_shift(arr10[::5], 2) + \
-            np.right_shift((arr10[1::5]), 6)
-        arr16.flat[1::4] = np.left_shift((arr10[1::5] & 63), 4) + \
-            np.right_shift((arr10[2::5]), 4)
-        arr16.flat[2::4] = np.left_shift(arr10[2::5] & 15, 6) + \
-            np.right_shift((arr10[3::5]), 2)
-        arr16.flat[3::4] = np.left_shift(arr10[3::5] & 3, 8) + \
-            arr10[4::5]
-        return arr16
+        from mipp import dec10to16
+        return dec10to16(data)
 
     def __str__(self):
-
-        retv = [name.lower() for name in self.channel_names]
-        return ' '.join(retv)
+        """Pretty printing of the channel names used internally to access data"""
+        retv = [name.lower() + '\t' + str(self.units[name.lower()])
+                for name in self.channel_names]
+        return '\n'.join(retv)
 
     def add_property(self, prop):
         fget = lambda self: self._get_property(prop)
         setattr(self.__class__, prop, property(fget))
 
     def _get_property(self, prop):
-        attr = '_{0}'.format(prop)
+        dummy = '_{0}'.format(prop)
         # When accessing the attribute the data is fetched, and calibrated as
         # specified using the self.calibflag:
         chidx = self.channel_name_mapping[prop.upper()].channel_number - 1
@@ -254,6 +250,21 @@ class NativeImage(object):
         if self.calibflag > 0:
             chname = self.channel_name_mapping[prop.upper()].name
             tmpch.calibrate(self.calibflag)
+
+        self.units[prop] = tmpch.unit
+
+        # if self.calibflag == 0:
+        #     self.units[prop] = 'counts'
+        # elif self.calibflag == 2:
+        # Radiance:
+        #     self.units[prop] = 'mW m-2 sr-1 (cm-1)-1'
+
+        # else:
+        #     if prop in ['ir_108', 'wv_062', 'ir_097', 'wv_073',
+        #                 'ir_039', 'ir_087', 'ir_120', 'ir_134']:
+        #         self.units[prop] = 'K'
+        #     else:
+        #         self.units[prop] = '%'
 
         return tmpch
 
@@ -278,8 +289,15 @@ class NativeImage(object):
                             for (fname, tstring) in files_and_times]
         # Find the closest time to the quarter
         dtobj = None
+        file_found = False
         for dtobj in files_and_dtobjs:
             if (self.time_slot - (dtobj[1] - timedelta(minutes=15))) < timedelta(minutes=15):
-                break
-        if dtobj:
-            return os.path.join(path, dtobj[0])
+                if not file_found:
+                    filename = os.path.join(path, dtobj[0])
+                    file_found = True
+                else:
+                    raise IOError("More than one file found matching time slot\n\t" +
+                                  str(filename) + "\n\t" +
+                                  str(os.path.join(path, dtobj[0])))
+        if file_found:
+            return filename
