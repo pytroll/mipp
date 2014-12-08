@@ -3,6 +3,8 @@
 import sys
 from datetime import datetime
 
+from mipp.version import __version__
+
 if sys.version_info < (2, 5):
     import time
     def strptime(string, fmt=None):

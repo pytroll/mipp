@@ -4,7 +4,7 @@
 *.pyc
 build
 dist
-debian
+debian*
 etc
 tmp
 tests/jojo.py

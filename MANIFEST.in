@@ -1,3 +1,4 @@
 include LICENSE.txt
 include MANIFEST.in
-include mipp/xrit/convert/wrap_convert.h
+include doc/Makefile
+include doc/source/*
