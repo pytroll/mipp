@@ -101,8 +101,9 @@ class SatelliteLoader(object):
         val["segment"] = "PRO".ljust(9, '_')
 
         filename_pro = opt.get('filename_pro', opt['filename'])
-        prologue = glob.glob(opt['dir'] + '/' +
-                             (time_stamp.strftime(filename_pro) % val))
+        prologue = glob.glob(
+            time_stamp.strftime(os.path.join(opt['dir'], filename_pro)) % val)
+
         if not prologue:
             raise mipp.NoFiles("missing prologue file: '%s'" % (time_stamp.strftime(filename_pro) % val))
         prologue = prologue[0]
@@ -110,9 +111,8 @@ class SatelliteLoader(object):
         # Regular channels
 
         val["segment"] = "0????????"
-        image_files = glob.glob(opt['dir'] + '/' +
-                                time_stamp.strftime(opt['filename']) % val)
-
+        image_files = glob.glob(
+            time_stamp.strftime(os.path.join(opt['dir'], opt['filename'])) % val)
         if not image_files:
             raise mipp.NoFiles("no data files: '%s'" % (time_stamp.strftime(opt['filename']) % val))
         image_files.sort()
@@ -129,8 +129,8 @@ class SatelliteLoader(object):
         val["segment"] = "EPI".ljust(9, '_')
 
         filename_epi = opt.get('filename_epi', opt['filename'])
-        epilogue = glob.glob(opt['dir'] + '/' +
-                             (time_stamp.strftime(filename_epi) % val))
+        epilogue = glob.glob(
+            time_stamp.strftime(os.path.join(opt['dir'], filename_epi)) % val)
 
         if not epilogue:
             logger.info("No epilogue file to read.")
