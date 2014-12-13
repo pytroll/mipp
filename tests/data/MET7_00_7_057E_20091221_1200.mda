@@ -1,6 +1,6 @@
 area_extent: [-1123120.7549999999, -450822.24499999994, 1125369.2449999999, 898271.75499999989]
 calibration_table: {'table': None, 'name': '', 'unit': ''}
-calibration_unit: counts
+calibration_unit: 
 channel: 00_7
 data_type: 8
 image_size: [1000, 600]
