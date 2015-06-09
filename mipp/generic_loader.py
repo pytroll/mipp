@@ -30,51 +30,71 @@ import glob
 import imp
 import types
 import re
-
+from mipp import cfg
 import logging
 logger = logging.getLogger('mipp')
 
-import mipp
-import mipp.cfg
+PPP_CFG_VARNAME = 'PPP_CONFIG_DIR'
 
 
 class GenericLoader(object):
 
-    """ Generic loader for geos satellites.
-    """
+	""" Generic loader for geostationary satellites
+	.
+	"""
 
-    def __init__(self, satid, timeslot=None, files=None):
-        """ Locate files and read metadata.
-        """
+	def __init__(self, satid, channels=None, timeslot=None, files=None):
+		""" Locate files and read metadata.
+			There
+		"""
 
-        self.image = None
-        if timeslot:
-            # Get list of files from the timeslot
-            #1 read config
-            ####
+		self.image = None
+		if files is not None:
+			try:
+				files[0]
+			except TypeError:
+				raise TypeError('Files argument has to be an iterable containing string elements representing full path to HRIT files')
+			self.files = files
+
+		else:
+
+			if timeslot:
+				# Get list of files from the timeslot
+				#1 read config
+				####
+				if not PPP_CFG_VARNAME in os.environ.keys():
+					raise RuntimeError('Could not find the pytroll config directory environmet variable "%s" ' % (PPP_CFG_VARNAME))
+				if satid is None:
+					raise ValueError('satid argument can not be omitted or be None')
+				#get the mtsat config
+				mtsat_cfg = cfg.read_config(satid)
+				#some confusin exists about the levels in the config file
+				#it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
+				#mpop level 2 is used. unde the hood mpop uses mpip so this all ends in mipp
+				data_level = [e for e in mtsat_cfg.sections if 'level1' in e][0]
+				cfg_level = mtsat_cfg(data_level)
 
 
 
-            #2 filter the files for this specific date
-            # set the files attribute
-            pass
-        elif files:
-            self.files = files
-        else:
-            raise IOError("Either files or timeslot needs to be provided!")
-        self.mda = self._get_metadata()
-    def __getitem__(self, slice):
-        pass
+	            #2 filter the files for this specific date
+				# set the files attribute
 
-    def load(self, area_extent=None, channels=None, calibrate="1"):
-        self._channels = channels
-        self.mda.area_extent = area_extent
-        return self.__getitem__(self._get_slice_obj())
+			else:
+				raise IOError("Either files or timeslot needs to be provided!")
+		self.mda = self._get_metadata()
+	def __getitem__(self, slice):
+		pass
 
-    def _get_slice_obj(self):
-        """ Get code from loader.py 
-        """
-        pass
+	def load(self, area_extent=None, channels=None, calibrate="1"):
+		self._channels = channels
+		self.mda.area_extent = area_extent
+		return self.__getitem__(self._get_slice_obj())
 
-    def _get_metadata(self):
-        pass
+	def _get_slice_obj(self):
+		""" Get code from loader.py
+		"""
+		pass
+
+	def _get_metadata(self):
+		pass
+
