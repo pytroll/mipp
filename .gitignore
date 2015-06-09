@@ -2,6 +2,7 @@
 *.[oa]
 *.so
 *.pyc
+.idea
 build
 dist
 debian*

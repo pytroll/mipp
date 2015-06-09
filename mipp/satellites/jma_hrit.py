@@ -28,6 +28,11 @@ from mipp.metadata import Metadata
 from collections import OrderedDict
 import struct
 import datetime
+import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 # a MTSAT HRIT image can have only following number of lines
@@ -241,9 +246,9 @@ class JMAHRITLoader(GenericLoader):
 
 
 
-	def __init__(self, satid, timeslot=None, files=None):
+	def __init__(self, satid=None, timeslot=None, files=None):
 		#call the superclass constructor
-		super(JMAHRITLoader, self).__init__(satid, timeslot=None, files=None)
+		super(JMAHRITLoader, self).__init__(satid=satid, timeslot=timeslot, files=files)
 
 
 	def _getmetadata(self):
@@ -372,7 +377,7 @@ class JMAHRITLoader(GenericLoader):
 		mda.shifted = self.is_shifted
 		mda.number_of_columns = self.NC
 		mda.number_of_lines = self.NL
-		mda.timestamp = None
+		mda.timestamp = self.segments[0].header.records['Time Stamp']['CDS_T_Field']
 		mda.number_of_segments = self.nsegs
 		mda.proj4_str = self.proj4_str
 		mda.projection = self.segments[0].header.records['Image Navigation']['Projection_Name']
@@ -383,4 +388,11 @@ class JMAHRITLoader(GenericLoader):
 
 		self._info = {}
 
+if __name__ == '__main__':
+	import glob
+	import datetime
+	fp = '/home/jano/pytroll/data/IMG_DK01IR1_200703220030_001'
+	hrit_files = glob.glob(fp.replace('001', '*'))
 
+	hf = JMAHRITLoader(files=hrit_files)
+	hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))

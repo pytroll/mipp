@@ -60,7 +60,9 @@ class _ConfigReader(object):
             return self._channels[name]
         except KeyError:
             raise mipp.ConfigReaderError("unknown channel: '%s'"%name)
-
+    @property
+    def sections(self):
+        return self._config.sections()
     @property
     def channels(self):
         return self._channels
