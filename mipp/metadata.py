@@ -37,6 +37,7 @@ class Metadata(object):
         self.number_of_lines = 0
         self.timestamp = None
         self.number_of_segments = 0
+        self.resolution = None
         self.proj4_str = 'unknown'
         self.projection = 'unknown'
         self.sublon = None

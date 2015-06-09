@@ -46,16 +46,23 @@ class GenericLoader(object):
     def __init__(self, satid, timeslot=None, files=None):
         """ Locate files and read metadata.
         """
-        self.mda = self._get_metadata()
+
         self.image = None
         if timeslot:
             # Get list of files from the timeslot
-            pass
+            #1 read config
+
+
+
+
+            #2 filter the files for this specific date
+            # set the files attribute
+
         elif files:
             self.files = files
         else:
             raise IOError("Either files or timeslot needs to be provided!")
-
+        self.mda = self._get_metadata()
     def __getitem__(self, slice):
         pass
 
