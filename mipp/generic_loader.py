@@ -1,11 +1,26 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2015
+
+# Author(s):
+
+#   Adam Dybbroe
+#   Ioan Ferencik
+#   Lars Orum Rasmussen
+
+# This file is part of mipp.
+
+# mipp is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+
+# mipp is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along with
+# mipp.  If not, see <http://www.gnu.org/licenses/>.
 """
-generic_loader.py
-
-Created on Mon Jun  8 16:40:35 2015
-
-@author: lars
-
 Replacing xrit.sat and xrit.loader
 """
 import os
@@ -23,8 +38,8 @@ import mipp
 import mipp.cfg
 
 class GenericLoader(object):
-    # Generic loader for geos satellites
-    #
+    """ Generic loader for geos satellites.
+    """
     
     def __init__(self, satid, timeslot=None, files=None):
         """ Locate files and read metadata.
@@ -35,7 +50,7 @@ class GenericLoader(object):
     def __getitem__(self, slice):
         pass
 
-    def load(self, area_extent=None, channels=None):
+    def load(self, area_extent=None, channels=None, calibrate="1"):
         self._channels = channels
         self.mda.area_extent = area_extent
         return self.__getitem__(self._get_slice_obj())
