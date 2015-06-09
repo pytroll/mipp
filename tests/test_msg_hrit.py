@@ -48,8 +48,11 @@ class TestReadData(unittest.TestCase):
     def test_msg(self):
         """Test read some msg image data"""
 
-        loader = MSGHRITLoader('meteosat10', files=MSG_FILES, calibrate=2)
-        mda, img = loader[1656:1956, 1756:2656]
+        loader = MSGHRITLoader(channels=[''], files=MSG_FILES)
+        mda, img = loader.load(calibrate=0)
+        arr = img[1656:1956, 1756:2656]
+        self.assertTrue(arr.shape == (300, 900))
+        self.assertEqual(arr.sum(), 121795059)
 
     def tearDown(self):
         """Clean up"""

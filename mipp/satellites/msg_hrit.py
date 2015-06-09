@@ -29,7 +29,7 @@ from mipp.xrit import _xrit
 from mipp.xrit import bin_reader as rbin
 from mipp.generic_loader import GenericLoader
 from mipp.metadata import Metadata
-import os.path
+import os
 from StringIO import StringIO
 import numpy as np
 import logging
@@ -48,14 +48,14 @@ class MSGHRITLoader(GenericLoader):
 
     """Loader for MSG data"""
 
-    def __init__(self, satid, timeslot=None, files=None):
+    def __init__(self, channels, satid=None, timeslot=None, files=None):
 
         self.image_filenames = []
         self.prologue_filename = None
         self.epilogue_filename = None
 
-        super(MSGHRITLoader, self).__init__(
-            satid, timeslot=timeslot, files=files)
+        super(MSGHRITLoader, self).__init__(channels,
+                                            satid=satid, timeslot=timeslot, files=files)
 
     def _identify_files(self):
         """Find the epilogue and the prologue files from the set of files provided 
@@ -68,6 +68,8 @@ class MSGHRITLoader(GenericLoader):
                 self.prologue_filename = filename
             else:
                 self.image_filenames.append(filename)
+
+        self.image_filenames.sort()
 
     def _get_metadata(self):
         """ Selected items from the MSG prologue file.
@@ -89,8 +91,17 @@ class MSGHRITLoader(GenericLoader):
 
         im = _xrit.read_imagedata(self.image_filenames[0])
 
+        self.channels = [im.product_name]
+
         md = Metadata()
         #md.calibrate = _Calibrator(prologue, im.product_name)
+
+        if 'HRV' in im.product_name:
+            md.xscale = 1000.134348869
+            md.yscale = 1000.134348869
+        else:
+            md.xscale = 3000.403165817
+            md.yscale = 3000.403165817
 
         md.projection = im.navigation.proj_name.lower()
         md.sublon = prologue["ProjectionDescription"]["LongitudeOfSSP"]
@@ -155,12 +166,25 @@ class MSGHRITLoader(GenericLoader):
 
         return md
 
-    def load(self, channels, area_extent=None, calibrate='1'):
+    def load(self, area_extent=None, calibrate=1):
         """Load the data"""
 
-        if len(channels) != 1:
+        if len(self.channels) != 1:
             raise IOError(
                 'Data loading requires one channel only at the moment!')
+
+        # Check if the files are xrit-compressed, and decompress them
+        # accordingly:
+        decomp_files = decompress(self.image_filenames)
+
+        from mipp.xrit.loader import ImageLoader
+
+        #
+        # Return a proxy slicer
+        #
+        mask = False
+        return ImageLoader(self.mda, decomp_files,
+                           mask=mask, calibrate=calibrate)(area_extent)
 
 
 def read_proheader(fp):
@@ -673,8 +697,43 @@ def read_epiheader(fp):
     return epilogue
 
 
+def decompress(infiles, **options):
+    """Check if the files are xrit-compressed, and decompress them
+    accordingly:
+    """
+    if 'outdir' in options:
+        cmd = options['outdir']
+    else:
+        cmd = os.environ.get('XRIT_DECOMPRESS_OUTDIR', None)
+
+    if not cmd:
+        logger.info("XRIT_DECOMPRESS_OUTDIR is not defined. " +
+                    "The decompressed files will be put in " +
+                    "the same directory as compressed ones")
+
+    decomp_files = []
+    for filename in infiles:
+        if filename.endswith('C_'):
+            # Try decompress it:
+            logger.debug('Try decompressing ' + filename)
+            if cmd:
+                outdir = cmd
+            else:
+                outdir = os.path.dirname(filename)
+            outfile = _xrit.decompress(filename, outdir)
+            decomp_files.append(outfile)
+        else:
+            decomp_files.append(filename)
+
+    return decomp_files
+
+
 if __name__ == '__main__':
     import sys
+    from glob import glob
 
     files = sys.argv[1:]
-    this = MSGHRITLoader('meteosat10', files=files)
+    files = (glob('/home/a000680/data/hrit/*IR_108*000008___-201504211100*') +
+             glob('/home/a000680/data/hrit/*EPI*201504211100*') +
+             glob('/home/a000680/data/hrit/*PRO*201504211100*'))
+    this = MSGHRITLoader(channels=['HRV'], files=files)
