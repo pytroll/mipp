@@ -40,7 +40,6 @@ PPP_CFG_VARNAME = 'PPP_CONFIG_DIR'
 class GenericLoader(object):
 
     """ Generic loader for geostationary satellites
-    .
     """
 
     def __init__(self, satid, channels=None, timeslot=None, files=None):
