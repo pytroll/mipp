@@ -46,3 +46,13 @@ class Metadata(object):
         self.sensor = 'unknown'
 
         self._info = {}
+
+    def __str__(self):
+        keys = sorted(self.__dict__.keys())
+        strn = ''
+        for key in keys:
+            val = getattr(self, key)
+            if (not key.startswith('_') and
+                    not callable(val)):
+                strn += key + ': ' + str(val) + '\n'
+        return strn[:-1]

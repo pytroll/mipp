@@ -97,4 +97,3 @@ class GenericLoader(object):
 
 	def _get_metadata(self):
 		pass
-
