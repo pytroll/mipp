@@ -48,6 +48,13 @@ class GenericLoader(object):
         """
         self.mda = self._get_metadata()
         self.image = None
+        if timeslot:
+            # Get list of files from the timeslot
+            pass
+        elif files:
+            self.files = files
+        else:
+            raise IOError("Either files or timeslot needs to be provided!")
 
     def __getitem__(self, slice):
         pass
