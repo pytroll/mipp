@@ -65,15 +65,16 @@ class GenericLoader(object):
                     raise RuntimeError('Could not find the pytroll config directory environmet variable "%s" ' % (PPP_CFG_VARNAME))
                 if satid is None:
                     raise ValueError('satid argument can not be omitted or be None')
-                #get the mtsat config
-                mtsat_cfg = cfg.read_config(satid)
+                #get the config
+                config = cfg.read_config(satid)
                 #some confusin exists about the levels in the config file
                 #it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
                 #mpop level 2 is used. unde the hood mpop uses mpip so this all ends in mipp
-                data_level = [e for e in mtsat_cfg.sections if 'level1' in e][0]
-                cfg_level = mtsat_cfg(data_level)
-                data_dir = cfg_level['dir']
-                filename = cfg_level['filename']
+                level = [e for e in config.sections if 'level1' in e][0]
+                cfg_level1 = config(level)
+                print cfg_level1
+                data_dir = cfg_level1['dir']
+                filename = cfg_level1['filename']
                 print filename
 
 
