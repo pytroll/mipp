@@ -46,30 +46,35 @@ class GenericLoader(object):
         """ Locate files and read metadata.
             There
         """
-
+        self.channels = channels
         self.image = None
         if files is not None:
             try:
                 files[0]
             except TypeError:
-                raise TypeError('Files argument has to be an iterable containing string elements representing full path to HRIT files')
+                raise TypeError(
+                    'Files argument has to be an iterable containing string ' +
+                    'elements representing full path to HRIT files')
             self.files = files
 
         else:
 
             if timeslot:
                 # Get list of files from the timeslot
-                #1 read config
+                # 1 read config
                 ####
                 if not PPP_CFG_VARNAME in os.environ.keys():
-                    raise RuntimeError('Could not find the pytroll config directory environmet variable "%s" ' % (PPP_CFG_VARNAME))
+                    raise RuntimeError(
+                        'Could not find the pytroll config directory environmet variable "%s" ' % (PPP_CFG_VARNAME))
                 if satid is None:
-                    raise ValueError('satid argument can not be omitted or be None')
-                #get the config
+                    raise ValueError(
+                        'satid argument can not be omitted or be None')
+                # get the config
                 config = cfg.read_config(satid)
-                #some confusin exists about the levels in the config file
-                #it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
-                #mpop level 2 is used. unde the hood mpop uses mpip so this all ends in mipp
+                # some confusin exists about the levels in the config file
+                # it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
+                # mpop level 2 is used. unde the hood mpop uses mpip so this
+                # all ends in mipp
                 level = [e for e in config.sections if 'level1' in e][0]
                 cfg_level1 = config(level)
                 print cfg_level1
@@ -77,18 +82,17 @@ class GenericLoader(object):
                 filename = cfg_level1['filename']
                 print filename
 
-
-                #2 filter the files for this specific date
+                # 2 filter the files for this specific date
                 # set the files attribute
 
             else:
                 raise IOError("Either files or timeslot needs to be provided!")
         self.mda = self._get_metadata()
+
     def __getitem__(self, slice):
         pass
 
-    def load(self, area_extent=None, channels=None, calibrate="1"):
-        self._channels = channels
+    def load(self, area_extent=None, calibrate="1"):
         self.mda.area_extent = area_extent
         return self.__getitem__(self._get_slice_obj())
 
