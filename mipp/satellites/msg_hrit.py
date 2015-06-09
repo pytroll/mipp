@@ -92,15 +92,23 @@ class MSGHRITLoader(GenericLoader):
         md = Metadata()
         #md.calibrate = _Calibrator(prologue, im.product_name)
 
+        md.projection = im.navigation.proj_name.lower()
         md.sublon = prologue["ProjectionDescription"]["LongitudeOfSSP"]
+        md.proj4_str = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00" % md.sublon
         md.product_name = im.product_id
         md.channel_id = im.product_name
         if md.channel_id == "HRV":
-            md.image_size = np.array((prologue["ReferenceGridHRV"]["NumberOfLines"],
-                                      prologue["ReferenceGridHRV"]["NumberOfColumns"]))
+            md.number_of_columns = prologue[
+                "ReferenceGridHRV"]["NumberOfColumns"]
+            md.number_of_lines = prologue["ReferenceGridHRV"]["NumberOfLines"]
         else:
-            md.image_size = np.array((prologue["ReferenceGridVIS_IR"]["NumberOfLines"],
-                                      prologue["ReferenceGridVIS_IR"]["NumberOfColumns"]))
+            md.number_of_columns = prologue[
+                "ReferenceGridVIS_IR"]["NumberOfColumns"]
+            md.number_of_lines = prologue[
+                "ReferenceGridVIS_IR"]["NumberOfLines"]
+
+        md.image_size = np.array((md.number_of_columns,
+                                  md.number_of_lines))
 
         md.satname = im.platform.lower()
         md.satnumber = SATNUM[prologue["SatelliteDefinition"]["SatelliteId"]]
@@ -146,6 +154,13 @@ class MSGHRITLoader(GenericLoader):
         md.calibration_unit = ""
 
         return md
+
+    def load(self, channels, area_extent=None, calibrate='1'):
+        """Load the data"""
+
+        if len(channels) != 1:
+            raise IOError(
+                'Data loading requires one channel only at the moment!')
 
 
 def read_proheader(fp):

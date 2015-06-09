@@ -25,6 +25,7 @@
 
 import unittest
 import os.path
+from datetime import datetime
 from mipp.satellites.msg_hrit import MSGHRITLoader
 
 DATADIR = (os.path.dirname(__file__) or '.') + '/data'
@@ -36,6 +37,8 @@ MSG_FILES = [DATADIR + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111
              '/H-000-MSG2__-MSG2________-IR_108___-000005___-201010111400-__',
              DATADIR + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
 
+PROJ4_STRING = "proj=geos lon_0=0.00 lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"
+
 
 class TestReadData(unittest.TestCase):
 
@@ -45,9 +48,8 @@ class TestReadData(unittest.TestCase):
     def test_msg(self):
         """Test read some msg image data"""
 
-        #loader = msg_hrit.load(files=msg_files, calibrate=2)
-        #mda, img = loader[1656:1956, 1756:2656]
-        pass
+        loader = MSGHRITLoader('meteosat10', files=MSG_FILES, calibrate=2)
+        mda, img = loader[1656:1956, 1756:2656]
 
     def tearDown(self):
         """Clean up"""
@@ -57,12 +59,23 @@ class TestReadData(unittest.TestCase):
 class TestReadMetaData(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.timestamp = datetime(2010, 10, 11, 14, 0, 0)
 
     def test_read_metadata(self):
         """Test read msg metadata"""
 
         loader = MSGHRITLoader('meteosat10', files=MSG_FILES)
+        self.assertEqual(loader.mda.coff, 1856)
+        self.assertEqual(loader.mda.loff, 1856)
+        self.assertEqual(loader.mda.image_size[0], 3712)
+        self.assertEqual(loader.mda.image_size[1], 3712)
+        self.assertEqual(loader.mda.number_of_columns, 3712)
+        self.assertEqual(loader.mda.proj4_str, PROJ4_STRING)
+        self.assertAlmostEqual(loader.mda.sublon, 0.0, 4)
+        self.assertEqual(loader.mda.satname, 'msg2')
+        self.assertEqual(loader.mda.satnumber, '09')
+        self.assertEqual(loader.mda.time_stamp, self.timestamp)
+
         print loader.mda
 
     def tearDown(self):

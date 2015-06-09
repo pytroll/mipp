@@ -50,23 +50,23 @@ class GenericLoader(object):
         self.image = None
         if timeslot:
             # Get list of files from the timeslot
-            #1 read config
+            # 1 read config
             ####
 
-
-
-            #2 filter the files for this specific date
+            # 2 filter the files for this specific date
             # set the files attribute
             pass
+
         elif files:
             self.files = files
         else:
             raise IOError("Either files or timeslot needs to be provided!")
         self.mda = self._get_metadata()
+
     def __getitem__(self, slice):
         pass
 
-    def load(self, area_extent=None, channels=None, calibrate="1"):
+    def load(self, channels, area_extent=None, calibrate="1"):
         self._channels = channels
         self.mda.area_extent = area_extent
         return self.__getitem__(self._get_slice_obj())
