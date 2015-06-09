@@ -42,7 +42,7 @@ class GenericLoader(object):
     """ Generic loader for geostationary satellites
     """
 
-    def __init__(self, satid, channels=None, timeslot=None, files=None):
+    def __init__(self, satid=None, channels=None, timeslot=None, files=None):
         """ Locate files and read metadata.
             There
         """
