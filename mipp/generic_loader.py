@@ -51,13 +51,13 @@ class GenericLoader(object):
         if timeslot:
             # Get list of files from the timeslot
             #1 read config
-
+            ####
 
 
 
             #2 filter the files for this specific date
             # set the files attribute
-
+            pass
         elif files:
             self.files = files
         else:
