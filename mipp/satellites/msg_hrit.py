@@ -169,7 +169,7 @@ class MSGHRITLoader(GenericLoader):
         md.calibration_unit = ""
 
         return md
-
+    
     def load(self, area_extent=None, calibrate=1):
         """Load the data"""
 
@@ -184,17 +184,73 @@ class MSGHRITLoader(GenericLoader):
         from mipp.xrit.loader import ImageLoader
 
         #
-        # Return a proxy slicer
+        # Call generic slicer
         #
-        mask = False
-        mda, img = ImageLoader(self.mda, decomp_files)(area_extent)
+        slice_obj = self._area_extent_to_slice(area_extent)
+        mda, img = super(MSGHRITLoader, self).__getitem__(slice_obj)
 
+        #
+        # Calibrate
+        #
         from mipp.satellites.msg_calibrate import Calibrator
         # Note: teach Calibrator to use mda instead of prologue
         img, unit = Calibrator(self.prologue, self.mda.channel_id)(
             img, calibrate=calibrate)
         mda.calibration_unit = unit
         return mda, img
+
+    def _area_extent_to_slice(self, area_extent):
+        """Slice according to (ll_x, ll_y, ur_x, ur_y) or read full disc.
+        """
+        if area_extent == None:
+            # full disc
+            return None
+
+        # slice
+        area_extent = tuple(area_extent)
+        if len(area_extent) != 4:
+            raise TypeError, "optional argument must be an area_extent"
+
+        ns_, ew_ = self.mda.first_pixel.split()
+
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - self.mda.loff - 1
+        else:
+            loff = self.mda.loff - 1
+
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - self.mda.coff - 1
+        else:
+            coff = self.mda.coff - 1
+
+        try:
+            row_size = self.mda.xscale
+            col_size = self.mda.yscale
+        except AttributeError:
+            row_size = self.mda.pixel_size[0]
+            col_size = self.mda.pixel_size[1]
+
+        logger.debug('area_extent: %.2f, %.2f, %.2f, %.2f' %
+                     tuple(area_extent))
+        logger.debug('area_extent: resolution %.2f, %.2f' %
+                     (row_size, col_size))
+        logger.debug('area_extent: loff, coff %d, %d' % (loff, coff))
+        logger.debug('area_extent: expected size %d, %d' %
+                     (int(numpy.round((area_extent[2] - area_extent[0]) / col_size)),
+                      int(numpy.round((area_extent[3] - area_extent[1]) / row_size))))
+
+        col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
+        row_stop = int(numpy.round(area_extent[1] / -row_size + loff - 0.5))
+        col_stop = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
+        row_start = int(numpy.round(area_extent[3] / -row_size + loff + 0.5))
+
+        row_stop += 1
+        col_stop += 1
+
+        logger.debug('area_extent: computed size %d, %d' %
+                     (col_stop - col_start, row_stop - row_start))
+
+        return (slice(row_start, row_stop), slice(col_start, col_stop))
 
 def read_proheader(fp):
     """Read the msg header.
