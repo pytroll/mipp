@@ -46,6 +46,7 @@ class Metadata(object):
         self.calibration_unit = 'unknown'
         self.satellite_id = ''
         self.sensor = 'unknown'
+        self.region_name = 'unknown'
 
         self._info = {}
 
