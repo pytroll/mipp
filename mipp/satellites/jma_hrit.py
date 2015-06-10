@@ -452,7 +452,7 @@ if __name__ == '__main__':
     #md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
     #md, d = hf.load(area_extent=(-2661089,-2845580 , -2189189,-2484642))
     #md, d = hf.load(area_extent=(-3100607.812,1874039.062 , -2772257.812,2142576.562))
-    md, d = hf.load(area_extent=(-790967.513,3315904.763, 151354.087,4346613.562))
+    md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
 
     print md
     from pylab import imshow, show
