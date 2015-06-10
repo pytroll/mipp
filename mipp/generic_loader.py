@@ -42,7 +42,7 @@ class GenericLoader(object):
     """ Generic loader for geostationary satellites
     """
 
-    def __init__(self, satid=None, channels=None, timeslot=None, files=None):
+    def __init__(self, channels, satid=None, timeslot=None, files=None):
         """ Locate files and read metadata.
             There
         """
@@ -70,6 +70,9 @@ class GenericLoader(object):
                     raise ValueError(
                         'satid argument can not be omitted or be None')
                 # get the config
+
+                # Note: use trollsift (in new satellite config files) ?
+                
                 config = cfg.read_config(satid)
                 # some confusin exists about the levels in the config file
                 # it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
@@ -92,7 +95,7 @@ class GenericLoader(object):
     def __getitem__(self, slice):
         pass
 
-    def load(self, area_extent=None, calibrate="1"):
+    def load(self, area_extent=None, calibrate=1):
         self.mda.area_extent = area_extent
         return self.__getitem__(self._get_slice_obj())
 

@@ -45,11 +45,25 @@ class TestReadData(unittest.TestCase):
     def setUp(self):
         self.decompressed_msg_files = []
 
-    def test_msg(self):
+    def test_msg_nocalib(self):
         """Test read some msg image data"""
 
-        loader = MSGHRITLoader('meteosat10', files=MSG_FILES, calibrate=2)
-        mda, img = loader[1656:1956, 1756:2656]
+        loader = MSGHRITLoader(channels=[''], files=MSG_FILES)
+        mda, img = loader.load(calibrate=0)
+        arr = img[1656:1956, 1756:2656]
+        self.assertTrue(arr.shape == (300, 900))
+        self.assertEqual(arr.sum(), 121795059)
+
+    def test_msg_calib(self):
+        """Test read some msg image data"""
+
+        loader = MSGHRITLoader(channels=[''], files=MSG_FILES)
+        mda, img = loader.load(calibrate=1)
+        arr = img[1656:1956, 1756:2656]
+        self.assertTrue(arr.shape == (300, 900))
+        print arr.sum()
+        self.assertAlmostEqual(arr.sum(), 75116847.2632, 3)
+        print mda
 
     def tearDown(self):
         """Clean up"""
@@ -76,7 +90,7 @@ class TestReadMetaData(unittest.TestCase):
         self.assertEqual(loader.mda.satnumber, '09')
         self.assertEqual(loader.mda.time_stamp, self.timestamp)
 
-        print loader.mda
+        ##print loader.mda
 
     def tearDown(self):
         """Clean up"""

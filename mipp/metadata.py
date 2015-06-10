@@ -38,6 +38,8 @@ class Metadata(object):
         self.timestamp = None
         self.number_of_segments = 0
         self.resolution = None
+        self.xscale = None
+        self.yscale = None
         self.proj4_str = 'unknown'
         self.projection = 'unknown'
         self.sublon = None

@@ -25,13 +25,15 @@
 """A reader for the MSG HRIT (EUMETCast disseminated) data
 """
 
+import os
+from StringIO import StringIO
+import numpy as np
+
 from mipp.xrit import _xrit
 from mipp.xrit import bin_reader as rbin
 from mipp.generic_loader import GenericLoader
 from mipp.metadata import Metadata
-import os.path
-from StringIO import StringIO
-import numpy as np
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -48,14 +50,16 @@ class MSGHRITLoader(GenericLoader):
 
     """Loader for MSG data"""
 
-    def __init__(self, satid, timeslot=None, files=None):
+    def __init__(self, channels, satid=None, timeslot=None, files=None):
 
         self.image_filenames = []
         self.prologue_filename = None
         self.epilogue_filename = None
+        self.prologue = None
+        self.epilogue = None
 
-        super(MSGHRITLoader, self).__init__(
-            satid, timeslot=timeslot, files=files)
+        super(MSGHRITLoader, self).__init__(channels,
+                                            satid=satid, timeslot=timeslot, files=files)
 
     def _identify_files(self):
         """Find the epilogue and the prologue files from the set of files provided 
@@ -68,6 +72,8 @@ class MSGHRITLoader(GenericLoader):
                 self.prologue_filename = filename
             else:
                 self.image_filenames.append(filename)
+
+        self.image_filenames.sort()
 
     def _get_metadata(self):
         """ Selected items from the MSG prologue file.
@@ -82,65 +88,74 @@ class MSGHRITLoader(GenericLoader):
         epilogue = _xrit.read_epilogue(self.epilogue_filename)
 
         fp = StringIO(prologue.data)
-        prologue = read_proheader(fp)
+        self.prologue = read_proheader(fp)
 
         fp = StringIO(epilogue.data)
-        epilogue = read_epiheader(fp)
+        self.epilogue = read_epiheader(fp)
 
         im = _xrit.read_imagedata(self.image_filenames[0])
 
+        self.channels = [im.product_name]
+
         md = Metadata()
-        #md.calibrate = _Calibrator(prologue, im.product_name)
+        #md.calibrate = _Calibrator(self.prologue, im.product_name)
+
+        if 'HRV' in im.product_name:
+            md.xscale = 1000.134348869
+            md.yscale = 1000.134348869
+        else:
+            md.xscale = 3000.403165817
+            md.yscale = 3000.403165817
 
         md.projection = im.navigation.proj_name.lower()
-        md.sublon = prologue["ProjectionDescription"]["LongitudeOfSSP"]
+        md.sublon = self.prologue["ProjectionDescription"]["LongitudeOfSSP"]
         md.proj4_str = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00" % md.sublon
         md.product_name = im.product_id
         md.channel_id = im.product_name
         if md.channel_id == "HRV":
-            md.number_of_columns = prologue[
+            md.number_of_columns = self.prologue[
                 "ReferenceGridHRV"]["NumberOfColumns"]
-            md.number_of_lines = prologue["ReferenceGridHRV"]["NumberOfLines"]
+            md.number_of_lines = self.prologue["ReferenceGridHRV"]["NumberOfLines"]
         else:
-            md.number_of_columns = prologue[
+            md.number_of_columns = self.prologue[
                 "ReferenceGridVIS_IR"]["NumberOfColumns"]
-            md.number_of_lines = prologue[
+            md.number_of_lines = self.prologue[
                 "ReferenceGridVIS_IR"]["NumberOfLines"]
 
         md.image_size = np.array((md.number_of_columns,
                                   md.number_of_lines))
 
         md.satname = im.platform.lower()
-        md.satnumber = SATNUM[prologue["SatelliteDefinition"]["SatelliteId"]]
+        md.satnumber = SATNUM[self.prologue["SatelliteDefinition"]["SatelliteId"]]
         logger.debug("%s %s", md.satname, md.satnumber)
         md.product_type = 'full disc'
         md.region_name = 'full disc'
         if md.channel_id == "HRV":
-            md.first_pixel = prologue["ReferenceGridHRV"]["GridOrigin"]
+            md.first_pixel = self.prologue["ReferenceGridHRV"]["GridOrigin"]
             dummy, ew_ = md.first_pixel.split()
             md.boundaries = np.array([[
-                epilogue["LowerSouthLineActual"],
-                epilogue["LowerNorthLineActual"],
-                epilogue["LowerEastColumnActual"],
-                epilogue["LowerWestColumnActual"]],
-                [epilogue["UpperSouthLineActual"],
-                 epilogue["UpperNorthLineActual"],
-                 epilogue["UpperEastColumnActual"],
-                 epilogue["UpperWestColumnActual"]]])
+                self.epilogue["LowerSouthLineActual"],
+                self.epilogue["LowerNorthLineActual"],
+                self.epilogue["LowerEastColumnActual"],
+                self.epilogue["LowerWestColumnActual"]],
+                [self.epilogue["UpperSouthLineActual"],
+                 self.epilogue["UpperNorthLineActual"],
+                 self.epilogue["UpperEastColumnActual"],
+                 self.epilogue["UpperWestColumnActual"]]])
 
-            md.coff = (epilogue["Lower" + ew_.capitalize() + "ColumnActual"]
+            md.coff = (self.epilogue["Lower" + ew_.capitalize() + "ColumnActual"]
                        + im.navigation.coff - 1)
             md.loff = im.navigation.loff + \
                 segment_size * (im.segment.seg_no - 1)
 
         else:
-            md.first_pixel = prologue["ReferenceGridVIS_IR"]["GridOrigin"]
+            md.first_pixel = self.prologue["ReferenceGridVIS_IR"]["GridOrigin"]
             dummy, ew_ = md.first_pixel.split()
             md.boundaries = np.array([[
-                epilogue["SouthernLineActual"],
-                epilogue["NorthernLineActual"],
-                epilogue["EasternColumnActual"],
-                epilogue["WesternColumnActual"]]])
+                self.epilogue["SouthernLineActual"],
+                self.epilogue["NorthernLineActual"],
+                self.epilogue["EasternColumnActual"],
+                self.epilogue["WesternColumnActual"]]])
 
             md.coff = im.navigation.coff
             md.loff = im.navigation.loff + \
@@ -155,13 +170,31 @@ class MSGHRITLoader(GenericLoader):
 
         return md
 
-    def load(self, channels, area_extent=None, calibrate='1'):
+    def load(self, area_extent=None, calibrate=1):
         """Load the data"""
 
-        if len(channels) != 1:
+        if len(self.channels) != 1:
             raise IOError(
                 'Data loading requires one channel only at the moment!')
 
+        # Check if the files are xrit-compressed, and decompress them
+        # accordingly:
+        decomp_files = decompress(self.image_filenames)
+
+        from mipp.xrit.loader import ImageLoader
+
+        #
+        # Return a proxy slicer
+        #
+        mask = False
+        mda, img = ImageLoader(self.mda, decomp_files)(area_extent)
+
+        from mipp.satellites.msg_calibrate import Calibrator
+        # Note: teach Calibrator to use mda instead of prologue
+        img, unit = Calibrator(self.prologue, self.mda.channel_id)(
+            img, calibrate=calibrate)
+        mda.calibration_unit = unit
+        return mda, img
 
 def read_proheader(fp):
     """Read the msg header.
@@ -673,8 +706,43 @@ def read_epiheader(fp):
     return epilogue
 
 
+def decompress(infiles, **options):
+    """Check if the files are xrit-compressed, and decompress them
+    accordingly:
+    """
+    if 'outdir' in options:
+        cmd = options['outdir']
+    else:
+        cmd = os.environ.get('XRIT_DECOMPRESS_OUTDIR', None)
+
+    if not cmd:
+        logger.info("XRIT_DECOMPRESS_OUTDIR is not defined. " +
+                    "The decompressed files will be put in " +
+                    "the same directory as compressed ones")
+
+    decomp_files = []
+    for filename in infiles:
+        if filename.endswith('C_'):
+            # Try decompress it:
+            logger.debug('Try decompressing ' + filename)
+            if cmd:
+                outdir = cmd
+            else:
+                outdir = os.path.dirname(filename)
+            outfile = _xrit.decompress(filename, outdir)
+            decomp_files.append(outfile)
+        else:
+            decomp_files.append(filename)
+
+    return decomp_files
+
+
 if __name__ == '__main__':
     import sys
+    from glob import glob
 
     files = sys.argv[1:]
-    this = MSGHRITLoader('meteosat10', files=files)
+    files = (glob('/home/a000680/data/hrit/*IR_108*000008___-201504211100*') +
+             glob('/home/a000680/data/hrit/*EPI*201504211100*') +
+             glob('/home/a000680/data/hrit/*PRO*201504211100*'))
+    this = MSGHRITLoader(channels=['HRV'], files=files)
