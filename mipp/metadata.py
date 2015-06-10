@@ -42,6 +42,7 @@ class Metadata(object):
         self.projection = 'unknown'
         self.sublon = None
         self.calibration_unit = 'unknown'
+        self.channel_names = []
         self.satellite_id = ''
         self.sensor = 'unknown'
 
