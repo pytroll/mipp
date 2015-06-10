@@ -178,7 +178,6 @@ class HRITHeader(object):
 
         return str(self.records)
 
-
 class HRITSegment(object):
     """
         Represents a JMA HRIT Image segment.
@@ -246,12 +245,12 @@ class JMAHRITLoader(GenericLoader):
 
 
 
-    def __init__(self, satid=None, timeslot=None, files=None):
+    def __init__(self, satid=None, channels=None, timeslot=None, files=None):
         #call the superclass constructor
-        super(JMAHRITLoader, self).__init__(satid=satid, timeslot=timeslot, files=files)
+        super(JMAHRITLoader, self).__init__(satid=satid, channels=channels, timeslot=timeslot, files=files)
 
-
-    def _getmetadata(self):
+    def _get_metadata(self):
+        print 'metadata'
         #JMA specific attributes
         self.basename = self.files[0].split('/')[-1][:-4]
         self.segments = []
@@ -381,18 +380,78 @@ class JMAHRITLoader(GenericLoader):
         mda.number_of_segments = self.nsegs
         mda.proj4_str = self.proj4_str
         mda.projection = self.segments[0].header.records['Image Navigation']['Projection_Name']
+        mda.xscale = self.resolution
+        mda.yscale = self.resolution
         mda.sublon = self.SSP
         mda.calibration_unit = 'counts'
         mda.satellite_id = 'MTSAT-1R|2'
         mda.sensor = '1R|2'
+        return mda
+    def YX2lc(self, X=None,Y=None, coff=None, loff=None, resolution=None):
+        """
+        Transforms Geostationary coordinates X/Y to mtsat line/col as per scene type (FD, NH, SH)
+        http://lists.osgeo.org/pipermail/gdal-dev/2007-November/014954.html
+        c = COFF + X / ColumnDirGridStep
+        :param X: geostationary MTSAT x axis coordinate
+        :param Y: geostationary MTSAT y axis coordinate
+        :param loff: line offset
+        :param coff: column offset
+        :param resolution:
+        :return:
+        """
 
-        self._info = {}
+        if Y is None or X is None:
+            return None, None
+
+        c = int(round((coff + X / resolution)+0.5))
+        l = int(round(abs(loff + Y / resolution)+0.5))
+
+        return l, c
+
+    @property
+    def data(self):
+        """
+            Collects the data chunk from individual segments into one big numpy array
+        """
+        if self._data is None:
+            self._data = np.zeros(self.shape, dtype='u2')
+            for s in self.segments:
+                seg_start_line = (s.SEG_NUM-1)*s.NL
+                seg_end_line = s.SEG_NUM*s.NL
+                self._data[seg_start_line:seg_end_line,:] = s.data
+        return self._data
+
+    def load(self, area_extent=None, calibrate="1"):
+        """
+
+        """
+        _data = np.zeros(self.shape, dtype='u2')
+        for s in self.segments:
+            seg_start_line = (s.SEG_NUM-1)*s.NL
+            seg_end_line = s.SEG_NUM*s.NL
+            _data[seg_start_line:seg_end_line,:] = s.data
+        if area_extent:
+            print area_extent
+            xmin, ymin = area_extent[0], area_extent[1]
+            xmax, ymax = area_extent[2], area_extent[3]
+            sy, sx = self.YX2lc(X=xmin, Y=ymin, coff=self.COFF, loff=self.LOFF, resolution=self.resolution)
+            ey, ex = self.YX2lc(X=xmax, Y=ymax, coff=self.COFF, loff=self.LOFF, resolution=self.resolution)
+            return self.mda, _data[sy:ey,sx:ex]
+        else:
+           return self.mda, _data
+
+
+
+
+
 
 if __name__ == '__main__':
     import glob
     import datetime
     fp = '/home/jano/pytroll/data/IMG_DK01IR1_200703220030_001'
     hrit_files = glob.glob(fp.replace('001', '*'))
-
     hf = JMAHRITLoader(files=hrit_files)
-    hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
+    #hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
+    md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
+    print d.shape
+    print md
