@@ -8,6 +8,8 @@
 # Author(s):
 
 #   Lars Orum Rasmussen <loerum@gmail.com>
+#   Adam Dybbroe <adam.dybbroe@smhi.se>
+#   Sauli Joro <sauli.joro@eumetsat.int>
 
 # This file is part of mipp.
 
@@ -46,6 +48,6 @@ setup(name='mipp',
       url="https://github.com/loerum/mipp",
       version=version.__version__,
       packages=['mipp', 'mipp.xrit', 'mipp.xsar',
-                  'mipp.satellites'],
+                'mipp.satellites', 'mipp.native'],
       zip_safe=False,
       )
