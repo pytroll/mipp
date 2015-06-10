@@ -37,10 +37,6 @@ logger = logging.getLogger('mipp')
 PPP_CFG_VARNAME = 'PPP_CONFIG_DIR'
 
 
-def _null_converter(blob):
-    return blob
-
-
 class GenericLoader(object):
 
     """ Generic loader for geostationary satellites
@@ -99,10 +95,15 @@ class GenericLoader(object):
         self.mda = self._get_metadata()
 
     def __getitem__(self, item):
-        # from mipp.xrit.loader import ImageLoader
-        # return ImageLoader(self.mda, self.image_filenames).__getitem__(slice)
         """Default slicing, handles rotated images.
         """
+        do_mask = True
+        allrows = slice(0, self.mda.image_size[0])  # !!!
+        allcolumns = slice(0, self.mda.image_size[0])
+
+
+        # from mipp.xrit.loader import ImageLoader
+        # return ImageLoader(self.mda, self.image_filenames).__getitem__(slice)
         rows, columns = self._handle_slice(item)
         ns_, ew_ = self.mda.first_pixel.split()
         if ns_ == 'south':
@@ -112,12 +113,71 @@ class GenericLoader(object):
             columns = slice(self.mda.image_size[0] - columns.stop,
                             self.mda.image_size[0] - columns.start)
 
-        # Does not handle HRV data!
-        # See xrit.loader.py
-        # FIXME!
         rows, columns = self._handle_slice((rows, columns))
-        img = self._read(rows, columns)
+        if not hasattr(self.mda, "boundaries"):
+            img = self._read(rows, columns)
 
+        else:
+            #
+            # Here we handle the case of partly defined channels.
+            # (for example MSG's HRV channel)
+            #
+            img = None
+
+            for region in (self.mda.boundaries - 1):
+                rlines = slice(region[0], region[1] + 1)
+                rcols = slice(region[2], region[3] + 1)
+
+                # check is we are outside the region
+                if (rows.start > rlines.stop or
+                    rows.stop < rlines.start or
+                    columns.start > rcols.stop or
+                    columns.stop < rcols.start):
+                    continue
+
+                lines = slice(max(rows.start, rlines.start),
+                              min(rows.stop, rlines.stop))
+                cols = slice(max(columns.start, rcols.start) - rcols.start,
+                             min(columns.stop, rcols.stop) - rcols.start)
+                rdata = self._read(lines, cols)
+                lines = slice(max(rows.start, rlines.start) - rows.start,
+                              min(rows.stop, rlines.stop) - rows.start)
+                cols = slice(max(columns.start, rcols.start) - columns.start,
+                             min(columns.stop, rcols.stop) - columns.start)
+                if img is None:
+                    img = (numpy.zeros((rows.stop - rows.start,
+                                        columns.stop - columns.start),
+                                       dtype=rdata.dtype)
+                           + self.mda.no_data_value)
+                    if do_mask:
+                        img = numpy.ma.masked_all_like(img)
+
+                if ns_ == "south":
+                    lines = slice(img.shape[0] - lines.stop,
+                                  img.shape[0] - lines.start)
+                if ew_ == "east":
+                    cols = slice(img.shape[1] - cols.stop,
+                                 img.shape[1] - cols.start)
+                if do_mask:
+                    img.mask[lines, cols] = rdata.mask
+                img[lines, cols] = rdata
+
+        if not hasattr(img, 'shape'):
+            logger.warning("Produced no image")
+            return None, None
+
+        #
+        # Update meta-data
+        #
+        self.mda.area_extent = numpy.array(
+            self._slice2extent(rows, columns, rotated=True), dtype=numpy.float64)
+
+        if (rows != allrows) or (columns != allcolumns):
+            self.mda.region_name = 'sliced'
+
+        self.mda.image_size = numpy.array([img.shape[1], img.shape[0]])
+
+        # return mipp.mda.mslice(mda), image
         return self.mda, img
 
     def _handle_slice(self, item):
@@ -163,203 +223,49 @@ class GenericLoader(object):
 
         return rows, columns
 
-    def _read(self, rows, columns):
-        """Here we need the following metadata:
-
-        .image_size
-        .data_type (8, 10, 16 ...)
-        .first_pixel
-        .no_data_value
-        .line_offset
+    def _slice2extent(self, rows, columns, rotated=True):
+        """ Calculate area extent.
+        If rotated=True then rows and columns are reflecting the actual rows and columns.
         """
-        from mipp.xrit import _xrit, convert
+        ns_, ew_ = self.mda.first_pixel.split()
 
-        shape = (rows.stop - rows.start, columns.stop - columns.start)
-        if (columns.start < 0 or
-                columns.stop > self.mda.image_size[0] or
-                rows.start < 0 or
-                rows.stop > self.mda.image_size[1]):
-            raise IndexError, "index out of range"
-
-        image_files = self.image_filenames
-
-        #
-        # Order segments
-        #
-        segments = {}
-        for f in image_files:
-            s = _xrit.read_imagedata(f)
-            segments[s.segment.seg_no] = f
-
-        start_seg_no = s.segment.planned_start_seg_no
-        end_seg_no = s.segment.planned_end_seg_no
-        ncols = s.structure.nc
-        segment_nlines = s.structure.nl
-
-        #
-        # Data type
-        #
-        converter = _null_converter
-        if self.mda.data_type == 8:
-            data_type = numpy.uint8
-            data_type_len = 8
-        elif self.mda.data_type == 10:
-            converter = convert.dec10216
-            data_type = numpy.uint16
-            data_type_len = 16
-        elif self.mda.data_type == 16:
-            data_type = numpy.uint16
-            data_type_len = 16
+        loff = self.mda.loff
+        coff = self.mda.coff
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - loff - 1
+            if rotated:
+                rows = slice(self.mda.image_size[1] - rows.stop,
+                             self.mda.image_size[1] - rows.start)
         else:
-            raise IOError("unknown data type: %d" % self.mda.data_type +
-                          " bit per pixel")
-
-        #
-        # Calculate initial and final line and column.
-        # The interface 'load(..., center, size)' will produce
-        # correct values relative to the image orientation.
-        # line_init, line_end : 1-based
-        #
-        line_init = rows.start + 1
-        line_end = line_init + rows.stop - rows.start - 1
-        col_count = shape[1]
-        col_offset = (columns.start) * data_type_len // 8
-
-        #
-        # Calculate initial and final segments
-        # depending on the image orientation.
-        # seg_init, seg_end : 1-based.
-        #
-        seg_init = ((line_init - 1) // segment_nlines) + 1
-        seg_end = ((line_end - 1) // segment_nlines) + 1
-
-        #
-        # Calculate initial line in image, line increment
-        # offset for columns and factor for columns,
-        # and factor for columns, depending on the image
-        # orientation
-        #
-        if self.mda.first_pixel == 'north west':
-            first_line = 0
-            increment_line = 1
-            factor_col = 1
-        elif self.mda.first_pixel == 'north east':
-            first_line = 0
-            increment_line = 1
-            factor_col = -1
-        elif self.mda.first_pixel == 'south west':
-            first_line = shape[0] - 1
-            increment_line = -1
-            factor_col = 1
-        elif self.mda.first_pixel == 'south east':
-            first_line = shape[0] - 1
-            increment_line = -1
-            factor_col = -1
+            loff -= 1
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - coff - 1
+            if rotated:
+                columns = slice(self.mda.image_size[0] - columns.stop,
+                                self.mda.image_size[0] - columns.start)
         else:
-            raise IOError("unknown geographical orientation of " +
-                          "first pixel: '%s'" % self.mda.first_pixel)
+            coff -= 1
 
-        #
-        # Generate final image with no data
-        #
-        image = numpy.zeros(shape, dtype=data_type) + self.mda.no_data_value
+        logger.debug('slice2extent: size %d, %d' %
+                     (columns.stop - columns.start, rows.stop - rows.start))
+        rows = slice(rows.start, rows.stop - 1)
+        columns = slice(columns.start, columns.stop - 1)
 
-        #
-        # Begin the segment processing.
-        #
-        seg_no = seg_init
-        line_in_image = first_line
-        while seg_no <= seg_end:
-            line_in_segment = 1
+        row_size = self.mda.xscale
+        col_size = self.mda.yscale
 
-            #
-            # Calculate initial line in actual segment.
-            #
-            if seg_no == seg_init:
-                init_line_in_segment = (line_init
-                                        - (segment_nlines * (seg_init - 1)))
-            else:
-                init_line_in_segment = 1
+        ll_x = (columns.start - coff - 0.5) * col_size
+        ll_y = -(rows.stop - loff + 0.5) * row_size
+        ur_x = (columns.stop - coff + 0.5) * col_size
+        ur_y = -(rows.start - loff - 0.5) * row_size
 
-            #
-            # Calculate final line in actual segment.
-            #
-            if seg_no == seg_end:
-                end_line_in_segment = line_end - \
-                    (segment_nlines * (seg_end - 1))
-            else:
-                end_line_in_segment = segment_nlines
+        logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f' %
+                     (ll_x, ll_y, ur_x, ur_y))
+        logger.debug('slice2extent: computed size %d, %d' %
+                     (int(numpy.round((ur_x - ll_x) / col_size)),
+                      int(numpy.round((ur_y - ll_y) / row_size))))
 
-            #
-            # Open segment file.
-            #
-            seg_file = segments.get(seg_no, None)
-            if not seg_file:
-                #
-                # No data for this segment.
-                #
-                logger.warning("Segment number %d not found" % seg_no)
-
-                # all image lines are already set to no-data count.
-                line_in_segment = init_line_in_segment
-                while line_in_segment <= end_line_in_segment:
-                    line_in_segment += 1
-                    line_in_image += increment_line
-            else:
-                #
-                # Data for this segment.
-                #
-                logger.info("Read %s" % seg_file)
-                seg = _xrit.read_imagedata(seg_file)
-
-                #
-                # Skip lines not processed.
-                #
-                while line_in_segment < init_line_in_segment:
-                    line = seg.readline()
-                    line_in_segment += 1
-
-                #
-                # Reading and processing segment lines.
-                #
-                while line_in_segment <= end_line_in_segment:
-                    line = seg.readline()[self.mda.line_offset:]
-                    line = converter(line)
-
-                    line = (numpy.frombuffer(line,
-                                             dtype=data_type,
-                                             count=col_count,
-                                             offset=col_offset)[::factor_col])
-
-                    #
-                    # Insert image data.
-                    #
-                    image[line_in_image] = line
-
-                    line_in_segment += 1
-                    line_in_image += increment_line
-
-                seg.close()
-
-            seg_no += 1
-
-        #
-        # Compute mask before calibration
-        #
-
-        mask = (image == self.mda.no_data_value)
-
-        #
-        # With or without mask ?
-        #
-        do_mask = True
-        if do_mask and not isinstance(image, numpy.ma.core.MaskedArray):
-            image = numpy.ma.array(image, mask=mask, copy=False)
-        elif ((not do_mask) and
-                isinstance(image, numpy.ma.core.MaskedArray)):
-            image = image.filled(self.mda.no_data_value)
-
-        return image
+        return [ll_x, ll_y, ur_x, ur_y]
 
     def load(self, area_extent=None, calibrate=1):
         """Specific loader will overwrite this
