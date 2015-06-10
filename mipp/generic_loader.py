@@ -55,7 +55,7 @@ class GenericLoader(object):
                 raise TypeError(
                     'Files argument has to be an iterable containing string ' +
                     'elements representing full path to HRIT files')
-            self.files = files
+            self.files = sorted(files)
 
         else:
 
