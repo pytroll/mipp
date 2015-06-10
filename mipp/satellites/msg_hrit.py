@@ -25,13 +25,15 @@
 """A reader for the MSG HRIT (EUMETCast disseminated) data
 """
 
+import os
+from StringIO import StringIO
+import numpy as np
+
 from mipp.xrit import _xrit
 from mipp.xrit import bin_reader as rbin
 from mipp.generic_loader import GenericLoader
 from mipp.metadata import Metadata
-import os
-from StringIO import StringIO
-import numpy as np
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,8 @@ class MSGHRITLoader(GenericLoader):
         self.image_filenames = []
         self.prologue_filename = None
         self.epilogue_filename = None
+        self.prologue = None
+        self.epilogue = None
 
         super(MSGHRITLoader, self).__init__(channels,
                                             satid=satid, timeslot=timeslot, files=files)
@@ -84,17 +88,17 @@ class MSGHRITLoader(GenericLoader):
         epilogue = _xrit.read_epilogue(self.epilogue_filename)
 
         fp = StringIO(prologue.data)
-        prologue = read_proheader(fp)
+        self.prologue = read_proheader(fp)
 
         fp = StringIO(epilogue.data)
-        epilogue = read_epiheader(fp)
+        self.epilogue = read_epiheader(fp)
 
         im = _xrit.read_imagedata(self.image_filenames[0])
 
         self.channels = [im.product_name]
 
         md = Metadata()
-        #md.calibrate = _Calibrator(prologue, im.product_name)
+        #md.calibrate = _Calibrator(self.prologue, im.product_name)
 
         if 'HRV' in im.product_name:
             md.xscale = 1000.134348869
@@ -104,54 +108,54 @@ class MSGHRITLoader(GenericLoader):
             md.yscale = 3000.403165817
 
         md.projection = im.navigation.proj_name.lower()
-        md.sublon = prologue["ProjectionDescription"]["LongitudeOfSSP"]
+        md.sublon = self.prologue["ProjectionDescription"]["LongitudeOfSSP"]
         md.proj4_str = "proj=geos lon_0=%.2f lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00" % md.sublon
         md.product_name = im.product_id
         md.channel_id = im.product_name
         if md.channel_id == "HRV":
-            md.number_of_columns = prologue[
+            md.number_of_columns = self.prologue[
                 "ReferenceGridHRV"]["NumberOfColumns"]
-            md.number_of_lines = prologue["ReferenceGridHRV"]["NumberOfLines"]
+            md.number_of_lines = self.prologue["ReferenceGridHRV"]["NumberOfLines"]
         else:
-            md.number_of_columns = prologue[
+            md.number_of_columns = self.prologue[
                 "ReferenceGridVIS_IR"]["NumberOfColumns"]
-            md.number_of_lines = prologue[
+            md.number_of_lines = self.prologue[
                 "ReferenceGridVIS_IR"]["NumberOfLines"]
 
         md.image_size = np.array((md.number_of_columns,
                                   md.number_of_lines))
 
         md.satname = im.platform.lower()
-        md.satnumber = SATNUM[prologue["SatelliteDefinition"]["SatelliteId"]]
+        md.satnumber = SATNUM[self.prologue["SatelliteDefinition"]["SatelliteId"]]
         logger.debug("%s %s", md.satname, md.satnumber)
         md.product_type = 'full disc'
         md.region_name = 'full disc'
         if md.channel_id == "HRV":
-            md.first_pixel = prologue["ReferenceGridHRV"]["GridOrigin"]
+            md.first_pixel = self.prologue["ReferenceGridHRV"]["GridOrigin"]
             dummy, ew_ = md.first_pixel.split()
             md.boundaries = np.array([[
-                epilogue["LowerSouthLineActual"],
-                epilogue["LowerNorthLineActual"],
-                epilogue["LowerEastColumnActual"],
-                epilogue["LowerWestColumnActual"]],
-                [epilogue["UpperSouthLineActual"],
-                 epilogue["UpperNorthLineActual"],
-                 epilogue["UpperEastColumnActual"],
-                 epilogue["UpperWestColumnActual"]]])
+                self.epilogue["LowerSouthLineActual"],
+                self.epilogue["LowerNorthLineActual"],
+                self.epilogue["LowerEastColumnActual"],
+                self.epilogue["LowerWestColumnActual"]],
+                [self.epilogue["UpperSouthLineActual"],
+                 self.epilogue["UpperNorthLineActual"],
+                 self.epilogue["UpperEastColumnActual"],
+                 self.epilogue["UpperWestColumnActual"]]])
 
-            md.coff = (epilogue["Lower" + ew_.capitalize() + "ColumnActual"]
+            md.coff = (self.epilogue["Lower" + ew_.capitalize() + "ColumnActual"]
                        + im.navigation.coff - 1)
             md.loff = im.navigation.loff + \
                 segment_size * (im.segment.seg_no - 1)
 
         else:
-            md.first_pixel = prologue["ReferenceGridVIS_IR"]["GridOrigin"]
+            md.first_pixel = self.prologue["ReferenceGridVIS_IR"]["GridOrigin"]
             dummy, ew_ = md.first_pixel.split()
             md.boundaries = np.array([[
-                epilogue["SouthernLineActual"],
-                epilogue["NorthernLineActual"],
-                epilogue["EasternColumnActual"],
-                epilogue["WesternColumnActual"]]])
+                self.epilogue["SouthernLineActual"],
+                self.epilogue["NorthernLineActual"],
+                self.epilogue["EasternColumnActual"],
+                self.epilogue["WesternColumnActual"]]])
 
             md.coff = im.navigation.coff
             md.loff = im.navigation.loff + \
@@ -183,9 +187,14 @@ class MSGHRITLoader(GenericLoader):
         # Return a proxy slicer
         #
         mask = False
-        return ImageLoader(self.mda, decomp_files,
-                           mask=mask, calibrate=calibrate)(area_extent)
+        mda, img = ImageLoader(self.mda, decomp_files)(area_extent)
 
+        from mipp.satellites.msg_calibrate import Calibrator
+        # Note: teach Calibrator to use mda instead of prologue
+        img, unit = Calibrator(self.prologue, self.mda.channel_id)(
+            img, calibrate=calibrate)
+        mda.calibration_unit = unit
+        return mda, img
 
 def read_proheader(fp):
     """Read the msg header.
