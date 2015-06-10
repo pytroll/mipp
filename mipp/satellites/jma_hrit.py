@@ -178,7 +178,6 @@ class HRITHeader(object):
 
         return str(self.records)
 
-
 class HRITSegment(object):
     """
         Represents a JMA HRIT Image segment.
@@ -203,12 +202,12 @@ class HRITSegment(object):
             raise ValueError, '%s has wrong byte order. Expected big endian' % self.__class__.__name__
         #set pointer to byte 4, and read byte 5 to find out the total header length
         f.seek(4)
-        header_length = struct.unpack('%sI' % self.byte_order, f.read(4))[0]
+        self.header_length = struct.unpack('%sI' % self.byte_order, f.read(4))[0]
         #reset pointer
         f.seek(0)
 
         #1 create header
-        self.header = HRITHeader(buffer=f.read(header_length), byte_order=self.byte_order)
+        self.header = HRITHeader(buffer=f.read(self.header_length), byte_order=self.byte_order)
         self.NL = self.header.records['Image Structure']['NL']
         self.NC = self.header.records['Image Structure']['NC']
         self.NB = self.header.records['Image Structure']['NB']
@@ -224,18 +223,24 @@ class HRITSegment(object):
 
 
         self.shape = self.NL, self.NC
-        #2 grab data
-        #self.data = np.zeros((self.NL, self.NC), dtype=np.uint16)
+
 
         self.size = self.NL*self.NC
 
-        self.data = np.zeros(self.shape, dtype=np.uint16)
-        block = np.memmap(self._fpath, dtype='%su2' % self.byte_order, mode='r', offset=header_length,shape=self.shape)
-        self.data = block.copy()
-        del block
+        self._data = None
+
         f.close()
 
-
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = np.zeros(self.shape, dtype=np.uint16)
+            block = np.memmap(self._fpath, dtype='%su2' % self.byte_order, mode='r', offset=self.header_length,shape=self.shape)
+            self._data = block.copy()
+            del block
+            return self._data
+        else:
+            return self._data
 
 
 
@@ -246,12 +251,11 @@ class JMAHRITLoader(GenericLoader):
 
 
 
-    def __init__(self, satid=None, timeslot=None, files=None):
+    def __init__(self, satid=None, channels=None, timeslot=None, files=None):
         #call the superclass constructor
-        super(JMAHRITLoader, self).__init__(satid=satid, timeslot=timeslot, files=files)
+        super(JMAHRITLoader, self).__init__(satid=satid, channels=channels, timeslot=timeslot, files=files)
 
-
-    def _getmetadata(self):
+    def _get_metadata(self):
         #JMA specific attributes
         self.basename = self.files[0].split('/')[-1][:-4]
         self.segments = []
@@ -381,18 +385,76 @@ class JMAHRITLoader(GenericLoader):
         mda.number_of_segments = self.nsegs
         mda.proj4_str = self.proj4_str
         mda.projection = self.segments[0].header.records['Image Navigation']['Projection_Name']
+        mda.xscale = self.resolution
+        mda.yscale = self.resolution
         mda.sublon = self.SSP
         mda.calibration_unit = 'counts'
         mda.satellite_id = 'MTSAT-1R|2'
         mda.sensor = '1R|2'
+        return mda
 
-        self._info = {}
+
+
+
+    def load(self, area_extent=None, calibrate=1):
+        """
+
+        """
+        if area_extent:
+            col_start = int(round(area_extent[0] / self.mda.xscale + self.mda.coff + 0.5))
+            row_stop = int(round(area_extent[1] / - self.mda.yscale + self.mda.loff - 0.5))
+            col_stop = int(round(area_extent[2] / self.mda.xscale + self.mda.coff - 0.5))+1
+            row_start = int(round(area_extent[3] / -self.mda.yscale + self.mda.loff + 0.5))+1
+            segs_indices = []
+            for i,s in enumerate(self.segments):
+                seg_start_line = (s.SEG_NUM-1)*s.NL
+                seg_end_line = s.SEG_NUM*s.NL
+                if (row_start>seg_start_line and row_start<seg_end_line) or (row_stop>seg_start_line and row_stop<seg_end_line):
+                    segs_indices.append(i)
+
+            if len(segs_indices) == 1:
+                segs_indices.append(segs_indices[0]+1)
+            filtered_segs = self.segments[segs_indices[0]:segs_indices[1]]
+            first_seg = filtered_segs[0]
+
+            segnl, segnc,  = first_seg.NL, first_seg.NC
+            segn = first_seg.SEG_NUM-1
+
+            _data = np.zeros((segnl*len(filtered_segs), segnc), dtype='u2')
+            print _data.shape
+            for j, seg in enumerate(filtered_segs):
+                seg_start_line = j*s.NL
+                seg_end_line = seg_start_line + s.NL
+                _data[seg_start_line:seg_end_line,:] = seg.data
+            rel_row_start, rel_row_stop = row_start-segnl*segn, row_stop-segn*segnl
+            return self.mda, _data[rel_row_start:rel_row_stop,col_start:col_stop]
+        else:
+            _data = np.zeros(self.shape, dtype='u2')
+            for s in self.segments:
+                seg_start_line = (s.SEG_NUM-1)*s.NL
+                seg_end_line = s.SEG_NUM*s.NL
+                _data[seg_start_line:seg_end_line,:] = s.data
+            return self.mda, _data
+
+
+
+
+
 
 if __name__ == '__main__':
     import glob
     import datetime
-    fp = '/home/jano/pytroll/data/IMG_DK01IR1_200703220030_001'
+    #fp = '/home/jano/pytroll/data/IMG_DK01VIS_200703220030_001'
+    fp = '/home/jano/pytroll/data/IMG_DK01VIS_200706010230_001'
     hrit_files = glob.glob(fp.replace('001', '*'))
-
     hf = JMAHRITLoader(files=hrit_files)
-    hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
+    #hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
+    #md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
+    #md, d = hf.load(area_extent=(-2661089,-2845580 , -2189189,-2484642))
+    #md, d = hf.load(area_extent=(-3100607.812,1874039.062 , -2772257.812,2142576.562))
+    md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
+
+    print md
+    from pylab import imshow, show
+    imshow(d, cmap='gray', interpolation='nearest')
+    show()
