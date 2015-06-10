@@ -22,11 +22,10 @@ def _null_converter(blob):
 
 class ImageLoader(object):
 
-    def __init__(self, mda, image_files, mask=False, calibrate=False):
+    def __init__(self, mda, image_files):
         self.mda = mda
         self.image_files = image_files
-        self.do_mask = mask
-        self.do_calibrate = calibrate
+        self.do_mask = True
         # full disc and square
         self._allrows = slice(0, self.mda.image_size[0])  # !!!
         self._allcolumns = slice(0, self.mda.image_size[0])
@@ -38,7 +37,7 @@ class ImageLoader(object):
 
         # Don't mess with callers metadata.
         mda = copy.copy(self.mda)
-        rows, columns = self._handle_item(item)
+        rows, columns = self._handle_slice(item)
 
         ns_, ew_ = mda.first_pixel.split()
 
@@ -112,7 +111,7 @@ class ImageLoader(object):
     def __getitem__(self, item):
         """Default slicing, handles rotated images.
         """
-        rows, columns = self._handle_item(item)
+        rows, columns = self._handle_slice(item)
         ns_, ew_ = self.mda.first_pixel.split()
         if ns_ == 'south':
             rows = slice(self.mda.image_size[1] - rows.stop,
@@ -175,7 +174,7 @@ class ImageLoader(object):
 
         return self[row_start:row_stop, col_start:col_stop]
 
-    def _handle_item(self, item):
+    def _handle_slice(self, item):
         """Transform item into slice(s).
         """
         if isinstance(item, slice):
@@ -439,18 +438,18 @@ class ImageLoader(object):
         #
         # Calibrate ?
         #
-        mda.is_calibrated = False
-        if self.do_calibrate:
-            # do this before masking.
-            calibrate = self.do_calibrate
-            if isinstance(calibrate, bool):
-                # allow boolean True/False for 1/0
-                calibrate = int(calibrate)
-            image, mda.calibration_unit = mda.calibrate(
-                image, calibrate=calibrate)
-            mda.is_calibrated = True
-        else:
-            mda.calibration_unit = ""
+        ##mda.is_calibrated = False
+        ##if self.do_calibrate:
+        ##    # do this before masking.
+        ##    calibrate = self.do_calibrate
+        ##    if isinstance(calibrate, bool):
+        ##        # allow boolean True/False for 1/0
+        ##        calibrate = int(calibrate)
+        ##    image, mda.calibration_unit = mda.calibrate(
+        ##        image, calibrate=calibrate)
+        ##    mda.is_calibrated = True
+        ##else:
+        ##    mda.calibration_unit = ""
 
         #
         # With or without mask ?
