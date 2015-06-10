@@ -115,7 +115,8 @@ class MSGHRITLoader(GenericLoader):
         if md.channel_id == "HRV":
             md.number_of_columns = self.prologue[
                 "ReferenceGridHRV"]["NumberOfColumns"]
-            md.number_of_lines = self.prologue["ReferenceGridHRV"]["NumberOfLines"]
+            md.number_of_lines = self.prologue[
+                "ReferenceGridHRV"]["NumberOfLines"]
         else:
             md.number_of_columns = self.prologue[
                 "ReferenceGridVIS_IR"]["NumberOfColumns"]
@@ -126,7 +127,8 @@ class MSGHRITLoader(GenericLoader):
                                   md.number_of_lines))
 
         md.satname = im.platform.lower()
-        md.satnumber = SATNUM[self.prologue["SatelliteDefinition"]["SatelliteId"]]
+        md.satnumber = SATNUM[
+            self.prologue["SatelliteDefinition"]["SatelliteId"]]
         logger.debug("%s %s", md.satname, md.satnumber)
         md.product_type = 'full disc'
         md.region_name = 'full disc'
@@ -169,7 +171,7 @@ class MSGHRITLoader(GenericLoader):
         md.calibration_unit = ""
 
         return md
-    
+
     def load(self, area_extent=None, calibrate=1):
         """Load the data"""
 
@@ -180,8 +182,6 @@ class MSGHRITLoader(GenericLoader):
         # Check if the files are xrit-compressed, and decompress them
         # accordingly:
         decomp_files = decompress(self.image_filenames)
-
-        from mipp.xrit.loader import ImageLoader
 
         #
         # Call generic slicer
@@ -236,13 +236,13 @@ class MSGHRITLoader(GenericLoader):
                      (row_size, col_size))
         logger.debug('area_extent: loff, coff %d, %d' % (loff, coff))
         logger.debug('area_extent: expected size %d, %d' %
-                     (int(numpy.round((area_extent[2] - area_extent[0]) / col_size)),
-                      int(numpy.round((area_extent[3] - area_extent[1]) / row_size))))
+                     (int(np.round((area_extent[2] - area_extent[0]) / col_size)),
+                      int(np.round((area_extent[3] - area_extent[1]) / row_size))))
 
-        col_start = int(numpy.round(area_extent[0] / col_size + coff + 0.5))
-        row_stop = int(numpy.round(area_extent[1] / -row_size + loff - 0.5))
-        col_stop = int(numpy.round(area_extent[2] / col_size + coff - 0.5))
-        row_start = int(numpy.round(area_extent[3] / -row_size + loff + 0.5))
+        col_start = int(np.round(area_extent[0] / col_size + coff + 0.5))
+        row_stop = int(np.round(area_extent[1] / -row_size + loff - 0.5))
+        col_stop = int(np.round(area_extent[2] / col_size + coff - 0.5))
+        row_start = int(np.round(area_extent[3] / -row_size + loff + 0.5))
 
         row_stop += 1
         col_stop += 1
@@ -251,6 +251,7 @@ class MSGHRITLoader(GenericLoader):
                      (col_stop - col_start, row_stop - row_start))
 
         return (slice(row_start, row_stop), slice(col_start, col_stop))
+
 
 def read_proheader(fp):
     """Read the msg header.
@@ -802,3 +803,5 @@ if __name__ == '__main__':
              glob('/home/a000680/data/hrit/*EPI*201504211100*') +
              glob('/home/a000680/data/hrit/*PRO*201504211100*'))
     this = MSGHRITLoader(channels=['HRV'], files=files)
+    mda, img = this.load(calibrate=0)
+    #mda, img = this.load(area_extent=[1000, 2000, 1200, 2200], calibrate=0)

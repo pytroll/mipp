@@ -37,6 +37,10 @@ logger = logging.getLogger('mipp')
 PPP_CFG_VARNAME = 'PPP_CONFIG_DIR'
 
 
+def _null_converter(blob):
+    return blob
+
+
 class GenericLoader(object):
 
     """ Generic loader for geostationary satellites
@@ -48,6 +52,8 @@ class GenericLoader(object):
         """
         self.channels = channels
         self.image = None
+        self.image_filenames = []
+
         if files is not None:
             try:
                 files[0]
@@ -72,7 +78,7 @@ class GenericLoader(object):
                 # get the config
 
                 # Note: use trollsift (in new satellite config files) ?
-                
+
                 config = cfg.read_config(satid)
                 # some confusin exists about the levels in the config file
                 # it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
@@ -90,25 +96,44 @@ class GenericLoader(object):
 
             else:
                 raise IOError("Either files or timeslot needs to be provided!")
-        self.image_filenames = self.files
         self.mda = self._get_metadata()
 
-    def __getitem__(self, slice):
-        #from mipp.xrit.loader import ImageLoader
-        #return ImageLoader(self.mda, self.image_filenames).__getitem__(slice)
-        print self.mda
-        rows, columns = self._handle_slice(slice)
+    def __getitem__(self, item):
+        # from mipp.xrit.loader import ImageLoader
+        # return ImageLoader(self.mda, self.image_filenames).__getitem__(slice)
+        """Default slicing, handles rotated images.
+        """
+        rows, columns = self._handle_slice(item)
+        ns_, ew_ = self.mda.first_pixel.split()
+        if ns_ == 'south':
+            rows = slice(self.mda.image_size[1] - rows.stop,
+                         self.mda.image_size[1] - rows.start)
+        if ew_ == 'east':
+            columns = slice(self.mda.image_size[0] - columns.stop,
+                            self.mda.image_size[0] - columns.start)
+
+        # Does not handle HRV data!
+        # See xrit.loader.py
+        # FIXME!
+        rows, columns = self._handle_slice((rows, columns))
         img = self._read(rows, columns)
+
+        return self.mda, img
 
     def _handle_slice(self, item):
         """Transform item into slice(s).
         """
+
+        # full disc and square
+        allrows = slice(0, self.mda.image_size[0])  # !!!
+        allcolumns = slice(0, self.mda.image_size[0])
+
         if isinstance(item, slice):
             # specify rows and all columns
-            rows, columns = item, self._allcolumns
+            rows, columns = item, allcolumns
         elif isinstance(item, int):
             # specify one row and all columns
-            rows, columns = slice(item, item + 1), self._allcolumns
+            rows, columns = slice(item, item + 1), allcolumns
         elif isinstance(item, tuple):
             if len(item) == 2:
                 # both row and column are specified
@@ -122,15 +147,15 @@ class GenericLoader(object):
                     item)
         elif item is None:
             # full disc
-            rows, columns = self._allrows, self._allcolumns
+            rows, columns = allrows, allcolumns
         else:
             raise IndexError, "don't understand the indexes"
 
         # take care of [:]
         if rows.start == None:
-            rows = self._allrows
+            rows = allrows
         if columns.start == None:
-            columns = self._allcolumns
+            columns = allcolumns
 
         if (rows.step != 1 and rows.step != None) or \
                 (columns.step != 1 and columns.step != None):
@@ -147,6 +172,8 @@ class GenericLoader(object):
         .no_data_value
         .line_offset
         """
+        from mipp.xrit import _xrit, convert
+
         shape = (rows.stop - rows.start, columns.stop - columns.start)
         if (columns.start < 0 or
                 columns.stop > self.mda.image_size[0] or
@@ -154,7 +181,7 @@ class GenericLoader(object):
                 rows.stop > self.mda.image_size[1]):
             raise IndexError, "index out of range"
 
-        image_files = self.image_files
+        image_files = self.image_filenames
 
         #
         # Order segments
@@ -163,6 +190,7 @@ class GenericLoader(object):
         for f in image_files:
             s = _xrit.read_imagedata(f)
             segments[s.segment.seg_no] = f
+
         start_seg_no = s.segment.planned_start_seg_no
         end_seg_no = s.segment.planned_end_seg_no
         ncols = s.structure.nc
@@ -183,8 +211,8 @@ class GenericLoader(object):
             data_type = numpy.uint16
             data_type_len = 16
         else:
-            raise mipp.ReaderError, "unknown data type: %d bit per pixel"\
-                % self.mda.data_type
+            raise IOError("unknown data type: %d" % self.mda.data_type +
+                          " bit per pixel")
 
         #
         # Calculate initial and final line and column.
@@ -228,8 +256,8 @@ class GenericLoader(object):
             increment_line = -1
             factor_col = -1
         else:
-            raise mipp.ReaderError, "unknown geographical orientation of " + \
-                "first pixel: '%s'" % self.mda.first_pixel
+            raise IOError("unknown geographical orientation of " +
+                          "first pixel: '%s'" % self.mda.first_pixel)
 
         #
         # Generate final image with no data
@@ -324,9 +352,10 @@ class GenericLoader(object):
         #
         # With or without mask ?
         #
-        if self.do_mask and not isinstance(image, numpy.ma.core.MaskedArray):
+        do_mask = True
+        if do_mask and not isinstance(image, numpy.ma.core.MaskedArray):
             image = numpy.ma.array(image, mask=mask, copy=False)
-        elif ((not self.do_mask) and
+        elif ((not do_mask) and
                 isinstance(image, numpy.ma.core.MaskedArray)):
             image = image.filled(self.mda.no_data_value)
 
@@ -337,9 +366,7 @@ class GenericLoader(object):
         """
         pass
         #self.mda.area_extent = area_extent
-        #return self.__getitem__(self._get_slice_obj())
-
+        # return self.__getitem__(self._get_slice_obj())
 
     def _get_metadata(self):
         pass
-
