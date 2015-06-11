@@ -46,9 +46,8 @@ class GenericLoader(object):
         """ Locate files and read metadata.
             There
         """
-        #self.channels = channels
+        self.channels = channels
         self.image = None
-        self.image_filenames = []
 
         if files is not None:
             try:
@@ -101,7 +100,7 @@ class GenericLoader(object):
 
                 # 2 filter the files for this specific date
                 # set the files attribute
-                self.image_files = files
+                self.files = sorted(files)
 
             else:
                 raise IOError("Either files or timeslot needs to be provided!")

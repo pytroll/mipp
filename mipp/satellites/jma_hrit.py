@@ -254,14 +254,14 @@ class JMAHRITLoader(GenericLoader):
     def __init__(self, platform_name=None, channels=None, timeslot=None, files=None):
         #call the superclass constructor
         super(JMAHRITLoader, self).__init__(platform_name=platform_name, channels=channels, timeslot=timeslot, files=files)
-        print self.image_files
+
     def _get_metadata(self):
         """
             Read the metadata from the header as per JMA mission specific LRIT/HRIT specs
         """
 
         #JMA specific attributes
-        self.basename = self.image_files[0].split('/')[-1][:-4]
+        self.basename = self.files[0].split('/')[-1][:-4]
         self.segments = []
         self.NL = None
         self.NC = None
@@ -275,7 +275,7 @@ class JMAHRITLoader(GenericLoader):
         LOFFS = []
         IOTLINES = []
         TIMES = []
-        for f in  self.image_files:
+        for f in  self.files:
             s = HRITSegment(fpath=f)
             seg_header = s.header
             self.CFAC = s.CFAC
