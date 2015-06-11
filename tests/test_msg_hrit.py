@@ -37,6 +37,14 @@ MSG_FILES = [DATADIR + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111
              '/H-000-MSG2__-MSG2________-IR_108___-000005___-201010111400-__',
              DATADIR + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
 
+HRV_FILES = [DATADIR + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111400-__',
+             DATADIR +
+             '/H-000-MSG2__-MSG2________-HRV______-000012___-201010111400-__',
+             DATADIR +
+             '/H-000-MSG2__-MSG2________-HRV______-000013___-201010111400-__',
+             DATADIR + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
+HRV_SUM = 11328340.753558
+
 PROJ4_STRING = "proj=geos lon_0=0.00 lat_0=0.00 a=6378169.00 b=6356583.80 h=35785831.00"
 
 
@@ -64,6 +72,17 @@ class TestReadData(unittest.TestCase):
         print arr.sum()
         self.assertAlmostEqual(arr.sum(), 75116847.2632, 3)
         print mda
+
+#    def test_msg_hrv(self):
+#        """Test read some msg image data"""
+#
+#        loader = MSGHRITLoader(channels=[''], files=HRV_FILES)
+#        mda, img = loader.load(calibrate=1)
+#        arr = img[1656:1956, 1756:2656]
+#        self.assertTrue(arr.shape == (300, 900))
+#        print arr.sum()
+#        self.assertAlmostEqual(arr.sum(), 75116847.2632, 3)
+#        print mda
 
     def tearDown(self):
         """Clean up"""
