@@ -406,22 +406,31 @@ class JMAHRITLoader(GenericLoader):
         row_start, row_stop = rows.start, rows.stop
         col_start, col_stop = columns.start, columns.stop
         #need to collect the segments that are intersecting the area defined by the slices
-        segs_indices = []
+        lines_in_segment = self.NL//self.nsegs
 
+        ##compute the segment indices (start, stop) that needs to be collected
+
+        start_seg, end_seg = int(np.ceil(float(row_start)//lines_in_segment)), int(np.ceil(float(row_stop)/lines_in_segment))
+        print start_seg, end_seg
+        '''
         for i,s in enumerate(self.segments):
             seg_start_line = (s.SEG_NUM-1)*s.NL
             seg_end_line = s.SEG_NUM*s.NL
+            print i,seg_start_line, seg_end_line, np.ceil(row_start)//seg_end_line, np.ceil(float(row_stop)/seg_end_line)
             #mark the first and last segment of intersection
             if (row_start>seg_start_line and row_start<seg_end_line) or (row_stop>seg_start_line and row_stop<seg_end_line):
                 segs_indices.append(i)
+
         #adjust he segment indices by appending the end index in case theer is only one segment and incrementing the last index
         #becasue the indices start at 0
+        print segs_indices
         if len(segs_indices) == 1:
             segs_indices.append(segs_indices[0]+1)
         else:
             segs_indices[1]+=1
+        '''
         #filter the segments
-        filtered_segs = self.segments[segs_indices[0]:segs_indices[1]]
+        filtered_segs = self.segments[start_seg:end_seg]
         #prepare soem metadata to compute the array size
         first_seg = filtered_segs[0]
         segnl, segnc,  = first_seg.NL, first_seg.NC
@@ -429,8 +438,8 @@ class JMAHRITLoader(GenericLoader):
         #allocate the array
         _data = np.zeros((segnl*len(filtered_segs), segnc), dtype='u2')
         for j, seg in enumerate(filtered_segs):
-            seg_start_line = j*s.NL
-            seg_end_line = seg_start_line + s.NL
+            seg_start_line = j*seg.NL
+            seg_end_line = seg_start_line + seg.NL
             #push segment data into array
             _data[seg_start_line:seg_end_line,:] = seg.data
         #compute relative row indices because we have reduced  the space by filtering the segments
@@ -468,13 +477,17 @@ if __name__ == '__main__':
     hrit_files = glob.glob(fp.replace('001', '*'))
     hf = JMAHRITLoader(files=hrit_files)
     #hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
-    md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
+    #md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
+    print d.shape
+    #md, d = hf.load()
+    print d.shape
     #md, d = hf.load(area_extent=(-2661089,-2845580 , -2189189,-2484642))
+    print d.shape
     #md, d = hf.load(area_extent=(-3100607.812,1874039.062 , -2772257.812,2142576.562))
     #md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
 
     #print md
     print d.shape
     from pylab import imshow, show
-    imshow(d, cmap='gray', interpolation='nearest')
-    show()
+    #imshow(d, cmap='gray', interpolation='nearest')
+    #show()
