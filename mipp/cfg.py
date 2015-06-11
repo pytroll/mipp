@@ -5,27 +5,25 @@ import os
 import re
 from ConfigParser import ConfigParser
 
-import mipp
-
 __all__ = ['read_config']
 
-def read_config(satname, instrument=''):
-    return _ConfigReader(satname, instrument)
+def read_config(platform_name, instrument=''):
+    return _ConfigReader(platform_name, instrument)
 
 class _ConfigReader(object):
 
-    def __init__(self, satname, instrument=''):
+    def __init__(self, platform_name, instrument=''):
         try:
             home = os.environ['PPP_CONFIG_DIR']
         except KeyError:
-            raise mipp.ConfigReaderError(
+            raise IOError(
                 "PPP_CONFIG_DIR environment variable is not set")
 
-        self.config_file = home + '/' + satname + '.cfg'
+        self.config_file = home + '/' + platform_name + '.cfg'
         if not os.path.isfile(self.config_file):
-            raise mipp.ConfigReaderError(
+            raise IOError(
                 "unknown satellite: '%s' (no such file: '%s')"%
-                (satname, self.config_file))
+                (platform_name, self.config_file))
         self._config = ConfigParser()
         self._config.read(self.config_file)
         
@@ -34,10 +32,10 @@ class _ConfigReader(object):
             if len(instruments) == 1:
                 instrument = instruments[0]
             else:
-                raise mipp.ConfigReaderError("please specify instrument")
+                raise IOError("please specify instrument")
         else:
             if instrument not in instruments: 
-                raise mipp.ConfigReaderError("unknown instrument: '%s'"%
+                raise IOError("unknown instrument: '%s'"%
                                              instrument)
         self.instrument = instrument
         
@@ -59,7 +57,7 @@ class _ConfigReader(object):
         try:
             return self._channels[name]
         except KeyError:
-            raise mipp.ConfigReaderError("unknown channel: '%s'"%name)
+            raise IOError("unknown channel: '%s'"%name)
     @property
     def sections(self):
         return self._config.sections()

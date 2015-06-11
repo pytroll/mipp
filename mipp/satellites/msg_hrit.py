@@ -23,6 +23,48 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """A reader for the MSG HRIT (EUMETCast disseminated) data
+
+Interface for MPOP:
+    other.load(...)
+
+Inherit and define:
+    other.load(...) (calling this.__getitem__(...), calling other._read(...)) hmm ?
+    other._read(rows, columns)
+
+class GenericLoader:
+
+    def __init__(self, satid=None, channels=None, timeslot=None, files=None):
+        # Definening:
+        self.mda
+        
+        self.channels
+        self.satid
+        
+        self.image_files
+        self._get_metadata()
+
+    def __getitem__(self, item):
+        ...
+        self._read(rows, columns)
+
+class SpecificLoader(GenericLoader):
+
+    def __init__(...):
+        ...
+
+
+    def load(area_extent, calibrate=1):
+         self[slice_obj]
+         ...
+         return self.mda, image
+
+    def _read(rows, columns):
+        ....
+    def _get_metadata()
+
+
+Note: have a commen data container class between MPOP and MIPP
+
 """
 
 import os
@@ -52,7 +94,7 @@ class MSGHRITLoader(GenericLoader):
 
     """Loader for MSG data"""
 
-    def __init__(self, channels, satid=None, timeslot=None, files=None):
+    def __init__(self, platform_name=None, channels=None, timeslot=None, files=None):
 
         self.image_filenames = []
         self.prologue_filename = None
@@ -60,8 +102,181 @@ class MSGHRITLoader(GenericLoader):
         self.prologue = None
         self.epilogue = None
 
-        super(MSGHRITLoader, self).__init__(channels,
-                                            satid=satid, timeslot=timeslot, files=files)
+        super(MSGHRITLoader, self).__init__(platform_name=platform_name,
+                                            channels=channels, timeslot=timeslot, files=files)
+
+    def __getitem__(self, item):
+        """Default slicing, handles rotated images.
+        """
+        do_mask = True
+        allrows = slice(0, self.mda.image_size[0])  # !!!
+        allcolumns = slice(0, self.mda.image_size[0])
+
+
+        # from mipp.xrit.loader import ImageLoader
+        # return ImageLoader(self.mda, self.image_filenames).__getitem__(slice)
+        rows, columns = self._handle_slice(item)
+        ns_, ew_ = self.mda.first_pixel.split()
+        if ns_ == 'south':
+            rows = slice(self.mda.image_size[1] - rows.stop,
+                         self.mda.image_size[1] - rows.start)
+        if ew_ == 'east':
+            columns = slice(self.mda.image_size[0] - columns.stop,
+                            self.mda.image_size[0] - columns.start)
+
+        rows, columns = self._handle_slice((rows, columns))
+        if not hasattr(self.mda, "boundaries"):
+            img = self._read(rows, columns)
+
+        else:
+            #
+            # Here we handle the case of partly defined channels.
+            # (for example MSG's HRV channel)
+            #
+            img = None
+
+            for region in (self.mda.boundaries - 1):
+                rlines = slice(region[0], region[1] + 1)
+                rcols = slice(region[2], region[3] + 1)
+
+                # check is we are outside the region
+                if (rows.start > rlines.stop or
+                    rows.stop < rlines.start or
+                    columns.start > rcols.stop or
+                    columns.stop < rcols.start):
+                    continue
+
+                lines = slice(max(rows.start, rlines.start),
+                              min(rows.stop, rlines.stop))
+                cols = slice(max(columns.start, rcols.start) - rcols.start,
+                             min(columns.stop, rcols.stop) - rcols.start)
+                rdata = self._read(lines, cols)
+                lines = slice(max(rows.start, rlines.start) - rows.start,
+                              min(rows.stop, rlines.stop) - rows.start)
+                cols = slice(max(columns.start, rcols.start) - columns.start,
+                             min(columns.stop, rcols.stop) - columns.start)
+                if img is None:
+                    img = (np.zeros((rows.stop - rows.start,
+                                        columns.stop - columns.start),
+                                       dtype=rdata.dtype)
+                           + self.mda.no_data_value)
+                    if do_mask:
+                        img = np.ma.masked_all_like(img)
+
+                if ns_ == "south":
+                    lines = slice(img.shape[0] - lines.stop,
+                                  img.shape[0] - lines.start)
+                if ew_ == "east":
+                    cols = slice(img.shape[1] - cols.stop,
+                                 img.shape[1] - cols.start)
+                if do_mask:
+                    img.mask[lines, cols] = rdata.mask
+                img[lines, cols] = rdata
+
+        if not hasattr(img, 'shape'):
+            logger.warning("Produced no image")
+            return None, None
+
+        #
+        # Update meta-data
+        #
+        self.mda.area_extent = np.array(
+            self._slice2extent(rows, columns, rotated=True), dtype=np.float64)
+
+        if (rows != allrows) or (columns != allcolumns):
+            self.mda.region_name = 'sliced'
+
+        self.mda.image_size = np.array([img.shape[1], img.shape[0]])
+
+        # return mipp.mda.mslice(mda), image
+        return self.mda, img
+
+    def _handle_slice(self, item):
+        """Transform item into slice(s).
+        """
+
+        # full disc and square
+        allrows = slice(0, self.mda.image_size[0])  # !!!
+        allcolumns = slice(0, self.mda.image_size[0])
+
+        if isinstance(item, slice):
+            # specify rows and all columns
+            rows, columns = item, allcolumns
+        elif isinstance(item, int):
+            # specify one row and all columns
+            rows, columns = slice(item, item + 1), allcolumns
+        elif isinstance(item, tuple):
+            if len(item) == 2:
+                # both row and column are specified
+                rows, columns = item
+                if isinstance(rows, int):
+                    rows = slice(item[0], item[0] + 1)
+                if isinstance(columns, int):
+                    columns = slice(item[1], item[1] + 1)
+            else:
+                raise IndexError, "can only handle two indexes, not %d" % len(
+                    item)
+        elif item is None:
+            # full disc
+            rows, columns = allrows, allcolumns
+        else:
+            raise IndexError, "don't understand the indexes"
+
+        # take care of [:]
+        if rows.start == None:
+            rows = allrows
+        if columns.start == None:
+            columns = allcolumns
+
+        if (rows.step != 1 and rows.step != None) or \
+                (columns.step != 1 and columns.step != None):
+            raise IndexError, "Currently we don't support steps different from one"
+
+        return rows, columns
+
+    def _slice2extent(self, rows, columns, rotated=True):
+        """ Calculate area extent.
+        If rotated=True then rows and columns are reflecting the actual rows and columns.
+        """
+        ns_, ew_ = self.mda.first_pixel.split()
+
+        loff = self.mda.loff
+        coff = self.mda.coff
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - loff - 1
+            if rotated:
+                rows = slice(self.mda.image_size[1] - rows.stop,
+                             self.mda.image_size[1] - rows.start)
+        else:
+            loff -= 1
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - coff - 1
+            if rotated:
+                columns = slice(self.mda.image_size[0] - columns.stop,
+                                self.mda.image_size[0] - columns.start)
+        else:
+            coff -= 1
+
+        logger.debug('slice2extent: size %d, %d' %
+                     (columns.stop - columns.start, rows.stop - rows.start))
+        rows = slice(rows.start, rows.stop - 1)
+        columns = slice(columns.start, columns.stop - 1)
+
+        row_size = self.mda.xscale
+        col_size = self.mda.yscale
+
+        ll_x = (columns.start - coff - 0.5) * col_size
+        ll_y = -(rows.stop - loff + 0.5) * row_size
+        ur_x = (columns.stop - coff + 0.5) * col_size
+        ur_y = -(rows.start - loff - 0.5) * row_size
+
+        logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f' %
+                     (ll_x, ll_y, ur_x, ur_y))
+        logger.debug('slice2extent: computed size %d, %d' %
+                     (int(np.round((ur_x - ll_x) / col_size)),
+                      int(np.round((ur_y - ll_y) / row_size))))
+
+        return [ll_x, ll_y, ur_x, ur_y]
 
     def _identify_files(self):
         """Find the epilogue and the prologue files from the set of files provided 
@@ -189,7 +404,7 @@ class MSGHRITLoader(GenericLoader):
         # Call generic slicer
         #
         slice_obj = self._area_extent_to_slice(area_extent)
-        mda, img = super(MSGHRITLoader, self).__getitem__(slice_obj)
+        mda, img = self[slice_obj]
 
         #
         # Calibrate
@@ -263,7 +478,8 @@ class MSGHRITLoader(GenericLoader):
         .no_data_value
         .line_offset
         """
-        from mipp.xrit import _xrit, convert
+        from mipp import convert
+        from mipp.xrit import _xrit
 
         shape = (rows.stop - rows.start, columns.stop - columns.start)
         if (columns.start < 0 or
