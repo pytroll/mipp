@@ -109,8 +109,8 @@ class MSGHRITLoader(GenericLoader):
         """Default slicing, handles rotated images.
         """
         do_mask = True
-        allrows = slice(0, self.mda.image_size[0])  # !!!
-        allcolumns = slice(0, self.mda.image_size[0])
+        allrows = slice(0, self.mda.number_of_columns)  # !!!
+        allcolumns = slice(0, self.mda.number_of_columns)
 
 
         # from mipp.xrit.loader import ImageLoader
@@ -118,11 +118,11 @@ class MSGHRITLoader(GenericLoader):
         rows, columns = self._handle_slice(item)
         ns_, ew_ = self.mda.first_pixel.split()
         if ns_ == 'south':
-            rows = slice(self.mda.image_size[1] - rows.stop,
-                         self.mda.image_size[1] - rows.start)
+            rows = slice(self.mda.number_of_lines - rows.stop,
+                         self.mda.number_of_lines - rows.start)
         if ew_ == 'east':
-            columns = slice(self.mda.image_size[0] - columns.stop,
-                            self.mda.image_size[0] - columns.start)
+            columns = slice(self.mda.number_of_columns - columns.stop,
+                            self.mda.number_of_columns - columns.start)
 
         rows, columns = self._handle_slice((rows, columns))
         if not hasattr(self.mda, "boundaries"):
@@ -186,7 +186,9 @@ class MSGHRITLoader(GenericLoader):
         if (rows != allrows) or (columns != allcolumns):
             self.mda.region_name = 'sliced'
 
-        self.mda.image_size = np.array([img.shape[1], img.shape[0]])
+        self.mda.number_of_lines = img.shape[0]
+        self.mda_number_of_coloumns = img.shape[1]
+        self.mda.image_size = np.array([self.mda.number_of_columns, self.mda.number_of_lines])
 
         # return mipp.mda.mslice(mda), image
         return self.mda, img
@@ -196,8 +198,8 @@ class MSGHRITLoader(GenericLoader):
         """
 
         # full disc and square
-        allrows = slice(0, self.mda.image_size[0])  # !!!
-        allcolumns = slice(0, self.mda.image_size[0])
+        allrows = slice(0, self.mda.number_of_columns)  # !!!
+        allcolumns = slice(0, self.mda.number_of_columns)
 
         if isinstance(item, slice):
             # specify rows and all columns
@@ -243,17 +245,17 @@ class MSGHRITLoader(GenericLoader):
         loff = self.mda.loff
         coff = self.mda.coff
         if ns_ == "south":
-            loff = self.mda.image_size[0] - loff - 1
+            loff = self.mda.number_of_columns - loff - 1
             if rotated:
-                rows = slice(self.mda.image_size[1] - rows.stop,
-                             self.mda.image_size[1] - rows.start)
+                rows = slice(self.mda.number_of_lines - rows.stop,
+                             self.mda.number_of_lines - rows.start)
         else:
             loff -= 1
         if ew_ == "east":
-            coff = self.mda.image_size[1] - coff - 1
+            coff = self.mda.number_of_lines - coff - 1
             if rotated:
-                columns = slice(self.mda.image_size[0] - columns.stop,
-                                self.mda.image_size[0] - columns.start)
+                columns = slice(self.mda.number_of_columns - columns.stop,
+                                self.mda.number_of_columns - columns.start)
         else:
             coff -= 1
 
@@ -431,12 +433,12 @@ class MSGHRITLoader(GenericLoader):
         ns_, ew_ = self.mda.first_pixel.split()
 
         if ns_ == "south":
-            loff = self.mda.image_size[0] - self.mda.loff - 1
+            loff = self.mda.number_of_columns - self.mda.loff - 1
         else:
             loff = self.mda.loff - 1
 
         if ew_ == "east":
-            coff = self.mda.image_size[1] - self.mda.coff - 1
+            coff = self.mda.number_of_lines - self.mda.coff - 1
         else:
             coff = self.mda.coff - 1
 
@@ -472,7 +474,8 @@ class MSGHRITLoader(GenericLoader):
     def _read(self, rows, columns):
         """Here we need the following metadata:
 
-        .image_size
+        .number_of_columns
+        .number_of_lines
         .data_type (8, 10, 16 ...)
         .first_pixel
         .no_data_value
@@ -483,9 +486,9 @@ class MSGHRITLoader(GenericLoader):
 
         shape = (rows.stop - rows.start, columns.stop - columns.start)
         if (columns.start < 0 or
-                columns.stop > self.mda.image_size[0] or
+                columns.stop > self.mda.number_of_columns or
                 rows.start < 0 or
-                rows.stop > self.mda.image_size[1]):
+                rows.stop > self.mda.number_of_lines):
             raise IndexError, "index out of range"
 
         image_files = self.image_filenames
