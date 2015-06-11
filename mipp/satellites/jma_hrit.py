@@ -254,13 +254,14 @@ class JMAHRITLoader(GenericLoader):
     def __init__(self, platform_name=None, channels=None, timeslot=None, files=None):
         #call the superclass constructor
         super(JMAHRITLoader, self).__init__(platform_name=platform_name, channels=channels, timeslot=timeslot, files=files)
-
+        print self.image_files
     def _get_metadata(self):
         """
             Read the metadata from the header as per JMA mission specific LRIT/HRIT specs
         """
+
         #JMA specific attributes
-        self.basename = self.files[0].split('/')[-1][:-4]
+        self.basename = self.image_files[0].split('/')[-1][:-4]
         self.segments = []
         self.NL = None
         self.NC = None
@@ -274,7 +275,7 @@ class JMAHRITLoader(GenericLoader):
         LOFFS = []
         IOTLINES = []
         TIMES = []
-        for f in  self.files:
+        for f in  self.image_files:
             s = HRITSegment(fpath=f)
             seg_header = s.header
             self.CFAC = s.CFAC
@@ -457,8 +458,8 @@ if __name__ == '__main__':
     #fp = '/home/jano/pytroll/data/IMG_DK01VIS_200703220030_001'
     fp = '/home/jano/pytroll/data/IMG_DK01VIS_200706010230_001'
     hrit_files = glob.glob(fp.replace('001', '*'))
-    hf = JMAHRITLoader(files=hrit_files)
-    #hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
+    #hf = JMAHRITLoader(files=hrit_files)
+    hf = JMAHRITLoader(platform_name='Himawari-7', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ), channels=['IR2'])
     md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
     print d.shape
     md, d = hf.load()

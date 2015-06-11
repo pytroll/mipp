@@ -46,7 +46,7 @@ class GenericLoader(object):
         """ Locate files and read metadata.
             There
         """
-        self.channels = channels
+        #self.channels = channels
         self.image = None
         self.image_filenames = []
 
@@ -73,24 +73,35 @@ class GenericLoader(object):
                         'platform_name argument can not be omitted or be None')
                 # get the config
 
-                # Note: use trollsift (in new satellite config files) ?
+                # Note: use trollsift (in new satellite config files) ? YES
 
                 config = satellite_config.read_config(platform_name)
+
                 # some confusion exists about the levels in the config file
                 # it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
                 # mpop level 2 is used. unde the hood mpop uses mpip so this
                 # all ends in mipp
                 level = [e for e in config.sections if 'level1' in e][0]
                 cfg_level1 = config(level)
-                print cfg_level1
                 data_dir = cfg_level1['dir']
                 filename = cfg_level1['filename']
-                print filename
+                files = []
+                d={}
+                if channels:
+                    for channel in channels:
+                        chn = config.channels.get(channel, None)
+                        if chn:
+                            d['channel'] = channel
+                            patt = os.path.join(data_dir, timeslot.strftime(filename) % d)
+                            files+= glob.glob(patt)
+                else:
+                    d['channel'] = '*'
+                    patt = os.path.join(data_dir, timeslot.strftime(filename) % d)
+                    files+= glob.glob(patt)
 
-                import pdb
-                pdb.set_trace()
                 # 2 filter the files for this specific date
                 # set the files attribute
+                self.image_files = files
 
             else:
                 raise IOError("Either files or timeslot needs to be provided!")
@@ -156,5 +167,7 @@ class GenericLoader(object):
 if __name__ == "__main__":
 
     from datetime import datetime
-    tslot = datetime(2010, 10, 11, 14, 0)
-    this = GenericLoader(platform_name='Meteosat-9', timeslot=tslot)
+    #tslot = datetime(2010, 10, 11, 14, 0)
+    tslot = datetime(2007, 06, 01, hour=02, minute=30 )
+    #this = GenericLoader(platform_name='Meteosat-9', timeslot=tslot)
+    this = GenericLoader(platform_name='Himawari-7', timeslot=tslot, )
