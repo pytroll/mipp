@@ -409,26 +409,8 @@ class JMAHRITLoader(GenericLoader):
         lines_in_segment = self.NL//self.nsegs
 
         ##compute the segment indices (start, stop) that needs to be collected
-
         start_seg, end_seg = int(np.ceil(float(row_start)//lines_in_segment)), int(np.ceil(float(row_stop)/lines_in_segment))
-        print start_seg, end_seg
-        '''
-        for i,s in enumerate(self.segments):
-            seg_start_line = (s.SEG_NUM-1)*s.NL
-            seg_end_line = s.SEG_NUM*s.NL
-            print i,seg_start_line, seg_end_line, np.ceil(row_start)//seg_end_line, np.ceil(float(row_stop)/seg_end_line)
-            #mark the first and last segment of intersection
-            if (row_start>seg_start_line and row_start<seg_end_line) or (row_stop>seg_start_line and row_stop<seg_end_line):
-                segs_indices.append(i)
 
-        #adjust he segment indices by appending the end index in case theer is only one segment and incrementing the last index
-        #becasue the indices start at 0
-        print segs_indices
-        if len(segs_indices) == 1:
-            segs_indices.append(segs_indices[0]+1)
-        else:
-            segs_indices[1]+=1
-        '''
         #filter the segments
         filtered_segs = self.segments[start_seg:end_seg]
         #prepare soem metadata to compute the array size
