@@ -42,7 +42,7 @@ class GenericLoader(object):
     """ Generic loader for geostationary satellites
     """
 
-    def __init__(self, channels, satid=None, timeslot=None, files=None):
+    def __init__(self, platform_name=None, channels=None, timeslot=None, files=None):
         """ Locate files and read metadata.
             There
         """
@@ -94,99 +94,16 @@ class GenericLoader(object):
                 raise IOError("Either files or timeslot needs to be provided!")
         self.mda = self._get_metadata()
 
+
     def __getitem__(self, item):
-        """Default slicing, handles rotated images.
         """
-        do_mask = True
-        allrows = slice(0, self.mda.image_size[0])  # !!!
-        allcolumns = slice(0, self.mda.image_size[0])
-
-
-        # from mipp.xrit.loader import ImageLoader
-        # return ImageLoader(self.mda, self.image_filenames).__getitem__(slice)
-        rows, columns = self._handle_slice(item)
-        ns_, ew_ = self.mda.first_pixel.split()
-        if ns_ == 'south':
-            rows = slice(self.mda.image_size[1] - rows.stop,
-                         self.mda.image_size[1] - rows.start)
-        if ew_ == 'east':
-            columns = slice(self.mda.image_size[0] - columns.stop,
-                            self.mda.image_size[0] - columns.start)
-
-        rows, columns = self._handle_slice((rows, columns))
-        if not hasattr(self.mda, "boundaries"):
-            img = self._read(rows, columns)
-
-        else:
-            #
-            # Here we handle the case of partly defined channels.
-            # (for example MSG's HRV channel)
-            #
-            img = None
-
-            for region in (self.mda.boundaries - 1):
-                rlines = slice(region[0], region[1] + 1)
-                rcols = slice(region[2], region[3] + 1)
-
-                # check is we are outside the region
-                if (rows.start > rlines.stop or
-                    rows.stop < rlines.start or
-                    columns.start > rcols.stop or
-                    columns.stop < rcols.start):
-                    continue
-
-                lines = slice(max(rows.start, rlines.start),
-                              min(rows.stop, rlines.stop))
-                cols = slice(max(columns.start, rcols.start) - rcols.start,
-                             min(columns.stop, rcols.stop) - rcols.start)
-                rdata = self._read(lines, cols)
-                lines = slice(max(rows.start, rlines.start) - rows.start,
-                              min(rows.stop, rlines.stop) - rows.start)
-                cols = slice(max(columns.start, rcols.start) - columns.start,
-                             min(columns.stop, rcols.stop) - columns.start)
-                if img is None:
-                    img = (numpy.zeros((rows.stop - rows.start,
-                                        columns.stop - columns.start),
-                                       dtype=rdata.dtype)
-                           + self.mda.no_data_value)
-                    if do_mask:
-                        img = numpy.ma.masked_all_like(img)
-
-                if ns_ == "south":
-                    lines = slice(img.shape[0] - lines.stop,
-                                  img.shape[0] - lines.start)
-                if ew_ == "east":
-                    cols = slice(img.shape[1] - cols.stop,
-                                 img.shape[1] - cols.start)
-                if do_mask:
-                    img.mask[lines, cols] = rdata.mask
-                img[lines, cols] = rdata
-
-        if not hasattr(img, 'shape'):
-            logger.warning("Produced no image")
-            return None, None
-
-        #
-        # Update meta-data
-        #
-        self.mda.area_extent = numpy.array(
-            self._slice2extent(rows, columns, rotated=True), dtype=numpy.float64)
-
-        if (rows != allrows) or (columns != allcolumns):
-            self.mda.region_name = 'sliced'
-
-        self.mda.image_size = numpy.array([img.shape[1], img.shape[0]])
-
-        # return mipp.mda.mslice(mda), image
-        return self.mda, img
-
-    def _handle_slice(self, item):
-        """Transform item into slice(s).
+            slicing
+            @args:
+                @item, a tuple fof 2 slices, one slice
         """
-
         # full disc and square
-        allrows = slice(0, self.mda.image_size[0])  # !!!
-        allcolumns = slice(0, self.mda.image_size[0])
+        allrows = slice(0, self.mda.number_of_lines)  # !!!
+        allcolumns = slice(0, self.mda.number_of_columns)
 
         if isinstance(item, slice):
             # specify rows and all columns
@@ -221,60 +138,18 @@ class GenericLoader(object):
                 (columns.step != 1 and columns.step != None):
             raise IndexError, "Currently we don't support steps different from one"
 
-        return rows, columns
+        return self._read(rows, columns)
 
-    def _slice2extent(self, rows, columns, rotated=True):
-        """ Calculate area extent.
-        If rotated=True then rows and columns are reflecting the actual rows and columns.
+    def _read(self, rows, columns):
         """
-        ns_, ew_ = self.mda.first_pixel.split()
-
-        loff = self.mda.loff
-        coff = self.mda.coff
-        if ns_ == "south":
-            loff = self.mda.image_size[0] - loff - 1
-            if rotated:
-                rows = slice(self.mda.image_size[1] - rows.stop,
-                             self.mda.image_size[1] - rows.start)
-        else:
-            loff -= 1
-        if ew_ == "east":
-            coff = self.mda.image_size[1] - coff - 1
-            if rotated:
-                columns = slice(self.mda.image_size[0] - columns.stop,
-                                self.mda.image_size[0] - columns.start)
-        else:
-            coff -= 1
-
-        logger.debug('slice2extent: size %d, %d' %
-                     (columns.stop - columns.start, rows.stop - rows.start))
-        rows = slice(rows.start, rows.stop - 1)
-        columns = slice(columns.start, columns.stop - 1)
-
-        row_size = self.mda.xscale
-        col_size = self.mda.yscale
-
-        ll_x = (columns.start - coff - 0.5) * col_size
-        ll_y = -(rows.stop - loff + 0.5) * row_size
-        ur_x = (columns.stop - coff + 0.5) * col_size
-        ur_y = -(rows.start - loff - 0.5) * row_size
-
-        logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f' %
-                     (ll_x, ll_y, ur_x, ur_y))
-        logger.debug('slice2extent: computed size %d, %d' %
-                     (int(numpy.round((ur_x - ll_x) / col_size)),
-                      int(numpy.round((ur_y - ll_y) / row_size))))
-
-        return [ll_x, ll_y, ur_x, ur_y]
+            read data, specific to format
+        """
+        raise NotImplementedError('Subclasses should implementet this method!')
 
     def load(self, area_extent=None, calibrate=1):
         """Specific loader will overwrite this
         """
-        pass
-        #self.mda.area_extent = area_extent
-        # return self.__getitem__(self._get_slice_obj())
+        raise NotImplementedError('Subclasses should implementet this method!')
 
-    def _get_metadata(self):
-        pass
 
 
