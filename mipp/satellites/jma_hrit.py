@@ -251,11 +251,14 @@ class JMAHRITLoader(GenericLoader):
 
 
 
-    def __init__(self, satid=None, channels=None, timeslot=None, files=None):
+    def __init__(self, platform_name=None, channels=None, timeslot=None, files=None):
         #call the superclass constructor
-        super(JMAHRITLoader, self).__init__(satid=satid, channels=channels, timeslot=timeslot, files=files)
+        super(JMAHRITLoader, self).__init__(platform_name=platform_name, channels=channels, timeslot=timeslot, files=files)
 
     def _get_metadata(self):
+        """
+            Read the metadata from the header as per JMA mission specific LRIT/HRIT specs
+        """
         #JMA specific attributes
         self.basename = self.files[0].split('/')[-1][:-4]
         self.segments = []
@@ -389,12 +392,51 @@ class JMAHRITLoader(GenericLoader):
         mda.yscale = self.resolution
         mda.sublon = self.SSP
         mda.calibration_unit = 'counts'
-        mda.satellite_id = 'MTSAT-1R|2'
-        mda.sensor = '1R|2'
+        mda.platform_name = 'Himawari_?'
         return mda
 
+    def _read(self, rows, columns):
+        """
+            @rags:
+                @rows, a slice object with start and stop for rows(axis0)
+                @columns, a slice object with start and stop for cols(axis1)
 
+        """
+        #unpack the slices
+        row_start, row_stop = rows.start, rows.stop
+        col_start, col_stop = columns.start, columns.stop
+        #need to collect the segments that are intersecting the area defined by the slices
+        segs_indices = []
 
+        for i,s in enumerate(self.segments):
+            seg_start_line = (s.SEG_NUM-1)*s.NL
+            seg_end_line = s.SEG_NUM*s.NL
+            #mark the first and last segment of intersection
+            if (row_start>seg_start_line and row_start<seg_end_line) or (row_stop>seg_start_line and row_stop<seg_end_line):
+                segs_indices.append(i)
+        #adjust he segment indices by appending the end index in case theer is only one segment and incrementing the last index
+        #becasue the indices start at 0
+        if len(segs_indices) == 1:
+            segs_indices.append(segs_indices[0]+1)
+        else:
+            segs_indices[1]+=1
+        #filter the segments
+        filtered_segs = self.segments[segs_indices[0]:segs_indices[1]]
+        #prepare soem metadata to compute the array size
+        first_seg = filtered_segs[0]
+        segnl, segnc,  = first_seg.NL, first_seg.NC
+        segn = first_seg.SEG_NUM-1
+        #allocate the array
+        _data = np.zeros((segnl*len(filtered_segs), segnc), dtype='u2')
+        for j, seg in enumerate(filtered_segs):
+            seg_start_line = j*s.NL
+            seg_end_line = seg_start_line + s.NL
+            #push segment data into array
+            _data[seg_start_line:seg_end_line,:] = seg.data
+        #compute relative row indices because we have reduced  the space by filtering the segments
+        rel_row_start, rel_row_stop = row_start-segnl*segn, row_stop-segn*segnl
+
+        return _data[rel_row_start:rel_row_stop,col_start:col_stop]
 
     def load(self, area_extent=None, calibrate=1):
         """
@@ -405,37 +447,14 @@ class JMAHRITLoader(GenericLoader):
             row_stop = int(round(area_extent[1] / - self.mda.yscale + self.mda.loff - 0.5))
             col_stop = int(round(area_extent[2] / self.mda.xscale + self.mda.coff - 0.5))+1
             row_start = int(round(area_extent[3] / -self.mda.yscale + self.mda.loff + 0.5))+1
-            segs_indices = []
-            for i,s in enumerate(self.segments):
-                seg_start_line = (s.SEG_NUM-1)*s.NL
-                seg_end_line = s.SEG_NUM*s.NL
-                if (row_start>seg_start_line and row_start<seg_end_line) or (row_stop>seg_start_line and row_stop<seg_end_line):
-                    segs_indices.append(i)
-
-            if len(segs_indices) == 1:
-                segs_indices.append(segs_indices[0]+1)
-            filtered_segs = self.segments[segs_indices[0]:segs_indices[1]]
-            first_seg = filtered_segs[0]
-
-            segnl, segnc,  = first_seg.NL, first_seg.NC
-            segn = first_seg.SEG_NUM-1
-
-            _data = np.zeros((segnl*len(filtered_segs), segnc), dtype='u2')
-            print _data.shape
-            for j, seg in enumerate(filtered_segs):
-                seg_start_line = j*s.NL
-                seg_end_line = seg_start_line + s.NL
-                _data[seg_start_line:seg_end_line,:] = seg.data
-            rel_row_start, rel_row_stop = row_start-segnl*segn, row_stop-segn*segnl
-            return self.mda, _data[rel_row_start:rel_row_stop,col_start:col_stop]
+            rows = slice(row_start, row_stop)
+            columns = slice(col_start, col_stop)
         else:
-            _data = np.zeros(self.shape, dtype='u2')
-            for s in self.segments:
-                seg_start_line = (s.SEG_NUM-1)*s.NL
-                seg_end_line = s.SEG_NUM*s.NL
-                _data[seg_start_line:seg_end_line,:] = s.data
-            return self.mda, _data
+            rows = slice(self.mda.number_of_lines)
+            columns = slice(self.mda.number_of_columns)
 
+        data = self[rows, columns]
+        return self.mda, data
 
 
 
@@ -449,12 +468,13 @@ if __name__ == '__main__':
     hrit_files = glob.glob(fp.replace('001', '*'))
     hf = JMAHRITLoader(files=hrit_files)
     #hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
-    #md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
+    md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
     #md, d = hf.load(area_extent=(-2661089,-2845580 , -2189189,-2484642))
     #md, d = hf.load(area_extent=(-3100607.812,1874039.062 , -2772257.812,2142576.562))
-    md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
+    #md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
 
-    print md
+    #print md
+    print d.shape
     from pylab import imshow, show
     imshow(d, cmap='gray', interpolation='nearest')
     show()
