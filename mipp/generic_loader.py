@@ -74,7 +74,7 @@ class GenericLoader(object):
                 # Note: use trollsift (in new satellite config files) ?
                 
                 config = cfg.read_config(satid)
-                # some confusin exists about the levels in the config file
+                # some confusion exists about the levels in the config file
                 # it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
                 # mpop level 2 is used. unde the hood mpop uses mpip so this
                 # all ends in mipp
@@ -106,3 +106,5 @@ class GenericLoader(object):
 
     def _get_metadata(self):
         pass
+
+
