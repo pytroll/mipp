@@ -94,7 +94,7 @@ class MSGHRITLoader(GenericLoader):
 
     """Loader for MSG data"""
 
-    def __init__(self, channels, satid=None, timeslot=None, files=None):
+    def __init__(self, platform_name=None, channels=None, timeslot=None, files=None):
 
         self.image_filenames = []
         self.prologue_filename = None
@@ -102,8 +102,8 @@ class MSGHRITLoader(GenericLoader):
         self.prologue = None
         self.epilogue = None
 
-        super(MSGHRITLoader, self).__init__(channels,
-                                            satid=satid, timeslot=timeslot, files=files)
+        super(MSGHRITLoader, self).__init__(platform_name=platform_name,
+                                            channels=channels, timeslot=timeslot, files=files)
 
     def __getitem__(self, item):
         """Default slicing, handles rotated images.
@@ -156,12 +156,12 @@ class MSGHRITLoader(GenericLoader):
                 cols = slice(max(columns.start, rcols.start) - columns.start,
                              min(columns.stop, rcols.stop) - columns.start)
                 if img is None:
-                    img = (numpy.zeros((rows.stop - rows.start,
+                    img = (np.zeros((rows.stop - rows.start,
                                         columns.stop - columns.start),
                                        dtype=rdata.dtype)
                            + self.mda.no_data_value)
                     if do_mask:
-                        img = numpy.ma.masked_all_like(img)
+                        img = np.ma.masked_all_like(img)
 
                 if ns_ == "south":
                     lines = slice(img.shape[0] - lines.stop,
@@ -180,13 +180,13 @@ class MSGHRITLoader(GenericLoader):
         #
         # Update meta-data
         #
-        self.mda.area_extent = numpy.array(
-            self._slice2extent(rows, columns, rotated=True), dtype=numpy.float64)
+        self.mda.area_extent = np.array(
+            self._slice2extent(rows, columns, rotated=True), dtype=np.float64)
 
         if (rows != allrows) or (columns != allcolumns):
             self.mda.region_name = 'sliced'
 
-        self.mda.image_size = numpy.array([img.shape[1], img.shape[0]])
+        self.mda.image_size = np.array([img.shape[1], img.shape[0]])
 
         # return mipp.mda.mslice(mda), image
         return self.mda, img
@@ -273,8 +273,8 @@ class MSGHRITLoader(GenericLoader):
         logger.debug('slice2extent: computed extent %.2f, %.2f, %.2f, %.2f' %
                      (ll_x, ll_y, ur_x, ur_y))
         logger.debug('slice2extent: computed size %d, %d' %
-                     (int(numpy.round((ur_x - ll_x) / col_size)),
-                      int(numpy.round((ur_y - ll_y) / row_size))))
+                     (int(np.round((ur_x - ll_x) / col_size)),
+                      int(np.round((ur_y - ll_y) / row_size))))
 
         return [ll_x, ll_y, ur_x, ur_y]
 
