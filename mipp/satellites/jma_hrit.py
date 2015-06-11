@@ -477,17 +477,18 @@ if __name__ == '__main__':
     hrit_files = glob.glob(fp.replace('001', '*'))
     hf = JMAHRITLoader(files=hrit_files)
     #hf = JMAHRITLoader(satid='mtsat2', timeslot=datetime.datetime(2007, 03, 22, hour=00, minute=30 ))
-    #md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
+    md, d = hf.load(area_extent=(-1987889.062, 185264.062, 203310.938, 4765664.062))
     print d.shape
-    #md, d = hf.load()
+    md, d = hf.load()
     print d.shape
-    #md, d = hf.load(area_extent=(-2661089,-2845580 , -2189189,-2484642))
+    md, d = hf.load(area_extent=(-2661089,-2845580 , -2189189,-2484642))
     print d.shape
-    #md, d = hf.load(area_extent=(-3100607.812,1874039.062 , -2772257.812,2142576.562))
-    #md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
-
+    md, d = hf.load(area_extent=(-3100607.812,1874039.062 , -2772257.812,2142576.562))
+    print d.shape
+    md, d = hf.load(area_extent=(-1051852,3116321 , 579034,4363721))
+    print d.shape
     #print md
     print d.shape
     from pylab import imshow, show
-    #imshow(d, cmap='gray', interpolation='nearest')
-    #show()
+    imshow(d, cmap='gray', interpolation='nearest')
+    show()
