@@ -1,5 +1,4 @@
 #
-from mipp.xrit import sat
 from mipp.xrit.mda import Metadata
 
 # low level XRIT data readers.

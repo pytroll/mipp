@@ -45,6 +45,8 @@ SATNUM = {321: "08",
           323: "10",
           324: "11"}
 
+def _null_converter(blob):
+    return blob
 
 class MSGHRITLoader(GenericLoader):
 
@@ -115,7 +117,8 @@ class MSGHRITLoader(GenericLoader):
         if md.channel_id == "HRV":
             md.number_of_columns = self.prologue[
                 "ReferenceGridHRV"]["NumberOfColumns"]
-            md.number_of_lines = self.prologue["ReferenceGridHRV"]["NumberOfLines"]
+            md.number_of_lines = self.prologue[
+                "ReferenceGridHRV"]["NumberOfLines"]
         else:
             md.number_of_columns = self.prologue[
                 "ReferenceGridVIS_IR"]["NumberOfColumns"]
@@ -126,7 +129,8 @@ class MSGHRITLoader(GenericLoader):
                                   md.number_of_lines))
 
         md.satname = im.platform.lower()
-        md.satnumber = SATNUM[self.prologue["SatelliteDefinition"]["SatelliteId"]]
+        md.satnumber = SATNUM[
+            self.prologue["SatelliteDefinition"]["SatelliteId"]]
         logger.debug("%s %s", md.satname, md.satnumber)
         md.product_type = 'full disc'
         md.region_name = 'full disc'
@@ -181,20 +185,272 @@ class MSGHRITLoader(GenericLoader):
         # accordingly:
         decomp_files = decompress(self.image_filenames)
 
-        from mipp.xrit.loader import ImageLoader
+        #
+        # Call generic slicer
+        #
+        slice_obj = self._area_extent_to_slice(area_extent)
+        mda, img = super(MSGHRITLoader, self).__getitem__(slice_obj)
 
         #
-        # Return a proxy slicer
+        # Calibrate
         #
-        mask = False
-        mda, img = ImageLoader(self.mda, decomp_files)(area_extent)
-
         from mipp.satellites.msg_calibrate import Calibrator
         # Note: teach Calibrator to use mda instead of prologue
         img, unit = Calibrator(self.prologue, self.mda.channel_id)(
             img, calibrate=calibrate)
         mda.calibration_unit = unit
         return mda, img
+
+    def _area_extent_to_slice(self, area_extent):
+        """Slice according to (ll_x, ll_y, ur_x, ur_y) or read full disc.
+        """
+        if area_extent == None:
+            # full disc
+            return None
+
+        # slice
+        area_extent = tuple(area_extent)
+        if len(area_extent) != 4:
+            raise TypeError, "optional argument must be an area_extent"
+
+        ns_, ew_ = self.mda.first_pixel.split()
+
+        if ns_ == "south":
+            loff = self.mda.image_size[0] - self.mda.loff - 1
+        else:
+            loff = self.mda.loff - 1
+
+        if ew_ == "east":
+            coff = self.mda.image_size[1] - self.mda.coff - 1
+        else:
+            coff = self.mda.coff - 1
+
+        try:
+            row_size = self.mda.xscale
+            col_size = self.mda.yscale
+        except AttributeError:
+            row_size = self.mda.pixel_size[0]
+            col_size = self.mda.pixel_size[1]
+
+        logger.debug('area_extent: %.2f, %.2f, %.2f, %.2f' %
+                     tuple(area_extent))
+        logger.debug('area_extent: resolution %.2f, %.2f' %
+                     (row_size, col_size))
+        logger.debug('area_extent: loff, coff %d, %d' % (loff, coff))
+        logger.debug('area_extent: expected size %d, %d' %
+                     (int(np.round((area_extent[2] - area_extent[0]) / col_size)),
+                      int(np.round((area_extent[3] - area_extent[1]) / row_size))))
+
+        col_start = int(np.round(area_extent[0] / col_size + coff + 0.5))
+        row_stop = int(np.round(area_extent[1] / -row_size + loff - 0.5))
+        col_stop = int(np.round(area_extent[2] / col_size + coff - 0.5))
+        row_start = int(np.round(area_extent[3] / -row_size + loff + 0.5))
+
+        row_stop += 1
+        col_stop += 1
+
+        logger.debug('area_extent: computed size %d, %d' %
+                     (col_stop - col_start, row_stop - row_start))
+
+        return (slice(row_start, row_stop), slice(col_start, col_stop))
+
+    def _read(self, rows, columns):
+        """Here we need the following metadata:
+
+        .image_size
+        .data_type (8, 10, 16 ...)
+        .first_pixel
+        .no_data_value
+        .line_offset
+        """
+        from mipp.xrit import _xrit, convert
+
+        shape = (rows.stop - rows.start, columns.stop - columns.start)
+        if (columns.start < 0 or
+                columns.stop > self.mda.image_size[0] or
+                rows.start < 0 or
+                rows.stop > self.mda.image_size[1]):
+            raise IndexError, "index out of range"
+
+        image_files = self.image_filenames
+
+        #
+        # Order segments
+        #
+        segments = {}
+        for f in image_files:
+            s = _xrit.read_imagedata(f)
+            segments[s.segment.seg_no] = f
+
+        start_seg_no = s.segment.planned_start_seg_no
+        end_seg_no = s.segment.planned_end_seg_no
+        ncols = s.structure.nc
+        segment_nlines = s.structure.nl
+
+        #
+        # Data type
+        #
+        converter = _null_converter
+        if self.mda.data_type == 8:
+            data_type = np.uint8
+            data_type_len = 8
+        elif self.mda.data_type == 10:
+            converter = convert.dec10216
+            data_type = np.uint16
+            data_type_len = 16
+        elif self.mda.data_type == 16:
+            data_type = np.uint16
+            data_type_len = 16
+        else:
+            raise IOError("unknown data type: %d" % self.mda.data_type +
+                          " bit per pixel")
+
+        #
+        # Calculate initial and final line and column.
+        # The interface 'load(..., center, size)' will produce
+        # correct values relative to the image orientation.
+        # line_init, line_end : 1-based
+        #
+        line_init = rows.start + 1
+        line_end = line_init + rows.stop - rows.start - 1
+        col_count = shape[1]
+        col_offset = (columns.start) * data_type_len // 8
+
+        #
+        # Calculate initial and final segments
+        # depending on the image orientation.
+        # seg_init, seg_end : 1-based.
+        #
+        seg_init = ((line_init - 1) // segment_nlines) + 1
+        seg_end = ((line_end - 1) // segment_nlines) + 1
+
+        #
+        # Calculate initial line in image, line increment
+        # offset for columns and factor for columns,
+        # and factor for columns, depending on the image
+        # orientation
+        #
+        if self.mda.first_pixel == 'north west':
+            first_line = 0
+            increment_line = 1
+            factor_col = 1
+        elif self.mda.first_pixel == 'north east':
+            first_line = 0
+            increment_line = 1
+            factor_col = -1
+        elif self.mda.first_pixel == 'south west':
+            first_line = shape[0] - 1
+            increment_line = -1
+            factor_col = 1
+        elif self.mda.first_pixel == 'south east':
+            first_line = shape[0] - 1
+            increment_line = -1
+            factor_col = -1
+        else:
+            raise IOError("unknown geographical orientation of " +
+                          "first pixel: '%s'" % self.mda.first_pixel)
+
+        #
+        # Generate final image with no data
+        #
+        image = np.zeros(shape, dtype=data_type) + self.mda.no_data_value
+
+        #
+        # Begin the segment processing.
+        #
+        seg_no = seg_init
+        line_in_image = first_line
+        while seg_no <= seg_end:
+            line_in_segment = 1
+
+            #
+            # Calculate initial line in actual segment.
+            #
+            if seg_no == seg_init:
+                init_line_in_segment = (line_init
+                                        - (segment_nlines * (seg_init - 1)))
+            else:
+                init_line_in_segment = 1
+
+            #
+            # Calculate final line in actual segment.
+            #
+            if seg_no == seg_end:
+                end_line_in_segment = line_end - \
+                    (segment_nlines * (seg_end - 1))
+            else:
+                end_line_in_segment = segment_nlines
+
+            #
+            # Open segment file.
+            #
+            seg_file = segments.get(seg_no, None)
+            if not seg_file:
+                #
+                # No data for this segment.
+                #
+                logger.warning("Segment number %d not found" % seg_no)
+
+                # all image lines are already set to no-data count.
+                line_in_segment = init_line_in_segment
+                while line_in_segment <= end_line_in_segment:
+                    line_in_segment += 1
+                    line_in_image += increment_line
+            else:
+                #
+                # Data for this segment.
+                #
+                logger.info("Read %s" % seg_file)
+                seg = _xrit.read_imagedata(seg_file)
+
+                #
+                # Skip lines not processed.
+                #
+                while line_in_segment < init_line_in_segment:
+                    line = seg.readline()
+                    line_in_segment += 1
+
+                #
+                # Reading and processing segment lines.
+                #
+                while line_in_segment <= end_line_in_segment:
+                    line = seg.readline()[self.mda.line_offset:]
+                    line = converter(line)
+
+                    line = (np.frombuffer(line,
+                                             dtype=data_type,
+                                             count=col_count,
+                                             offset=col_offset)[::factor_col])
+
+                    #
+                    # Insert image data.
+                    #
+                    image[line_in_image] = line
+
+                    line_in_segment += 1
+                    line_in_image += increment_line
+
+                seg.close()
+
+            seg_no += 1
+
+        #
+        # Compute mask before calibration
+        #
+
+        mask = (image == self.mda.no_data_value)
+
+        #
+        # With or without mask ?
+        #
+        do_mask = True
+        if do_mask and not isinstance(image, np.ma.core.MaskedArray):
+            image = np.ma.array(image, mask=mask, copy=False)
+        elif ((not do_mask) and
+                isinstance(image, np.ma.core.MaskedArray)):
+            image = image.filled(self.mda.no_data_value)
+
+        return image
 
 def read_proheader(fp):
     """Read the msg header.
@@ -746,3 +1002,5 @@ if __name__ == '__main__':
              glob('/home/a000680/data/hrit/*EPI*201504211100*') +
              glob('/home/a000680/data/hrit/*PRO*201504211100*'))
     this = MSGHRITLoader(channels=['HRV'], files=files)
+    mda, img = this.load(calibrate=0)
+    #mda, img = this.load(area_extent=[1000, 2000, 1200, 2200], calibrate=0)

@@ -47,6 +47,7 @@ class Metadata(object):
         self.channel_names = []
         self.satellite_id = ''
         self.sensor = 'unknown'
+        self.region_name = 'unknown'
 
         self._info = {}
 
