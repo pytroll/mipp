@@ -30,7 +30,7 @@ import glob
 import imp
 import types
 import re
-from mipp import cfg
+from mipp import satellite_config
 import logging
 logger = logging.getLogger('mipp')
 
@@ -68,14 +68,14 @@ class GenericLoader(object):
                 if not PPP_CFG_VARNAME in os.environ.keys():
                     raise RuntimeError(
                         'Could not find the pytroll config directory environmet variable "%s" ' % (PPP_CFG_VARNAME))
-                if satid is None:
+                if platform_name is None:
                     raise ValueError(
-                        'satid argument can not be omitted or be None')
+                        'platform_name argument can not be omitted or be None')
                 # get the config
 
                 # Note: use trollsift (in new satellite config files) ?
 
-                config = cfg.read_config(satid)
+                config = satellite_config.read_config(platform_name)
                 # some confusion exists about the levels in the config file
                 # it seeme level1 corresponds to mipp and level2 corresponds to mpop. when reaodin data from mipp level 1 is used when reading data from
                 # mpop level 2 is used. unde the hood mpop uses mpip so this
@@ -87,13 +87,14 @@ class GenericLoader(object):
                 filename = cfg_level1['filename']
                 print filename
 
+                import pdb
+                pdb.set_trace()
                 # 2 filter the files for this specific date
                 # set the files attribute
 
             else:
                 raise IOError("Either files or timeslot needs to be provided!")
         self.mda = self._get_metadata()
-
 
     def __getitem__(self, item):
         """
@@ -152,4 +153,8 @@ class GenericLoader(object):
         raise NotImplementedError('Subclasses should implementet this method!')
 
 
+if __name__ == "__main__":
 
+    from datetime import datetime
+    tslot = datetime(2010, 10, 11, 14, 0)
+    this = GenericLoader(platform_name='Meteosat-9', timeslot=tslot)
