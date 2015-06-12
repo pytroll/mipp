@@ -36,6 +36,8 @@ MSG_FILES = [DATADIR + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111
              DATADIR +
              '/H-000-MSG2__-MSG2________-IR_108___-000005___-201010111400-__',
              DATADIR + '/H-000-MSG2__-MSG2________-_________-EPI______-201010111400-__']
+MSG_SUM_CALIB = 75116847.263172984
+MSG_SUM_NOCALIB = 121795059
 
 HRV_FILES = [DATADIR + '/H-000-MSG2__-MSG2________-_________-PRO______-201010111400-__',
              DATADIR +
@@ -60,7 +62,7 @@ class TestReadData(unittest.TestCase):
         mda, img = loader.load(calibrate=0)
         arr = img[1656:1956, 1756:2656]
         self.assertTrue(arr.shape == (300, 900))
-        self.assertEqual(arr.sum(), 121795059)
+        self.assertEqual(arr.sum(), MSG_SUM_NOCALIB)
 
     def test_msg_calib(self):
         """Test read some msg image data"""
@@ -70,19 +72,24 @@ class TestReadData(unittest.TestCase):
         arr = img[1656:1956, 1756:2656]
         self.assertTrue(arr.shape == (300, 900))
         print arr.sum()
-        self.assertAlmostEqual(arr.sum(), 75116847.2632, 3)
-        print mda
+        self.assertAlmostEqual(arr.sum(), MSG_SUM_CALIB, 3)
 
-#    def test_msg_hrv(self):
-#        """Test read some msg image data"""
-#
-#        loader = MSGHRITLoader(channels=[''], files=HRV_FILES)
-#        mda, img = loader.load(calibrate=1)
-#        arr = img[1656:1956, 1756:2656]
-#        self.assertTrue(arr.shape == (300, 900))
-#        print arr.sum()
-#        self.assertAlmostEqual(arr.sum(), 75116847.2632, 3)
-#        print mda
+    def test_msg_hrv(self):
+        """Test read some msg image data"""
+
+        loader = MSGHRITLoader(channels=[''], files=HRV_FILES)
+        mda, img = loader[5168:5768, 5068:6068] #.load(calibrate=1)
+
+        from mipp.satellites.msg_calibrate import Calibrator
+        img, unit = Calibrator(loader.prologue, loader.mda.channel_id)(
+            img, calibrate=1)
+        mda.calibration_unit = unit
+
+        print img.shape
+        self.assertTrue(img.shape == (600, 1000))
+        print img.sum()
+        self.assertAlmostEqual(img.sum(), HRV_SUM, 3)
+        print mda
 
     def tearDown(self):
         """Clean up"""
@@ -107,7 +114,7 @@ class TestReadMetaData(unittest.TestCase):
         self.assertAlmostEqual(loader.mda.sublon, 0.0, 4)
         self.assertEqual(loader.mda.satname, 'msg2')
         self.assertEqual(loader.mda.satnumber, '09')
-        self.assertEqual(loader.mda.time_stamp, self.timestamp)
+        self.assertEqual(loader.mda.timestamp, self.timestamp)
 
         ##print loader.mda
 
