@@ -59,7 +59,8 @@ class GenericLoader(object):
             self.files = sorted(files)
 
         else:
-
+        	# Replace this by self._get_files(platform_name, channels, timeslot) 
+			
             if timeslot:
                 # Get list of files from the timeslot
                 # 1 read config
@@ -110,7 +111,7 @@ class GenericLoader(object):
         """
             slicing
             @args:
-                @item, a tuple fof 2 slices, one slice
+                @item, a tuple (or not) for two, one or zero slices
         """
         # full disc and square
         allrows = slice(0, self.mda.number_of_lines)  # !!!

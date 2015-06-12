@@ -10,9 +10,10 @@
 import sys
 import os
 from StringIO import StringIO 
+from datetime import datetime
 
 import mipp
-from mipp.xrit import bin_reader as rbin
+from mipp.satellites.msg_hrit import bin_reader as rbin
 
 __all__ = ['read_prologue',
            'read_epilogue',
@@ -143,7 +144,7 @@ class AnnotationHeader(object):
         self.platform = a[3]
         self.product_name = a[4]
         self.segment_name = a[5]
-        self.time_stamp = mipp.strptime(a[6], "%Y%m%d%H%M")
+        self.time_stamp = datetime.strptime(a[6], "%Y%m%d%H%M")
         self.flags = a[7]
         self.segment_id = a[3] + '_' + a[4] + '_' + a[5] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")
         self.product_id = a[3] + '_' + a[4] + '_' + self.time_stamp.strftime("%Y%m%d_%H%M")

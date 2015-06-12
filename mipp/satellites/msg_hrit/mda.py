@@ -1,9 +1,9 @@
 #
 # $Id$
 #
-import mipp.mda
+from mipp.satellites.msg_hrit import _mda
 
-class Metadata(mipp.mda.Metadata):
+class Metadata(_mda.Metadata):
     token = ':'
     ignore_attributes = ('line_offset', 'first_pixel',
                          'coff', 'loff',

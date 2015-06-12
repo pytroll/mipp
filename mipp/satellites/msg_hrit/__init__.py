@@ -71,8 +71,8 @@ import os
 from StringIO import StringIO
 import numpy as np
 
-from mipp.xrit import _xrit
-from mipp.xrit import bin_reader as rbin
+from mipp.satellites.msg_hrit import _xrit
+from mipp.satellites.msg_hrit import bin_reader as rbin
 from mipp.generic_loader import GenericLoader
 from mipp.metadata import Metadata
 
@@ -190,7 +190,7 @@ class MSGHRITLoader(GenericLoader):
         self.mda_number_of_coloumns = img.shape[1]
         self.mda.image_size = np.array([self.mda.number_of_columns, self.mda.number_of_lines])
 
-        # return mipp.mda.mslice(mda), image
+        # return metadata and image
         return self.mda, img
 
     def _handle_slice(self, item):
@@ -385,7 +385,7 @@ class MSGHRITLoader(GenericLoader):
         md.data_type = im.structure.nb
         md.no_data_value = NO_DATA_VALUE
         md.line_offset = 0
-        md.time_stamp = im.time_stamp
+        md.timestamp = im.time_stamp
         md.production_time = im.production_time
         md.calibration_unit = ""
 
@@ -406,8 +406,11 @@ class MSGHRITLoader(GenericLoader):
         # Call generic slicer
         #
         slice_obj = self._area_extent_to_slice(area_extent)
-        mda, img = self[slice_obj]
-
+        
+        # You can call __getitem__ or _read
+        #mda, img = self[slice_obj]        
+        img = self._read(*slice_obj)
+        mda = self.mda
         #
         # Calibrate
         #
@@ -423,7 +426,8 @@ class MSGHRITLoader(GenericLoader):
         """
         if area_extent == None:
             # full disc
-            return None
+            return (slice(0, self.mda.number_of_lines),
+                    slice(0, self.mda.number_of_columns))
 
         # slice
         area_extent = tuple(area_extent)
@@ -468,7 +472,6 @@ class MSGHRITLoader(GenericLoader):
 
         logger.debug('area_extent: computed size %d, %d' %
                      (col_stop - col_start, row_stop - row_start))
-
         return (slice(row_start, row_stop), slice(col_start, col_stop))
 
     def _read(self, rows, columns):
@@ -481,8 +484,7 @@ class MSGHRITLoader(GenericLoader):
         .no_data_value
         .line_offset
         """
-        from mipp import convert
-        from mipp.xrit import _xrit
+        import mipp.tools.convert
 
         shape = (rows.stop - rows.start, columns.stop - columns.start)
         if (columns.start < 0 or
@@ -514,7 +516,7 @@ class MSGHRITLoader(GenericLoader):
             data_type = np.uint8
             data_type_len = 8
         elif self.mda.data_type == 10:
-            converter = convert.dec10216
+            converter = mipp.tools.convert.dec10to16
             data_type = np.uint16
             data_type_len = 16
         elif self.mda.data_type == 16:
