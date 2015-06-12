@@ -5,7 +5,7 @@ import cStringIO
 
 import buildpath_to_syspath
 print sys.path
-import mipp.cfg
+import mipp.satellite_config as cfg
 
 datadir = (os.path.dirname(__file__) or '.') + '/data'
 
@@ -14,16 +14,16 @@ class Test(unittest.TestCase):
     def test_config_parser(self):
         cfgfile = 'msg2'        
         os.environ['PPP_CONFIG_DIR'] = datadir
-        c = mipp.cfg.read_config(cfgfile)
+        c = cfg.read_config(cfgfile)
         fp = cStringIO.StringIO()
         for name in ('satellite', 'level1', 'level2'):
             h = c(name)
             print >>fp, name
             for k in sorted(h.keys()):
                 print >>fp, '    ', k + ':',  h[k]
-        print >>fp, mipp.cfg._Channel(c(1).items())
-        print >>fp, mipp.cfg._Channel(c(2).items())
-        print >>fp, mipp.cfg._Channel(c(3).items())
+        print >>fp, cfg._Channel(c(1).items())
+        print >>fp, cfg._Channel(c(2).items())
+        print >>fp, cfg._Channel(c(3).items())
         for name in c.channel_names:
             print >>fp, c.get_channel(name)
         text1 = fp.getvalue().strip()

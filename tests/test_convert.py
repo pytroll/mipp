@@ -23,13 +23,12 @@
 """Unit testing the (10 to 16 bit) conversion functions
 """
 
-import unittest
-
-from mipp import convert
-from mipp import xrit
 import os
-from mipp.xrit import _xrit
+import unittest
 import numpy as np
+
+from mipp.tools import convert
+from mipp.satellites.msg_hrit import _xrit
 
 
 class ConvertTest(unittest.TestCase):
@@ -59,7 +58,7 @@ class ConvertTest(unittest.TestCase):
         _xrit.read_headers(fp)
         s = fp.read()
         fp.close()
-
+        
         fp = open(msg_files[2], 'r')
         _xrit.read_headers(fp)
         s2 = fp.read()
@@ -69,12 +68,13 @@ class ConvertTest(unittest.TestCase):
         #
         # Do conversion
         #
-        x = convert.dec10216(s)
+        x = convert.dec10to16(s)
         this = np.frombuffer(x, dtype=np.uint16)
 
         #
         # Validate conversion through known sum
         #
+        print this.sum 
         self.assertEqual(this.sum(), EXPECTED_SUM)
 
 
@@ -83,5 +83,6 @@ class ConvertTest(unittest.TestCase):
         """Clean up"""
         return
 
+print __name__
 if __name__ == '__main__':
     unittest.main()
