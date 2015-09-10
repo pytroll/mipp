@@ -15,6 +15,7 @@ import mipp.cfg
 from mipp.xrit import _xrit
 from mipp.xrit.loader import ImageLoader
 import os
+from datetime import timedelta
 
 __all__ = ['load_meteosat07',
            'load_meteosat09',
@@ -24,6 +25,7 @@ __all__ = ['load_meteosat07',
            'load_mtsat1r',
            'load_mtsat2',
            'load_electrol',
+           'load_himawari8',
            'load',
            'load_files']
 
@@ -96,33 +98,44 @@ class SatelliteLoader(object):
         val = {}
         val["channel"] = channel + '*'
 
+        if isinstance(time_stamp, (tuple, list)):
+            start_time, end_time = time_stamp
+        else:
+            start_time = time_stamp
+            end_time = time_stamp
+
         # Prologue
 
         val["segment"] = "PRO".ljust(9, '_')
 
         filename_pro = opt.get('filename_pro', opt['filename'])
-        prologue = glob.glob(
-            time_stamp.strftime(os.path.join(opt['dir'], filename_pro)) % val)
+        prologue = glob.glob(start_time.strftime(os.path.join(opt['dir'], filename_pro)) % val)
 
         if not prologue:
-            raise mipp.NoFiles("missing prologue file: '%s'" % (time_stamp.strftime(filename_pro) % val))
-        prologue = prologue[0]
+            logger.info("No prologue file to read.")
+            prologue = None
+        else:
+            prologue = prologue[0]
+            logger.info("Read %s" % prologue)
+            prologue = _xrit.read_prologue(prologue)
+
 
         # Regular channels
 
-        val["segment"] = "0????????"
-        image_files = glob.glob(
-            time_stamp.strftime(os.path.join(opt['dir'], opt['filename'])) % val)
+        val["segment"] = "0??*"
+        dt = timedelta(minutes=1)
+        image_files = []
+        while start_time <= end_time:
+            image_files.extend(glob.glob(start_time.strftime(os.path.join(opt['dir'], opt['filename'])) % val))
+            start_time += dt
+
         if not image_files:
-            raise mipp.NoFiles("no data files: '%s'" % (time_stamp.strftime(opt['filename']) % val))
+            raise mipp.NoFiles("no data files: '%s'" % (start_time.strftime(opt['filename']) % val))
         image_files.sort()
 
         # Check if the files are xrit-compressed, and decompress them
         # accordingly:
         decomp_files = decompress(image_files)
-
-        logger.info("Read %s" % prologue)
-        prologue = _xrit.read_prologue(prologue)
 
         # Epilogue
 
@@ -130,7 +143,7 @@ class SatelliteLoader(object):
 
         filename_epi = opt.get('filename_epi', opt['filename'])
         epilogue = glob.glob(
-            time_stamp.strftime(os.path.join(opt['dir'], filename_epi)) % val)
+            end_time.strftime(os.path.join(opt['dir'], filename_epi)) % val)
 
         if not epilogue:
             logger.info("No epilogue file to read.")
@@ -188,9 +201,9 @@ class SatelliteLoader(object):
             mda = self._read_metadata(prologue, image_files, epilogue=epilogue)
         else:
             mda = self._read_metadata(prologue, image_files)
-        len_img = (((mda.image_size[0] + mda.line_offset) * mda.image_size[1]) * mda.data_type) // 8
+        len_img = (((mda.image_size[0] + mda.line_offset) * mda.image_size[1]) * abs(mda.data_type)) // 8
         logger.info("Data size: %dx%d pixels, %d bytes, %d bits per pixel",
-                    mda.image_size[0], mda.image_size[1], len_img, mda.data_type)
+                    mda.image_size[0], mda.image_size[1], len_img, abs(mda.data_type))
 
         #
         # Return a proxy slicer
@@ -301,6 +314,8 @@ def load_mtsat1r(time_stamp, channel, **kwarg):
 def load_mtsat2(time_stamp, channel, **kwarg):
     return load('mtsat2', time_stamp, channel, **kwarg)
 
+def load_himawari8(time_stamp, channel, **kwarg):
+    return load('himawari8', time_stamp, channel, **kwarg)
 
 def load_electrol(time_stamp, channel, **kwarg):
     return load('electrol', time_stamp, channel, **kwarg)
