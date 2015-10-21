@@ -65,6 +65,12 @@ class SatelliteLoader(object):
                                    + "in " + str(pth) + "\n" + str(err))
         try:
             m = imp.load_module(format, *args)
+            try:
+                _xrit.header_map = m.header_map
+                _xrit.header_types = m.header_types
+            except AttributeError:
+                _xrit.header_map = _xrit.base_header_map
+                _xrit.header_types = _xrit.base_header_types
         finally:
             if args[0]:
                 args[0].close()
@@ -118,7 +124,6 @@ class SatelliteLoader(object):
             prologue = prologue[0]
             logger.info("Read %s" % prologue)
             prologue = _xrit.read_prologue(prologue)
-
 
         # Regular channels
 
@@ -314,8 +319,10 @@ def load_mtsat1r(time_stamp, channel, **kwarg):
 def load_mtsat2(time_stamp, channel, **kwarg):
     return load('mtsat2', time_stamp, channel, **kwarg)
 
+
 def load_himawari8(time_stamp, channel, **kwarg):
     return load('himawari8', time_stamp, channel, **kwarg)
+
 
 def load_electrol(time_stamp, channel, **kwarg):
     return load('electrol', time_stamp, channel, **kwarg)

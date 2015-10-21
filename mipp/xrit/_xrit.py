@@ -132,7 +132,7 @@ class ImageDataFunction(object):
 
 class AnnotationHeader(object):
     hdr_type = 4
-    hdr_name = 'annotation'    
+    hdr_name = 'annotation'
     def __init__(self, fp):
         self.rec_len = rbin.read_uint2(fp.read(2))
         self.text = fp.read(self.rec_len-3).strip()
@@ -196,8 +196,7 @@ class ImageSegmentLineQuality(object):
             lr = rbin.read_uint1(fp.read(1))
             lg = rbin.read_uint1(fp.read(1))
             a.append((ln, stamp, lv, lr, lg))
-            #print ln, lv, lr, lg, stamp
-            nb += 13            
+            nb += 13
         self.line_quality = a        
 
     def __str__(self):
@@ -229,7 +228,7 @@ def _decode_data_definition(buf):
             raise mipp.DecodeError("could not decode data definition: '%s'"%a)
     return dd
     
-header_map = {0: PrimaryHeader,
+base_header_map = {0: PrimaryHeader,
               1: ImageStructure,
               2: ImageNavigation,
               3: ImageDataFunction,
@@ -237,7 +236,7 @@ header_map = {0: PrimaryHeader,
               5: TimeStampRecord,
               128: SegmentIdentification,
               129: ImageSegmentLineQuality}
-header_types = tuple(sorted(header_map.keys()))
+base_header_types = tuple(sorted(base_header_map.keys()))
 
 def read_header(fp):
     hdr_type = rbin.read_uint1(fp.read(1))
@@ -307,7 +306,7 @@ class Segment(object):
                 print k + ':', self.__dict__[k]
 
     def __str__(self):
-        return self.segment_id
+        return str(self.segment_id)
 
 class ImageSegment(Segment):
 
@@ -373,7 +372,6 @@ def list(file_name, dump_data=False):
     fname = 'xrit.dat'
     fp = open(file_name)
     for hdr in read_header(fp):
-        print hdr
         if hdr.hdr_name == 'annotation':
             fname = hdr.segment_id
     data = fp.read()

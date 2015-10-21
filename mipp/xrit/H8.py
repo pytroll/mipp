@@ -183,7 +183,7 @@ class SegmentIdentification(object):
                 self.seg_line_no)
 
 
-_xrit.header_map = {0: _xrit.PrimaryHeader,
+header_map = {0: _xrit.PrimaryHeader,
                     1: _xrit.ImageStructure,
                     2: _xrit.ImageNavigation,
                     3: _xrit.ImageDataFunction,
@@ -195,7 +195,7 @@ _xrit.header_map = {0: _xrit.PrimaryHeader,
                     131: ImageObservationTimeHeader,
                     132: ImageQualityInformationHeader}
 
-_xrit.header_types = tuple(sorted(_xrit.header_map.keys()))
+header_types = tuple(sorted(header_map.keys()))
 
 
 if __name__ == '__main__':
