@@ -94,7 +94,9 @@ def read_metadata(prologue, image_files):
     md.no_data_value = no_data_value
 
     segment_size = im.structure.nl
-    md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
+
+    #md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
+    md.loff = im.navigation.loff
     md.coff = im.navigation.coff
 
     return md
