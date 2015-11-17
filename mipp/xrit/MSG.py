@@ -311,8 +311,8 @@ class _Calibrator(object):
             # computation based on spectral radiance
             cal_data = eval_np(('C2 * 100. * wavenumber / '
                                 'log(C1 * 1.0e6 * wavenumber ** 3 / '
-                                '(1.0e-5 * radiances) + 1))'))
-
+                                '(1.0e-5 * radiances) + 1)'))
+            
             coef_a = eval("BTFIT_A_" + channel_name)
             coef_b = eval("BTFIT_B_" + channel_name)
             coef_c = eval("BTFIT_C_" + channel_name)
