@@ -31,6 +31,8 @@ __all__ = ['load_meteosat07',
 
 CHECK_CONFIG_SUBLON = False
 
+_xrit.header_map = _xrit.base_header_map
+_xrit.header_types = _xrit.base_header_types
 
 class SatelliteLoader(object):
     # Currently this one only works for geos satellites
