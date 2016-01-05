@@ -236,9 +236,10 @@ C2 = 0.0143877523
 
 class _Calibrator(object):
 
-    def __init__(self, hdr, channel_name):
+    def __init__(self, hdr, channel_name, bits_per_pixel):
         self.hdr = hdr
         self.channel_name = channel_name
+        self.bits_per_pixel = bits_per_pixel
 
     def __call__(self, image, calibrate=1):
         """Computes the radiances and reflectances/bt of a given channel.  The
@@ -271,6 +272,9 @@ class _Calibrator(object):
         chn_nb = channels[channel_name] - 1
 
         mask = (image == no_data_value)
+        if self.bits_per_pixel == 8:
+            logger.info("8 bits per pixel adjusted to 10 bits for calibration.")
+            image = image.astype(np.uint16) * 4
 
         cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
         coffset = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Offset']
@@ -806,7 +810,7 @@ def read_metadata(prologue, image_files, epilogue):
     im = _xrit.read_imagedata(image_files[0])
 
     md = Metadata()
-    md.calibrate = _Calibrator(hdr, im.product_name)
+    md.calibrate = _Calibrator(hdr, im.product_name, bits_per_pixel=im.structure.nb)
 
     md.sublon = hdr["ProjectionDescription"]["LongitudeOfSSP"]
     md.product_name = im.product_id
