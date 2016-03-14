@@ -693,9 +693,9 @@ def read_proheader(fp):
                               ("AbsCalWeightXsat", ">f4"),
                               ("AbsCalCoeff", ">f4"),
                               ("AbsCalError", ">f4"),
-                              ("CalMonBias", ">f4"),
-                              ("CalMonRms", ">f4"),
-                              ("OffsetCount", ">f4")])
+                              ("GSICSCalCoeff", ">f4"),
+                              ("GSICSCalError", ">f4"),
+                              ("GSICSOffsetCount", ">f4")])
 
     bbdu["MPEFCalFeedback"] = np.fromstring(fp.read(32 * 12),
                                             dtype=impf_cal_type)
