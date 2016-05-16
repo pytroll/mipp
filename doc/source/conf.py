@@ -79,7 +79,7 @@ copyright = u'2009-2014, The pytroll crew'
 import mipp.version as current_version
 
 # The short X.Y version.
-version = ".".join([current_version.__major__, current_version.__minor__])
+version = current_version.__version__.rsplit('.', 1)[0]
 # The full version, including alpha/beta/rc tags.
 release = current_version.__version__
 
