@@ -282,6 +282,9 @@ class ImageLoader(object):
         elif mda.data_type == 16:
             data_type = numpy.uint16
             data_type_len = 16
+        elif mda.data_type == -16:
+            data_type = '>u2'
+            data_type_len = 16
         else:
             raise mipp.ReaderError, "unknown data type: %d bit per pixel"\
                 %mda.data_type

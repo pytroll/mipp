@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger('mipp')
 
 import mipp
-from mipp import geotiff
+from mipp.read_geotiff import read_geotiff, tiff2areadef
 from mipp.xsar import Metadata
 
 __all__ = ['read_metadata', 'read_image']
@@ -108,10 +108,10 @@ def read_image(mda, filename=None, mask=True, calibrate=1):
     if not filename:
         filename = mda.image_filename
 
-    params, data = geotiff.read_geotiff(filename)
-    area_def = geotiff.tiff2areadef(params['projection'],
-                                    params['geotransform'],
-                                    data.shape)
+    params, data = read_geotiff(filename)
+    area_def = tiff2areadef(params['projection'],
+                            params['geotransform'],
+                            data.shape)
 
     mda.proj4_params = area_def.proj4_string.replace('+', '')
     mda.area_extent = area_def.area_extent

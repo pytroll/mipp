@@ -2,3 +2,6 @@ This is a Meteorological Ingest-Processing Package (mipp).
 
 It's main task is to convert satellite level-1.5 data into a 
 format understood by mpop (http://github.com/mraspaud/mpop).
+
+A recent build of the documentation is available at
+http://mipp.readthedocs.org/.

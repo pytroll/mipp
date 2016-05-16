@@ -132,7 +132,7 @@ class ImageDataFunction(object):
 
 class AnnotationHeader(object):
     hdr_type = 4
-    hdr_name = 'annotation'    
+    hdr_name = 'annotation'
     def __init__(self, fp):
         self.rec_len = rbin.read_uint2(fp.read(2))
         self.text = fp.read(self.rec_len-3).strip()
@@ -196,8 +196,7 @@ class ImageSegmentLineQuality(object):
             lr = rbin.read_uint1(fp.read(1))
             lg = rbin.read_uint1(fp.read(1))
             a.append((ln, stamp, lv, lr, lg))
-            #print ln, lv, lr, lg, stamp
-            nb += 13            
+            nb += 13
         self.line_quality = a        
 
     def __str__(self):
@@ -229,7 +228,7 @@ def _decode_data_definition(buf):
             raise mipp.DecodeError("could not decode data definition: '%s'"%a)
     return dd
     
-header_map = {0: PrimaryHeader,
+base_header_map = {0: PrimaryHeader,
               1: ImageStructure,
               2: ImageNavigation,
               3: ImageDataFunction,
@@ -237,7 +236,7 @@ header_map = {0: PrimaryHeader,
               5: TimeStampRecord,
               128: SegmentIdentification,
               129: ImageSegmentLineQuality}
-header_types = tuple(sorted(header_map.keys()))
+base_header_types = tuple(sorted(base_header_map.keys()))
 
 def read_header(fp):
     hdr_type = rbin.read_uint1(fp.read(1))
@@ -274,10 +273,10 @@ class Segment(object):
             elif h.hdr_type == 4:
                 self.platform = h.platform
                 self.product_name = h.product_name
-                self.segment_name = h.segment_name
-                self.time_stamp = h.time_stamp
-                self.product_id = h.product_id
-                self.segment_id = h.segment_id
+                self.segment_name = getattr(h, "segment_name", None)
+                self.time_stamp = getattr(h, "time_stamp", None)
+                self.product_id = getattr(h, "product_id", None)
+                self.segment_id = getattr(h, "segment_id", None)
             elif h.hdr_type == 5:
                 self.production_time = h.time_stamp
             elif h.hdr_type in header_types:
@@ -307,7 +306,7 @@ class Segment(object):
                 print k + ':', self.__dict__[k]
 
     def __str__(self):
-        return self.segment_id
+        return str(self.segment_id)
 
 class ImageSegment(Segment):
 
@@ -358,7 +357,7 @@ def read_gts_message(file_name):
         return s
     else:
         raise mipp.DecodeError("this is no 'GTS Message' file: '%s'"%file_name)
-    
+
 def read_mpef(file_name):
     s = Segment(file_name)
     if s.file_type == 144:
@@ -373,7 +372,6 @@ def list(file_name, dump_data=False):
     fname = 'xrit.dat'
     fp = open(file_name)
     for hdr in read_header(fp):
-        print hdr
         if hdr.hdr_name == 'annotation':
             fname = hdr.segment_id
     data = fp.read()
