@@ -25,8 +25,4 @@
 """Version file.
 """
 
-__major__ = "0"
-__minor__ = "9"
-__patch__ = "2"
-
-__version__ = "v" + ".".join([__major__, __minor__, __patch__])
+__version__ = "v0.9.2"
