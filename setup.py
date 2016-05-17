@@ -7,7 +7,7 @@
 
 # Author(s):
 
-#   Lars Orum Rasmussen <loerum@gmail.com>  
+#   Lars Orum Rasmussen <loerum@gmail.com>
 
 # This file is part of mipp.
 
@@ -26,13 +26,12 @@
 
 """Setup file for mipp.
 """
-import os
-from setuptools import setup, Extension
+from setuptools import setup
 import imp
 
 version = imp.load_source('mipp.version', 'mipp/version.py')
 
-setup(name = 'mipp',
+setup(name='mipp',
       description='Meteorological ingest processing package',
       author='Lars Orum Rasmussen',
       author_email='loerum@gmail.com',
@@ -43,8 +42,9 @@ setup(name = 'mipp',
                    "Operating System :: OS Independent",
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
-      url="https://github.com/loerum/mipp",
-      version = version.__version__,
-      packages = ['mipp', 'mipp.xrit', 'mipp.xsar'],
-      zip_safe = False,
+      url="https://github.com/pytroll/mipp",
+      download_url="https://github.com/pytroll/mipp/releases/tag/" + version.__version__,
+      version=version.__version__,
+      packages=['mipp', 'mipp.xrit', 'mipp.xsar'],
+      zip_safe=False,
       )
