@@ -27,6 +27,7 @@ import unittest
 import os.path
 from datetime import datetime
 from mipp.satellites.msg_hrit import MSGHRITLoader
+import logging
 
 DATADIR = (os.path.dirname(__file__) or '.') + '/data'
 
@@ -123,4 +124,5 @@ class TestReadMetaData(unittest.TestCase):
         pass
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()
