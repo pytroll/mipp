@@ -23,4 +23,4 @@
 """Package nat for native format
 """
 
-from mipp.native import MSG
+from mipp.satellites.msg_native import MSG

@@ -27,16 +27,17 @@
 import logging
 logger = logging.getLogger(__name__)
 
-import mipp.cfg
 from glob import glob
 import os.path
 from datetime import datetime, timedelta
 import numpy as np
-from mipp.header_records import (
+
+from mipp import satellite_config
+from mipp.satellites.msg_native.header_records import (
     Msg15NativeHeaderRecord, GSDTRecords)
 
-import mipp.xrit.MSG
-from mipp import get_cds_time
+from mipp.satellites.msg_calibrate import Calibrator
+from mipp.tools.convert import get_cds_time
 
 
 class ChannelData(object):
@@ -45,7 +46,7 @@ class ChannelData(object):
 
         self.header = mda
         self.channel_name = name
-        self.calibrator = mipp.xrit.MSG._Calibrator(
+        self.calibrator = Calibrator(
             self.header, self.channel_name)
         self.data, self.unit = data, 'counts'
 
@@ -73,15 +74,14 @@ class NativeImage(object):
         self.units = {}
         self.satname = satname
         self.channel_name_mapping = None
-        self.channel_numbers = []
-        self._config_reader = mipp.cfg.read_config(satname)
+        self._config_reader = satellite_config.read_config(satname)
         self.channel_name_mapping = self._config_reader.channels
         self.channel_names = self.channel_name_mapping.keys()
         # Make the list of channel numbers:
-        self.channel_numbers = []
+        self.channel_names = []
         for name in self.channel_names:
-            self.channel_numbers.append(
-                self.channel_name_mapping[name].channel_number)
+            self.channel_names.append(
+                self.channel_name_mapping[name].name)
 
         self.header = None
         self.pk_head = None
@@ -227,7 +227,7 @@ class NativeImage(object):
 
     def _dec10to16(self, data):
         """Unpacking the 10 bit data to 16 bit"""
-        from mipp import dec10to16
+        from mipp.tools.convert import dec10to16
         return dec10to16(data)
 
     def __str__(self):
@@ -301,3 +301,10 @@ class NativeImage(object):
                                   str(os.path.join(path, dtobj[0])))
         if file_found:
             return filename
+
+
+if __name__ == "__main__":
+    filename = "/home/lars/Downloads/MSG3-SEVI-MSG15-0100-NA-20140724095743.719000000Z-NA.nat"
+    img = NativeImage("meteosat10", filename=filename, calibflag=1)
+    img.load()
+    img.read_channel(1)

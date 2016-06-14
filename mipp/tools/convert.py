@@ -24,7 +24,7 @@
 """Convertion functions taken from old convert.py inside xrit directory
 """
 
-from StringIO import StringIO
+from datetime import datetime, timedelta
 import numpy as np
 
 def get_cds_time(days, msecs):
