@@ -56,72 +56,37 @@ class TestReadData(unittest.TestCase):
     def setUp(self):
         self.decompressed_msg_files = []
 
-    def test_msg_nocalib(self):
+    def test_msg_slicing(self):
         """Test read some msg image data"""
 
         loader = MSGHRITLoader(channels=[''], files=MSG_FILES)
-        mda, img = loader.load(calibrate=0)
-        arr = img[1656:1956, 1756:2656]
-        self.assertTrue(arr.shape == (300, 900))
-        self.assertEqual(arr.sum(), MSG_SUM_NOCALIB)
+        mda, img = loader.load(calibrate=0, area_extent=(
+            -696092.8, 0.00, 2784371.2, 1392185.6))
+        print img.shape
+        print img.sum()
+        #import matplotlib.pyplot as plt
+        #plt.imshow(img)
+        #plt.show()
+        self.assertTrue(img.shape == (463, 1159))
+        self.assertEqual(img.sum(), 278892695)
 
-    def test_msg_calib(self):
-        """Test read some msg image data"""
-
-        loader = MSGHRITLoader(channels=[''], files=MSG_FILES)
-        mda, img = loader.load(calibrate=1)
-        arr = img[1656:1956, 1756:2656]
-        self.assertTrue(arr.shape == (300, 900))
-        print arr.sum()
-        self.assertAlmostEqual(arr.sum(), MSG_SUM_CALIB, 3)
-
-    def test_msg_hrv(self):
+    def test_msg_slicing_hrv(self):
         """Test read some msg image data"""
 
         loader = MSGHRITLoader(channels=[''], files=HRV_FILES)
-        mda, img = loader[5168:5768, 5068:6068]  # .load(calibrate=1)
-
-        from mipp.satellites.msg_calibrate import Calibrator
-        img, unit = Calibrator(loader.prologue, loader.mda.channel_id)(
-            img, calibrate=1)
-        mda.calibration_unit = unit
-
+        mda, img = loader[5168:5768, 5068:6068]
         print img.shape
-        self.assertTrue(img.shape == (600, 1000))
         print img.sum()
-        self.assertAlmostEqual(img.sum(), HRV_SUM, 3)
-        print mda
+        #import matplotlib.pyplot as plt
+        #plt.imshow(img)
+        #plt.show()
+        self.assertTrue(img.shape == (600, 1000))
+        self.assertEqual(img.sum(), 125778624)
 
     def tearDown(self):
         """Clean up"""
         pass
 
-
-class TestReadMetaData(unittest.TestCase):
-
-    def setUp(self):
-        self.timestamp = datetime(2010, 10, 11, 14, 0, 0)
-
-    def test_read_metadata(self):
-        """Test read msg metadata"""
-
-        loader = MSGHRITLoader('meteosat10', files=MSG_FILES)
-        self.assertEqual(loader.mda.coff, 1856)
-        self.assertEqual(loader.mda.loff, 1856)
-        self.assertEqual(loader.mda.image_size[0], 3712)
-        self.assertEqual(loader.mda.image_size[1], 3712)
-        self.assertEqual(loader.mda.number_of_columns, 3712)
-        self.assertEqual(loader.mda.proj4_str, PROJ4_STRING)
-        self.assertAlmostEqual(loader.mda.sublon, 0.0, 4)
-        self.assertEqual(loader.mda.satname, 'msg2')
-        self.assertEqual(loader.mda.satnumber, '09')
-        self.assertEqual(loader.mda.timestamp, self.timestamp)
-
-        ##print loader.mda
-
-    def tearDown(self):
-        """Clean up"""
-        pass
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

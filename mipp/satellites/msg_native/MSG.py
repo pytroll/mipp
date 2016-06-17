@@ -307,4 +307,9 @@ if __name__ == "__main__":
     filename = "/home/lars/Downloads/MSG3-SEVI-MSG15-0100-NA-20140724095743.719000000Z-NA.nat"
     img = NativeImage("meteosat10", filename=filename, calibflag=1)
     img.load()
-    img.read_channel(1)
+    data = img.read_channel(1)
+    print data
+    print data.min(), data.mean(), data.max()
+    import matplotlib.pyplot as plt
+    plt.imshow(data)
+    plt.show()

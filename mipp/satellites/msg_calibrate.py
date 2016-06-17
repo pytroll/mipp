@@ -215,6 +215,7 @@ class Calibrator(object):
         """
 
         self.hdr = hdr
+        #print "CALIBRATING", hdr
         self.channel_name = channel_name
 
     def __call__(self, image, calibrate=1):
