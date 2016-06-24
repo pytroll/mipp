@@ -12,7 +12,6 @@ from datetime import datetime
 
 from mipp.xsar import Metadata
 
-SATELLITE = 's1a'
 PIXEL_SPACING = {
     'sm-f': (4, 4),
     'sm-h': (10, 10),
@@ -178,7 +177,7 @@ def read_manifest(filename, **mdax):
         resolution = manifest.resolution_class
         channels = {}
         for pol in manifest.polarisations:
-            _text = '-'.join([SATELLITE, manifest.instrument_mode, manifest.product_type, pol])
+            _text = '-'.join([manifest.mission_id, manifest.instrument_mode, manifest.product_type, pol])
             _name = '-'.join([manifest.instrument_mode, resolution, pol])
             for fn in manifest.files:
                 if os.path.basename(fn).startswith(_text):
