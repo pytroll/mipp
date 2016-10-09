@@ -283,11 +283,14 @@ def load_files(prologue, image_files, epilogue=None, **kwarg):
     if epilogue and type(epilogue) == type('string'):
         logger.info("Read %s" % epilogue)
         epilogue = _xrit.read_epilogue(epilogue)
-    satname = prologue.platform.lower()
-    return SatelliteLoader(mipp.cfg.read_config(satname)).load_files(prologue,
-                                                                     image_files,
-                                                                     epilogue=epilogue,
-                                                                     **kwarg)
+
+    satname = kwarg.pop('platform_name', None)
+    if satname is None:
+        satname = prologue.platform
+    return SatelliteLoader(mipp.cfg.read_config(satname.lower())).load_files(prologue,
+                                                                             image_files,
+                                                                             epilogue=epilogue,
+                                                                             **kwarg)
 
 
 def load(satname, time_stamp, channel, **kwarg):
