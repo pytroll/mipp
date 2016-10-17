@@ -1,21 +1,23 @@
 #
 # $Id$
 #
-import numpy
 import glob
 import imp
-import types
-import re
-
 import logging
-logger = logging.getLogger('mipp')
+import os
+import re
+import types
+from datetime import timedelta
+
+import numpy
 
 import mipp
 import mipp.cfg
 from mipp.xrit import _xrit
 from mipp.xrit.loader import ImageLoader
-import os
-from datetime import timedelta
+
+logger = logging.getLogger('mipp')
+
 
 __all__ = ['load_meteosat07',
            'load_meteosat09',
@@ -34,6 +36,7 @@ CHECK_CONFIG_SUBLON = False
 _xrit.header_map = _xrit.base_header_map
 _xrit.header_types = _xrit.base_header_types
 
+
 class SatelliteLoader(object):
     # Currently this one only works for geos satellites
     #
@@ -50,7 +53,8 @@ class SatelliteLoader(object):
         sat = config_reader('satellite')
         projname = sat['projection'].lower()
         if not projname.startswith('geos'):
-            raise mipp.ReaderError("currently we only support projections of type: 'GEOS'")
+            raise mipp.ReaderError(
+                "currently we only support projections of type: 'GEOS'")
 
         #
         # Load format decoder based on level1 format
@@ -117,7 +121,8 @@ class SatelliteLoader(object):
         val["segment"] = "PRO".ljust(9, '_')
 
         filename_pro = opt.get('filename_pro', opt['filename'])
-        prologue = glob.glob(start_time.strftime(os.path.join(opt['dir'], filename_pro)) % val)
+        prologue = glob.glob(start_time.strftime(
+            os.path.join(opt['dir'], filename_pro)) % val)
 
         if not prologue:
             logger.info("No prologue file to read.")
@@ -133,11 +138,13 @@ class SatelliteLoader(object):
         dt = timedelta(minutes=1)
         image_files = []
         while start_time <= end_time:
-            image_files.extend(glob.glob(start_time.strftime(os.path.join(opt['dir'], opt['filename'])) % val))
+            image_files.extend(glob.glob(start_time.strftime(
+                os.path.join(opt['dir'], opt['filename'])) % val))
             start_time += dt
 
         if not image_files:
-            raise mipp.NoFiles("no data files: '%s'" % (start_time.strftime(opt['filename']) % val))
+            raise mipp.NoFiles("no data files: '%s'" %
+                               (start_time.strftime(opt['filename']) % val))
         image_files.sort()
 
         # Check if the files are xrit-compressed, and decompress them
@@ -172,7 +179,8 @@ class SatelliteLoader(object):
 
     def _read_metadata(self, prologue, image_files, epilogue=None):
         if epilogue:
-            mda = self._metadata_reader(prologue, image_files, epilogue=epilogue)
+            mda = self._metadata_reader(
+                prologue, image_files, epilogue=epilogue)
         else:
             mda = self._metadata_reader(prologue, image_files)
         if "%.2f" % mda.sublon != "%.2f" % self.sublon:
@@ -194,7 +202,8 @@ class SatelliteLoader(object):
             raise mipp.ReaderError("unknown image width for %s, %s: %d" %
                                    (self.satname, mda.channel, mda.image_size[0]))
 
-        mda.pixel_size = numpy.array([chn.resolution, chn.resolution], dtype=numpy.float64)
+        mda.pixel_size = numpy.array(
+            [chn.resolution, chn.resolution], dtype=numpy.float64)
         for k, v in self.__dict__.items():
             if k[0] != '_' and type(v) != types.FunctionType:
                 setattr(mda, k, v)
@@ -208,7 +217,8 @@ class SatelliteLoader(object):
             mda = self._read_metadata(prologue, image_files, epilogue=epilogue)
         else:
             mda = self._read_metadata(prologue, image_files)
-        len_img = (((mda.image_size[0] + mda.line_offset) * mda.image_size[1]) * abs(mda.data_type)) // 8
+        len_img = (((mda.image_size[0] + mda.line_offset)
+                    * mda.image_size[1]) * abs(mda.data_type)) // 8
         logger.info("Data size: %dx%d pixels, %d bytes, %d bits per pixel",
                     mda.image_size[0], mda.image_size[1], len_img, abs(mda.data_type))
 
@@ -287,10 +297,10 @@ def load_files(prologue, image_files, epilogue=None, **kwarg):
     satname = kwarg.pop('platform_name', None)
     if satname is None:
         satname = prologue.platform
-    return SatelliteLoader(mipp.cfg.read_config(satname.lower())).load_files(prologue,
-                                                                             image_files,
-                                                                             epilogue=epilogue,
-                                                                             **kwarg)
+    return SatelliteLoader(mipp.cfg.read_config(satname)).load_files(prologue,
+                                                                     image_files,
+                                                                     epilogue=epilogue,
+                                                                     **kwarg)
 
 
 def load(satname, time_stamp, channel, **kwarg):
