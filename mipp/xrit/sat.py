@@ -10,6 +10,7 @@ import types
 from datetime import timedelta
 
 import numpy
+import six
 
 import mipp
 import mipp.cfg
@@ -188,8 +189,8 @@ class SatelliteLoader(object):
                 raise mipp.ReaderError("Sub satellite point in config file (%.2f) don't match data (%.2f)" %
                                        (self.sublon, mda.sublon))
             else:
-                logger.warning("Modifying sub satellite point from %.2f to %.2f" %
-                               (self.sublon, mda.sublon))
+                logger.warning("Modifying sub satellite point from %.2f to %.2f",
+                               self.sublon, mda.sublon)
                 self.sublon = mda.sublon
 
         try:
@@ -287,11 +288,11 @@ def decompress(infiles, **options):
 
 
 def load_files(prologue, image_files, epilogue=None, **kwarg):
-    if type(prologue) == type('string'):
-        logger.info("Read %s" % prologue)
+    if isinstance(prologue, (str, six.text_type)):
+        logger.info("Read %s", prologue)
         prologue = _xrit.read_prologue(prologue)
-    if epilogue and type(epilogue) == type('string'):
-        logger.info("Read %s" % epilogue)
+    if epilogue and isinstance(epilogue, (str, six.text_type)):
+        logger.info("Read %s", epilogue)
         epilogue = _xrit.read_epilogue(epilogue)
 
     satname = kwarg.pop('platform_name', None)

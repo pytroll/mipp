@@ -26,8 +26,9 @@
 
 """Setup file for mipp.
 """
-from setuptools import setup
 import imp
+
+from setuptools import setup
 
 version = imp.load_source('mipp.version', 'mipp/version.py')
 
@@ -45,6 +46,7 @@ setup(name='mipp',
       url="https://github.com/pytroll/mipp",
       download_url="https://github.com/pytroll/mipp/releases/tag/" + version.__version__,
       version=version.__version__,
+      install_requires=['six', 'numpy'],
       packages=['mipp', 'mipp.xrit', 'mipp.xsar'],
       zip_safe=False,
       )
