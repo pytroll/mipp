@@ -1,6 +1,57 @@
 Changelog
 =========
 
+v1.0.0 (2016-10-27)
+-------------------
+
+- Update changelog. [Martin Raspaud]
+
+- Bump version: 0.10.0 → 1.0.0. [Martin Raspaud]
+
+- Merge branch 'master' into release-1.0.0. [Martin Raspaud]
+
+  Conflicts:
+  	mipp/xrit/MSG.py
+
+
+- Merge branch 'pre-master' [Martin Raspaud]
+
+  Conflicts:
+  	mipp/xrit/MSG.py
+
+- Merge pull request #5 from sebiegli/master. [Martin Raspaud]
+
+  fixed Issue #4
+
+- Fixed Issue #4. [Sebastian]
+
+- Add bump and changelog config files. [Martin Raspaud]
+
+- Fix pep8 compliance. [Martin Raspaud]
+
+- Accept unicode filenames. [Martin Raspaud]
+
+- Fix the lowering of case in load_files for the platform name. [Martin
+  Raspaud]
+
+- Allow platform name to be provided to load_files. [Martin Raspaud]
+
+  This is usefull for H8 files for exemple, since they don't have
+  prologues.
+
+- Fixed Issue #4. [Sebastian]
+
+- Corrected tests, after last checkin. [Lars Orum Rasmussen]
+
+- Sentinel reader independent of S1A and S1B. [Lars Orum Rasmussen]
+
+- Define download_url. [Lars Orum Rasmussen]
+
+  Better url (usr pytroll organization)
+
+  pep8
+
+
 v0.10.0 (2016-05-16)
 --------------------
 
