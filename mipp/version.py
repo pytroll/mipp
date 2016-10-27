@@ -25,4 +25,4 @@
 """Version file.
 """
 
-__version__ = "v0.10.0"
+__version__ = "v1.0.0"
