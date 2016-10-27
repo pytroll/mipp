@@ -22,21 +22,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""This module will read MSG level1.5 files, format documented in: 
+"""This module will read MSG level1.5 files, format documented in:
 'MSG Level 1.5 Image Data Format Description', EUM/MSG/ICD/105, v5A, 22 August 2007
 """
 #raise NotImplementedError
 import logging
-logger = logging.getLogger(__name__)
-
 import sys
-import numpy as np
 from StringIO import StringIO
 
+import numpy as np
+
 from mipp import CalibrationError
-from mipp.xrit import _xrit
-from mipp.xrit import Metadata
 from mipp.xrit import bin_reader as rbin
+from mipp.xrit import Metadata, _xrit
+
+logger = logging.getLogger(__name__)
+
+
 
 __all__ = ['read_metadata']
 
@@ -273,7 +275,8 @@ class _Calibrator(object):
 
         mask = (image == no_data_value)
         if self.bits_per_pixel == 8:
-            logger.info("8 bits per pixel adjusted to 10 bits for calibration.")
+            logger.info(
+                "8 bits per pixel adjusted to 10 bits for calibration.")
             image = image.astype(np.uint16) * 4
 
         cslope = hdr["Level1_5ImageCalibration"][chn_nb]['Cal_Slope']
@@ -312,7 +315,7 @@ class _Calibrator(object):
             cal_data = eval_np(('C2 * 100. * wavenumber / '
                                 'log(C1 * 1.0e6 * wavenumber ** 3 / '
                                 '(1.0e-5 * radiances) + 1)'))
-            
+
             coef_a = eval("BTFIT_A_" + channel_name)
             coef_b = eval("BTFIT_B_" + channel_name)
             coef_c = eval("BTFIT_C_" + channel_name)
@@ -428,28 +431,40 @@ def read_proheader(fp):
     # RadiometerSettings
 
     radiosettings = {}
-    radiosettings["MDUSamplingDelays"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
+    radiosettings["MDUSamplingDelays"] = np.fromstring(
+        fp.read(42 * 2), dtype=">u2")
     radiosettings["HRVFrameOffsets"] = {}
-    radiosettings["HRVFrameOffsets"]["MDUNomHRVDelay1"] = rbin.read_uint2(fp.read(2))
-    radiosettings["HRVFrameOffsets"]["MDUNomHRVDelay2"] = rbin.read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"][
+        "MDUNomHRVDelay1"] = rbin.read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"][
+        "MDUNomHRVDelay2"] = rbin.read_uint2(fp.read(2))
     radiosettings["HRVFrameOffsets"]["Spare"] = rbin.read_uint2(fp.read(2))
-    radiosettings["HRVFrameOffsets"]["MDUNomHRVBreakline"] = rbin.read_uint2(fp.read(2))
+    radiosettings["HRVFrameOffsets"][
+        "MDUNomHRVBreakline"] = rbin.read_uint2(fp.read(2))
     radiosettings["DHSSSynchSelection"] = ord(fp.read(1))
     radiosettings["MDUOutGain"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
     radiosettings["MDUCourseGain"] = np.fromstring(fp.read(42), dtype=np.uint8)
     radiosettings["MDUFineGain"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
-    radiosettings["MDUNumericalOffset"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
+    radiosettings["MDUNumericalOffset"] = np.fromstring(
+        fp.read(42 * 2), dtype=">u2")
     radiosettings["PUGain"] = np.fromstring(fp.read(42 * 2), dtype=">u2")
     radiosettings["PUOffset"] = np.fromstring(fp.read(27 * 2), dtype=">u2")
     radiosettings["PUBias"] = np.fromstring(fp.read(15 * 2), dtype=">u2")
     radiosettings["OperationParameters"] = {}
-    radiosettings["OperationParameters"]["L0_LineCounter"] = rbin.read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K1_RetraceLines"] = rbin.read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K2_PauseDeciseconds"] = rbin.read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K3_RetraceLines"] = rbin.read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K4_PauseDeciseconds"] = rbin.read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["K5_RetraceLines"] = rbin.read_uint2(fp.read(2))
-    radiosettings["OperationParameters"]["X_DeepSpaceWindowPosition"] = ord(fp.read(1))
+    radiosettings["OperationParameters"][
+        "L0_LineCounter"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"][
+        "K1_RetraceLines"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"][
+        "K2_PauseDeciseconds"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"][
+        "K3_RetraceLines"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"][
+        "K4_PauseDeciseconds"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"][
+        "K5_RetraceLines"] = rbin.read_uint2(fp.read(2))
+    radiosettings["OperationParameters"][
+        "X_DeepSpaceWindowPosition"] = ord(fp.read(1))
     radiosettings["RefocusingLines"] = rbin.read_uint2(fp.read(2))
     radiosettings["RefocusingDirection"] = ord(fp.read(1))
     radiosettings["RefocusingPosition"] = rbin.read_uint2(fp.read(2))
@@ -470,8 +485,10 @@ def read_proheader(fp):
     radiooper["LastGainChangeTime"] = rbin.read_cds_time(fp.read(6))
     radiooper["Decontamination"] = {}
     radiooper["Decontamination"]["DecontaminationNow"] = ord(fp.read(1)) > 0
-    radiooper["Decontamination"]["DecontaminationStart"] = rbin.read_cds_time(fp.read(6))
-    radiooper["Decontamination"]["DecontaminationEnd"] = rbin.read_cds_time(fp.read(6))
+    radiooper["Decontamination"][
+        "DecontaminationStart"] = rbin.read_cds_time(fp.read(6))
+    radiooper["Decontamination"][
+        "DecontaminationEnd"] = rbin.read_cds_time(fp.read(6))
 
     radiooper["BBCalScheduled"] = ord(fp.read(1)) > 0
     radiooper["BBCalibrationType"] = ord(fp.read(1))
@@ -600,13 +617,17 @@ def read_proheader(fp):
     # RPSummary
 
     rpsummary = {}
-    rpsummary["RadianceLinearization"] = np.fromstring(fp.read(12), dtype=np.bool)
+    rpsummary["RadianceLinearization"] = np.fromstring(
+        fp.read(12), dtype=np.bool)
 
-    rpsummary["DetectorEqualization"] = np.fromstring(fp.read(12), dtype=np.bool)
-    rpsummary["OnboardCalibrationResult"] = np.fromstring(fp.read(12), dtype=np.bool)
+    rpsummary["DetectorEqualization"] = np.fromstring(
+        fp.read(12), dtype=np.bool)
+    rpsummary["OnboardCalibrationResult"] = np.fromstring(
+        fp.read(12), dtype=np.bool)
     rpsummary["MPEFCalFeedback"] = np.fromstring(fp.read(12), dtype=np.bool)
     rpsummary["MTFAdaptation"] = np.fromstring(fp.read(12), dtype=np.bool)
-    rpsummary["StraylightCorrectionFlag"] = np.fromstring(fp.read(12), dtype=np.bool)
+    rpsummary["StraylightCorrectionFlag"] = np.fromstring(
+        fp.read(12), dtype=np.bool)
 
     hdr["RPSummary"] = rpsummary
 
@@ -614,7 +635,8 @@ def read_proheader(fp):
 
     caltype = np.dtype([('Cal_Slope', '>f8'), ('Cal_Offset', '>f8')])
 
-    hdr["Level1_5ImageCalibration"] = np.fromstring(fp.read(192), dtype=caltype)
+    hdr["Level1_5ImageCalibration"] = np.fromstring(
+        fp.read(192), dtype=caltype)
 
     # BlackBodyDataUsed
 
@@ -622,7 +644,8 @@ def read_proheader(fp):
 
     bbdu["BBObservationUTC"] = rbin.read_cds_expanded_time(fp.read(10))
     bbdu["BBRelatedData"] = {}
-    bbdu["BBRelatedData"]["OnBoardBBTime"] = rbin.read_cuc_time(fp.read(7), 4, 3)
+    bbdu["BBRelatedData"][
+        "OnBoardBBTime"] = rbin.read_cuc_time(fp.read(7), 4, 3)
     bbdu["BBRelatedData"]["MDUOutGain"] = np.fromstring(fp.read(42 * 2),
                                                         dtype=">u2")
     bbdu["BBRelatedData"]["MDUCoarseGain"] = np.fromstring(fp.read(42),
@@ -647,34 +670,56 @@ def read_proheader(fp):
     bbdu["BBRelatedData"]["DCRValues"] = result
     bbdu["BBRelatedData"]["X_DeepSpaceWindowPosition"] = ord(fp.read(1))
     bbdu["BBRelatedData"]["ColdFPTemperature"] = {}
-    bbdu["BBRelatedData"]["ColdFPTemperature"]["FCUNominalColdFocalPlaneTemp"] = rbin.read_uint2(fp.read(2)) / 100.
-    bbdu["BBRelatedData"]["ColdFPTemperature"]["FCURedundantColdFocalPlaneTemp"] = rbin.read_uint2(fp.read(2)) / 100.
+    bbdu["BBRelatedData"]["ColdFPTemperature"][
+        "FCUNominalColdFocalPlaneTemp"] = rbin.read_uint2(fp.read(2)) / 100.
+    bbdu["BBRelatedData"]["ColdFPTemperature"][
+        "FCURedundantColdFocalPlaneTemp"] = rbin.read_uint2(fp.read(2)) / 100.
     bbdu["BBRelatedData"]["WarmFPTemperature"] = {}
-    bbdu["BBRelatedData"]["WarmFPTemperature"]["FCUNominalWarmFocalPlaneVHROTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["WarmFPTemperature"]["FCURedundantWarmFocalPlaneVHROTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["WarmFPTemperature"][
+        "FCUNominalWarmFocalPlaneVHROTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["WarmFPTemperature"][
+        "FCURedundantWarmFocalPlaneVHROTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["ScanMirrorTemperature"] = {}
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCUNominalScanMirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCURedundantScanMirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCUNominalScanMirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["ScanMirrorTemperature"]["FCURedundantScanMirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"][
+        "FCUNominalScanMirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"][
+        "FCURedundantScanMirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"][
+        "FCUNominalScanMirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["ScanMirrorTemperature"][
+        "FCURedundantScanMirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["M1M2M3Temperature"] = {}
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM1MirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM1MirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM1MirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM1MirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM23AssemblySensor1Temp"] = ord(fp.read(1)) / 4. + 265
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM23AssemblySensor1Temp"] = ord(fp.read(1)) / 4. + 265
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCUNominalM23AssemblySensor2Temp"] = ord(fp.read(1)) / 4. + 265
-    bbdu["BBRelatedData"]["M1M2M3Temperature"]["FCURedundantM23AssemblySensor2Temp"] = ord(fp.read(1)) / 4. + 265
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCUNominalM1MirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCURedundantM1MirrorSensor1Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCUNominalM1MirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCURedundantM1MirrorSensor2Temp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCUNominalM23AssemblySensor1Temp"] = ord(fp.read(1)) / 4. + 265
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCURedundantM23AssemblySensor1Temp"] = ord(fp.read(1)) / 4. + 265
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCUNominalM23AssemblySensor2Temp"] = ord(fp.read(1)) / 4. + 265
+    bbdu["BBRelatedData"]["M1M2M3Temperature"][
+        "FCURedundantM23AssemblySensor2Temp"] = ord(fp.read(1)) / 4. + 265
     bbdu["BBRelatedData"]["BaffleTemperature"] = {}
-    bbdu["BBRelatedData"]["BaffleTemperature"]["FCUNominalM1BaffleTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["BaffleTemperature"]["FCURedundantM1BaffleTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BaffleTemperature"][
+        "FCUNominalM1BaffleTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BaffleTemperature"][
+        "FCURedundantM1BaffleTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["BlackBodyTemperature"] = {}
-    bbdu["BBRelatedData"]["BlackBodyTemperature"]["FCUNominalBlackBodySensorTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
-    bbdu["BBRelatedData"]["BlackBodyTemperature"]["FCURedundantBlackBodySensorTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BlackBodyTemperature"][
+        "FCUNominalBlackBodySensorTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
+    bbdu["BBRelatedData"]["BlackBodyTemperature"][
+        "FCURedundantBlackBodySensorTemp"] = rbin.read_uint2(fp.read(2)) / 100. + 250
     bbdu["BBRelatedData"]["FCUMode"] = {}
-    bbdu["BBRelatedData"]["FCUMode"]["FCUNominalSMMStatus"] = rbin.read_uint2(fp.read(2))
-    bbdu["BBRelatedData"]["FCUMode"]["FCURedundantSMMStatus"] = rbin.read_uint2(fp.read(2))
+    bbdu["BBRelatedData"]["FCUMode"][
+        "FCUNominalSMMStatus"] = rbin.read_uint2(fp.read(2))
+    bbdu["BBRelatedData"]["FCUMode"][
+        "FCURedundantSMMStatus"] = rbin.read_uint2(fp.read(2))
     extracted_data_type = np.dtype([('NumberOfPixelsUsed', '>u4'),
                                     ('MeanCount', '>f4'),
                                     ('RMS', '>f4'),
@@ -810,7 +855,8 @@ def read_metadata(prologue, image_files, epilogue):
     im = _xrit.read_imagedata(image_files[0])
 
     md = Metadata()
-    md.calibrate = _Calibrator(hdr, im.product_name, bits_per_pixel=im.structure.nb)
+    md.calibrate = _Calibrator(
+        hdr, im.product_name, bits_per_pixel=im.structure.nb)
 
     md.sublon = hdr["ProjectionDescription"]["LongitudeOfSSP"]
     md.product_name = im.product_id
@@ -842,7 +888,8 @@ def read_metadata(prologue, image_files, epilogue):
 
         md.coff = (ftr["Lower" + ew_.capitalize() + "ColumnActual"]
                    + im.navigation.coff + 1)
-        md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1) + 2
+        md.loff = im.navigation.loff + \
+            segment_size * (im.segment.seg_no - 1) + 2
 
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
