@@ -28,6 +28,7 @@
 #raise NotImplementedError
 import logging
 import sys
+from datetime import datetime
 from StringIO import StringIO
 
 import numpy as np
@@ -37,7 +38,6 @@ from mipp.xrit import bin_reader as rbin
 from mipp.xrit import Metadata, _xrit
 
 logger = logging.getLogger(__name__)
-
 
 
 __all__ = ['read_metadata']
@@ -58,6 +58,8 @@ else:
     logger.warning('Older version of python. Module numexpr not used. '
                    'Performance will be slower.')
 
+
+MSG_HEIGHT = 35785831.00  # m
 
 # Reflectance factor for visible bands
 HRV_F = 25.15
@@ -886,10 +888,17 @@ def read_metadata(prologue, image_files, epilogue):
              ftr["UpperEastColumnActual"],
              ftr["UpperWestColumnActual"]]])
 
-        md.coff = (ftr["Lower" + ew_.capitalize() + "ColumnActual"]
-                   + im.navigation.coff + 1)
+        md.coff = (ftr["Lower" + ew_.capitalize() + "ColumnActual"] - 1
+                   + im.navigation.coff - 1)
         md.loff = im.navigation.loff + \
-            segment_size * (im.segment.seg_no - 1) + 2
+            segment_size * (im.segment.seg_no - 1) - 1
+
+        if ((im.time_stamp < datetime(2017, 1, 24)
+             and im.platform in ['MSG2', 'MSG3'])
+            or (im.time_stamp < datetime(2017, 1, 17)
+                and im.platform in ['MSG1'])):
+            md.coff += 1.5
+            md.loff += 1.5
 
     else:
         md.first_pixel = hdr["ReferenceGridVIS_IR"]["GridOrigin"]
@@ -900,8 +909,19 @@ def read_metadata(prologue, image_files, epilogue):
             ftr["EasternColumnActual"],
             ftr["WesternColumnActual"]]])
 
-        md.coff = im.navigation.coff
-        md.loff = im.navigation.loff + segment_size * (im.segment.seg_no - 1)
+        md.coff = im.navigation.coff - 1
+        md.loff = im.navigation.loff + \
+            segment_size * (im.segment.seg_no - 1) - 1
+
+        if ((im.time_stamp < datetime(2017, 1, 24)
+             and im.platform in ['MSG2', 'MSG3'])
+            or (im.time_stamp < datetime(2017, 1, 17)
+                and im.platform in ['MSG1'])):
+            md.coff += .5
+            md.loff += .5
+
+    md.x_pixel_size = np.deg2rad(2.**16 / im.navigation.cfac) * MSG_HEIGHT * -1
+    md.y_pixel_size = np.deg2rad(2.**16 / im.navigation.lfac) * MSG_HEIGHT * -1
 
     md.data_type = im.structure.nb
     md.no_data_value = no_data_value
