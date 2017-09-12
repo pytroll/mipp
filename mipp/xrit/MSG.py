@@ -892,11 +892,7 @@ def read_metadata(prologue, image_files, epilogue):
                    + im.navigation.coff - 1)
         md.loff = im.navigation.loff + \
             segment_size * (im.segment.seg_no - 1) - 1
-
-        if ((im.time_stamp < datetime(2037, 1, 24)
-             and im.platform in ['MSG2', 'MSG3'])
-            or (im.time_stamp < datetime(2037, 1, 17)
-                and im.platform in ['MSG1'])):
+        if (hdr["GeometricProcessing"]["EarthModel"]["TypeOfEarthModel"] < 2):
             md.coff += 1.5
             md.loff += 1.5
 
@@ -913,10 +909,7 @@ def read_metadata(prologue, image_files, epilogue):
         md.loff = im.navigation.loff + \
             segment_size * (im.segment.seg_no - 1) - 1
 
-        if ((im.time_stamp < datetime(2037, 1, 24)
-             and im.platform in ['MSG2', 'MSG3'])
-            or (im.time_stamp < datetime(2037, 1, 17)
-                and im.platform in ['MSG1'])):
+        if (hdr["GeometricProcessing"]["EarthModel"]["TypeOfEarthModel"] < 2):
             md.coff += .5
             md.loff += .5
 
