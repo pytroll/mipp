@@ -33,7 +33,7 @@ from StringIO import StringIO
 
 import numpy as np
 
-from mipp import CalibrationError
+from mipp import CalibrationError, ReaderError
 from mipp.xrit import bin_reader as rbin
 from mipp.xrit import Metadata, _xrit
 
@@ -854,7 +854,10 @@ def read_metadata(prologue, image_files, epilogue):
     fp = StringIO(epilogue.data)
     ftr = read_epiheader(fp)
 
-    im = _xrit.read_imagedata(image_files[0])
+    try:
+        im = _xrit.read_imagedata(image_files[0])
+    except IndexError:
+        raise ReaderError("No image segments available")
 
     md = Metadata()
     md.calibrate = _Calibrator(
